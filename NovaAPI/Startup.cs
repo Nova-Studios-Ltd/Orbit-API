@@ -11,6 +11,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using NovaAPI.Controllers;
 using Microsoft.Extensions.Configuration;
+using System.Net.WebSockets;
+using System.Threading;
+using System.Text;
 
 namespace NovaAPI
 {
@@ -30,6 +33,10 @@ namespace NovaAPI
         {
             services.AddControllers();
             services.Add(new ServiceDescriptor(typeof(NovaChatDatabaseContext), new NovaChatDatabaseContext(Configuration)));
+            services.AddTransient<EventManager>(sp =>
+            {
+                return new EventManager((NovaChatDatabaseContext)sp.GetService(typeof(NovaChatDatabaseContext)));
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nova API", Version = "v1" });
@@ -66,6 +73,9 @@ namespace NovaAPI
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            WebSocketOptions wsOptions = new() { KeepAliveInterval = TimeSpan.FromSeconds(120) };
+            app.UseWebSockets(wsOptions);
 
             app.UseAuthorization();
             app.UseAuthentication();

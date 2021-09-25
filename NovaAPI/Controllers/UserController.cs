@@ -12,6 +12,7 @@ using NovaAPI;
 using NovaAPI.Models;
 using NovaAPI.Attri;
 using Microsoft.Extensions.Primitives;
+using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
@@ -36,7 +37,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
                 cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                cmd.Parameters.AddWithValue("@token", GetToken());
+                cmd.Parameters.AddWithValue("@token", this.GetToken());
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
@@ -58,7 +59,7 @@ namespace NovaAPI.Controllers
             return user;
         }
 
-        [HttpGet("/Login")]
+        [HttpGet("Login")]
         public ActionResult<object> LoginUser(string username, string password)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -80,64 +81,51 @@ namespace NovaAPI.Controllers
             return StatusCode(404);
         }
 
-        //TODO Fix this stupid function
         [HttpPut("{user_uuid}")]
         [TokenAuthorization]
-        public ActionResult UpdateUser(string user_uuid, UpdateType updateType, [FromBody] object json)
+        public ActionResult UpdateUser(string user_uuid, UpdateType updateType, [FromBody] string data)
         {
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
+                if (string.IsNullOrEmpty(data)) return StatusCode(400);
                 if (updateType == UpdateType.Username)
                 {
-                    using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE UUID=@uuid", conn);
+                    using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE (UUID=@uuid) AND (Token=@token)", conn);
                     cmd.Parameters.AddWithValue("@uuid", user_uuid);
                     cmd.Parameters.AddWithValue("@user", data);
+                    cmd.Parameters.AddWithValue("@token", this.GetToken());
                     cmd.ExecuteNonQuery();
                 }
                 else if (updateType == UpdateType.Password)
                 {
-                    dynamic u = GetUser(user_uuid);
-                    using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Token=@token WHERE UUID=@uuid", conn);
+                    dynamic u = GetUser(user_uuid).Value;
+                    using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Token=@newToken WHERE (UUID=@uuid) AND (Token=@token)", conn);
                     cmd.Parameters.AddWithValue("@uuid", user_uuid);
                     cmd.Parameters.AddWithValue("@pass", GetHashString(data));
-                    cmd.Parameters.AddWithValue("@token", GetHashString(user_uuid + u.Email + data + u.Username + DateTime.Now.ToString()));
+                    cmd.Parameters.AddWithValue("@token", this.GetToken());
+                    cmd.Parameters.AddWithValue("@newToken", GetHashString(user_uuid + u.Email + data + u.Username + DateTime.Now.ToString()));
                     cmd.ExecuteNonQuery();
                 }
                 else if (updateType == UpdateType.Email)
                 {
-                    using MySqlCommand cmd = new($"UPDATE Users SET Email=@email WHERE UUID=@uuid", conn);
+                    using MySqlCommand cmd = new($"UPDATE Users SET Email=@email WHERE (UUID=@uuid) AND (Token=@token)", conn);
                     cmd.Parameters.AddWithValue("@uuid", user_uuid);
                     cmd.Parameters.AddWithValue("@email", data);
+                    cmd.Parameters.AddWithValue("@token", this.GetToken());
                     cmd.ExecuteNonQuery();
                 }
                 else
                 {
-                    return NotFound();
+                    return StatusCode(500);
                 }
             }
 
-            return NoContent();
+            return StatusCode(200);
         }
 
-        //[HttpPut("/{uuid}")]
-        //[TokenAuthorization]
-        //public ActionResult AddChannel(string uuid, string channel_uuid)
-        //{
-        //    using (MySqlConnection conn = Context.GetUsers())
-        //    {
-        //        conn.Open();
-
-        //        using MySqlCommand cmd = new($"INSERT INTO `{uuid}` (Property, Value) VALUES (@property, @uuid)", conn);
-        //        cmd.Parameters.AddWithValue("@property", "ChannelAccess");
-        //        cmd.Parameters.AddWithValue("@uuid", channel_uuid);
-        //        cmd.ExecuteNonQuery();
-        //    }
-        //    return NoContent();
-        //}
-
-        [HttpPost("/Register")]
-        public ActionResult<User> RegisterUser(LoginInfo loginInfo)
+        [HttpPost("Register")]
+        public ActionResult<object> RegisterUser(LoginInfo loginInfo)
         {
             string UUID = Guid.NewGuid().ToString("N");
             string token = GetHashString(UUID + loginInfo.Email + loginInfo.Password + loginInfo.Username + DateTime.Now.ToString());
@@ -156,8 +144,8 @@ namespace NovaAPI.Controllers
                 using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
             }
-
-            return CreatedAtAction("GetUser", new { uuid = UUID }, GetUser(UUID).Value);
+            HttpContext.Request.Headers.Add("Authorization", token);
+            return GetUser(UUID);
         }
 
         [HttpDelete("{user_uuid}")]
@@ -169,7 +157,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 using MySqlCommand cmd = new($"DELETE FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
                 cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                cmd.Parameters.AddWithValue("@token", GetToken());
+                cmd.Parameters.AddWithValue("@token", this.GetToken());
                 if (cmd.ExecuteNonQuery() == 0) return StatusCode(404);
             }
             return StatusCode(200);
@@ -187,13 +175,6 @@ namespace NovaAPI.Controllers
             foreach (byte b in GetHash(inputString))
                 sb.Append(b.ToString("X2"));
             return sb.ToString();
-        }
-
-        string GetToken()
-        {
-            if (!Request.Headers.TryGetValue("Authorization", out StringValues values))
-                return "";
-            return values.First();
         }
     }
 }

@@ -18,9 +18,11 @@ namespace NovaAPI.Controllers
     public class MessageController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
-        public MessageController(NovaChatDatabaseContext context)
+        private readonly EventManager Event;
+        public MessageController(NovaChatDatabaseContext context, EventManager em)
         {
             Context = context;
+            Event = em;
         }
 
         [HttpGet("{channel_uuid}/Messages/")]
@@ -69,6 +71,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
             }
+            Event.MessageSentEvent(channel_uuid);
             return StatusCode(200);
         }
 

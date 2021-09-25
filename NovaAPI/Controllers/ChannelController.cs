@@ -22,8 +22,12 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("CreateChannel")]
-        public string CreateChannel()
+        public ActionResult<string> CreateChannel(string recipient_uuid)
         {
+            string author = Context.GetUserUUID(GetToken());
+            if (string.IsNullOrEmpty(recipient_uuid) || !Context.UserExsists(recipient_uuid)) return StatusCode(500);
+            if (author == recipient_uuid) return StatusCode(500);
+
             string table_id = Guid.NewGuid().ToString("N");
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -33,11 +37,46 @@ namespace NovaAPI.Controllers
                 using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_UUID CHAR(255) NOT NULL, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE Message_IDs(Message_UUID)) ENGINE = InnoDB; ", conn);
                 createTable.ExecuteNonQuery();
 
+                // Create table to hold the users attached to this channel
+                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL , UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
+                createAccessTable.ExecuteNonQuery();
+
+                // Add users to access table
+                using MySqlCommand addUserAccess = new($"INSERT INTO  `access_{table_id}` (User_UUID) VALUES (@author), (@recipient)", conn);
+                addUserAccess.Parameters.AddWithValue("@author", author);
+                addUserAccess.Parameters.AddWithValue("@recipient", recipient_uuid);
+                addUserAccess.ExecuteNonQuery();
+
                 // Add table id to channels table
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `Timestamp`) VALUES (@table_id, @owner_uuid, CURRENT_TIMESTAMP)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(GetToken()));
                 addChannel.ExecuteNonQuery();
+            }
+
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                try
+                {
+                    // Add channel to receiver
+                    MySqlCommand cmd = new($"INSERT INTO `{recipient_uuid}` (Property, Value) VALUES (@property, @uuid)", conn);
+                    cmd.Parameters.AddWithValue("@property", "ChannelAccess");
+                    cmd.Parameters.AddWithValue("@uuid", table_id);
+                    cmd.ExecuteNonQuery();
+
+                    // Add channel to author
+                    cmd = new($"INSERT INTO `{Context.GetUserUUID(GetToken())}` (Property, Value) VALUES (@property, @uuid)", conn);
+                    cmd.Parameters.AddWithValue("@property", "ChannelAccess");
+                    cmd.Parameters.AddWithValue("@uuid", table_id);
+                    cmd.ExecuteNonQuery();
+
+                    cmd.Dispose();
+                }
+                catch
+                {
+                    return StatusCode(500);
+                }
             }
 
             return table_id;
@@ -56,9 +95,29 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(GetToken()));
                 if (cmd.ExecuteNonQuery() == 0) return NotFound();
 
+                // Remove channel from user
+                using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+                MySqlDataReader reader = removeUsers.ExecuteReader();
+                using MySqlConnection userDb = Context.GetUsers();
+                userDb.Open();
+                while (reader.Read())
+                {
+                    using MySqlCommand removeAccess = new($"DELETE FROM `{reader["User_UUID"]}` WHERE (Property=@prop) AND (Value=@value)", userDb);
+                    removeAccess.Parameters.AddWithValue("@prop", "ChannelAccess");
+                    removeAccess.Parameters.AddWithValue("@value", channel_uuid);
+                    removeAccess.ExecuteNonQuery();
+                }
+
+                conn.Close();
+                conn.Open();
+
                 // Remove channel table (removing messages)
                 using MySqlCommand deleteChannel = new($"DROP TABLE `{channel_uuid}`", conn);
                 deleteChannel.ExecuteNonQuery();
+
+                // Remove channel access table
+                using MySqlCommand deleteAccessTable = new($"DROP TABLE `access_{channel_uuid}`", conn);
+                deleteAccessTable.ExecuteNonQuery();
             }
             return NoContent();
         }

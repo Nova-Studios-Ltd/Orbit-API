@@ -43,5 +43,21 @@ namespace NovaAPI.Controllers
             }
             return "";
         }
+
+        public bool UserExsists(string user_uuid)
+        {
+            using (MySqlConnection conn = GetUsers())
+            {
+                conn.Open();
+                MySqlCommand cmd = new("SELECT UUID FROM Users WHERE (UUID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

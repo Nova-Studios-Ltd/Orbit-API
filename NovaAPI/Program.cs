@@ -22,16 +22,17 @@ namespace NovaAPI
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.ConfigureKestrel(options =>
-                    {
-                        int httpsPort = 5001;
-                        string pfxFilePath = "";
-                        options.Listen(IPAddress.Any, httpsPort, listenOptions =>
-                        {
-                            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-                            listenOptions.UseHttps(pfxFilePath);
-                        });
-                    });
+                    //webBuilder.UseKestrel();
+                    //webBuilder.ConfigureKestrel(options =>
+                    //{
+                    //    int httpsPort = 5001;
+                    //    string pfxFilePath = "";
+                    //    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
+                    //    {
+                    //        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                    //        listenOptions.UseHttps(pfxFilePath);
+                    //    });
+                    //});
                     webBuilder.UseStartup<Startup>();
                 });
     }
