@@ -30,7 +30,8 @@ namespace NovaAPI.Controllers
 
             while (reader.Read())
             {
-                Clients[(string)reader["User_UUID"]].SendAsync(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { Channel = channel_uuid })), WebSocketMessageType.Text, true, CancellationToken.None);
+                if (Clients.ContainsKey((string)reader["User_UUID"]))
+                    Clients[(string)reader["User_UUID"]].SendAsync(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { Channel = channel_uuid })), WebSocketMessageType.Text, true, CancellationToken.None);
             }
         }
 

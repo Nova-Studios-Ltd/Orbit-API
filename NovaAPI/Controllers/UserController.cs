@@ -16,7 +16,7 @@ using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
-    [Route("Users")]
+    [Route("User")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -59,7 +59,7 @@ namespace NovaAPI.Controllers
             return user;
         }
 
-        [HttpGet("Login")]
+        [HttpGet("/Login")]
         public ActionResult<object> LoginUser(string username, string password)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -124,7 +124,7 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
-        [HttpPost("Register")]
+        [HttpPost("/Register")]
         public ActionResult<object> RegisterUser(LoginInfo loginInfo)
         {
             string UUID = Guid.NewGuid().ToString("N");
@@ -175,6 +175,26 @@ namespace NovaAPI.Controllers
             foreach (byte b in GetHash(inputString))
                 sb.Append(b.ToString("X2"));
             return sb.ToString();
+        }
+
+        // User info
+        [HttpGet("Channels")]
+        [TokenAuthorization]
+        public ActionResult<List<string>> GetUserChannels()
+        {
+            List<string> channels = new();
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                using MySqlCommand cmd = new($"SELECT * FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=ChannelAccess)", conn);
+                cmd.Parameters.AddWithValue("@token", this.GetToken());
+                MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    channels.Add((string)reader["Property"]);
+                }
+            }
+            return channels;
         }
     }
 }

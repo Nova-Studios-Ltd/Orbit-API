@@ -57,7 +57,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("{channel_uuid}/Messages/")]
-        public ActionResult SendMessage(string channel_uuid, Message message)
+        public ActionResult<string> SendMessage(string channel_uuid, Message message)
         {
             string UUID = Guid.NewGuid().ToString("N");
             string user = Context.GetUserUUID(GetToken());
@@ -72,7 +72,7 @@ namespace NovaAPI.Controllers
                 cmd.ExecuteNonQuery();
             }
             Event.MessageSentEvent(channel_uuid);
-            return StatusCode(200);
+            return UUID;
         }
 
         [HttpPut("{channel_uuid}/Messages/{message_uuid}")]
