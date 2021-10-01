@@ -50,8 +50,9 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                MySqlCommand getAvatar = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+                MySqlCommand getAvatar = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
                 getAvatar.Parameters.AddWithValue("@uuid", user_uuid);
+                getAvatar.Parameters.AddWithValue("@token", this.GetToken());
                 using MySqlDataReader reader = getAvatar.ExecuteReader();
                 while (reader.Read())
                 {
