@@ -26,23 +26,23 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("{channel_uuid}/Messages/")]
-        public ActionResult<IEnumerable<object>> GetMessages(string channel_uuid)
+        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
-            List<object> messages = new();
+            List<ChannelMessage> messages = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid}", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY CreationDate DESC LIMIT 10", conn);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
-                        messages.Add(new
+                        messages.Add(new ChannelMessage
                         {
                             Message_Id = reader["Message_UUID"].ToString(),
-                            Author = reader["Author_UUID"].ToString(),
+                            Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Content = reader["Content"].ToString(),
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
                         });
@@ -56,8 +56,39 @@ namespace NovaAPI.Controllers
             return messages;
         }
 
+        [HttpGet("{channel_uuid}/Messages/{message_uuid}")]
+        public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_uuid)
+        {
+            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                try
+                {
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE (Message_UUID=@uuid)", conn);
+                    cmd.Parameters.AddWithValue("@uuid", message_uuid);
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        return new ChannelMessage
+                        {
+                            Message_Id = reader["Message_UUID"].ToString(),
+                            Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
+                            Content = reader["Content"].ToString(),
+                            Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
+                        };
+                    }
+                }
+                catch
+                {
+                    return StatusCode(404);
+                }
+            }
+            return StatusCode(500);
+        }
+
         [HttpPost("{channel_uuid}/Messages/")]
-        public ActionResult<string> SendMessage(string channel_uuid, Message message)
+        public ActionResult<string> SendMessage(string channel_uuid, SentMessage message)
         {
             string UUID = Guid.NewGuid().ToString("N");
             string user = Context.GetUserUUID(GetToken());
@@ -71,12 +102,12 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
             }
-            Event.MessageSentEvent(channel_uuid);
+            Event.MessageSentEvent(channel_uuid, UUID);
             return UUID;
         }
 
         [HttpPut("{channel_uuid}/Messages/{message_uuid}")]
-        public ActionResult<object> EditMessage(string channel_uuid, string message_uuid, Message message)
+        public ActionResult<object> EditMessage(string channel_uuid, string message_uuid, SentMessage message)
         {
             string user = Context.GetUserUUID(GetToken());
             if (!CheckUserChannelAccess(user, channel_uuid)) return StatusCode(403);

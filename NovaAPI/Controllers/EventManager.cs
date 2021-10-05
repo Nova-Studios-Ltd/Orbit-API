@@ -13,15 +13,35 @@ namespace NovaAPI.Controllers
 {
     public class EventManager
     {
+
+        private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 60);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
 
         public EventManager(NovaChatDatabaseContext context)
         {
-            Context = context;   
+            Context = context;
         }
 
-        public async void MessageSentEvent(string channel_uuid)
+        public static void CheckPulse(object state)
+        {
+            List<string> deadClients = new();
+            foreach (KeyValuePair<string, UserSocket> item in Clients)
+            {
+                if (item.Value.Socket.State != WebSocketState.Open)
+                {
+                    item.Value.SocketFinished.TrySetResult(null);
+                    deadClients.Add(item.Key);
+                }
+            }
+
+            foreach (string client in deadClients)
+            {
+                Clients.Remove(client);
+            }
+        }
+
+        public async void MessageSentEvent(string channel_uuid, string message_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
@@ -31,7 +51,7 @@ namespace NovaAPI.Controllers
             while (reader.Read())
             {
                 if (Clients.ContainsKey((string)reader["User_UUID"])) {
-                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 0, Channel = channel_uuid }));
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 0, Channel = channel_uuid, Message = message_uuid }));
                     if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
                     {
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -46,14 +66,23 @@ namespace NovaAPI.Controllers
         }
 
         public void AddClient(string user_uuid, UserSocket socket)
-        { 
-            Clients.Add(user_uuid, socket);
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                Clients[user_uuid].SocketFinished.TrySetResult(null);
+                Clients.Remove(user_uuid);
+                Clients.Add(user_uuid, socket);
+            }
+            else
+            {
+                Clients.Add(user_uuid, socket);
+            }
             //Echo(socket);
         }
 
-
         private async Task Echo(WebSocket webSocket)
         {
+
             var buffer = new byte[1024];
             var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
 

@@ -59,8 +59,9 @@ namespace NovaAPI.Controllers
                     string oldAvatar = Path.Combine("Media/avatars", (string)reader["Avatar"]);
                     if (!Regex.IsMatch((string)reader["Avatar"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
                         System.IO.File.Delete(oldAvatar);
-                    string newAvatar = Path.Combine("Media/avatars", CreateMD5(file.FileName + DateTime.Now.ToString()));
-                    FileStream fs = System.IO.File.OpenWrite(newAvatar);
+                    string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
+                    string newAvatarPath = Path.Combine("Media/avatars", newAvatar);
+                    FileStream fs = System.IO.File.OpenWrite(newAvatarPath);
                     file.CopyTo(fs);
                     fs.Close();
                     conn.Close();
