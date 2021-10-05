@@ -26,7 +26,7 @@ namespace NovaAPI
                     //webBuilder.ConfigureKestrel(options =>
                     //{
                     //    int httpsPort = 5001;
-                    //    string pfxFilePath = "";
+                    //    string pfxFilePath = "/var/www/asp.net/certs/api.novastudios.tk.crt";
                     //    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
                     //    {
                     //        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;

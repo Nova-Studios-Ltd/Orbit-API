@@ -18,7 +18,7 @@ namespace NovaAPI.Controllers
     [ApiController]
     public class MediaController : ControllerBase
     {
-        NovaChatDatabaseContext Context;
+        readonly NovaChatDatabaseContext Context;
         public MediaController(NovaChatDatabaseContext context)
         {
             Context = context;

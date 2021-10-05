@@ -11,12 +11,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NovaAPI.Util;
+using NovaAPI.Models;
 
 namespace NovaAPI.Controllers
 {
     [Route("Events")]
     [ApiController]
-    [TokenAuthorization]
+    //[TokenAuthorization]
     public class WebsocketController : ControllerBase
     {
         private readonly ILogger<WebsocketController> _logger;
@@ -31,12 +32,14 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("Listen")]
-        public async Task ConnectWebsocket()
+        public async Task ConnectWebsocket(string user_uuid)
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
-                Event.AddClient(Context.GetUserUUID(this.GetToken()), await HttpContext.WebSockets.AcceptWebSocketAsync());
+                TaskCompletionSource<object> socketFinished = new();
+                Event.AddClient(user_uuid, new UserSocket(socketFinished, await HttpContext.WebSockets.AcceptWebSocketAsync()));
                 _logger.Log(LogLevel.Information, "WebSocket connection established");
+                await socketFinished.Task;
             }
             else
             {
@@ -48,20 +51,16 @@ namespace NovaAPI.Controllers
         {
             var buffer = new byte[1024];
             var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-            _logger.Log(LogLevel.Information, "Message received from Client");
 
             while (!result.CloseStatus.HasValue)
             {
                 var serverMsg = Encoding.UTF8.GetBytes($"Server: Hello. You said: {Encoding.UTF8.GetString(buffer)}");
                 await webSocket.SendAsync(new ArraySegment<byte>(serverMsg, 0, serverMsg.Length), result.MessageType, result.EndOfMessage, CancellationToken.None);
-                _logger.Log(LogLevel.Information, "Message sent to Client");
 
                 result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                _logger.Log(LogLevel.Information, "Message received from Client");
 
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-            _logger.Log(LogLevel.Information, "WebSocket connection closed");
         }
     }
 }
