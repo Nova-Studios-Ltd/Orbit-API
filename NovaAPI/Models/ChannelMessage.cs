@@ -9,6 +9,7 @@ namespace NovaAPI.Models
     {
         public string Message_Id { get; set; }
         public string Author { get; set; }
+        public string Author_UUID { get; set; }
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
     }

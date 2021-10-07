@@ -35,7 +35,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY CreationDate DESC LIMIT 10", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY CreationDate ASC LIMIT 30", conn);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
@@ -43,6 +43,7 @@ namespace NovaAPI.Controllers
                         {
                             Message_Id = reader["Message_UUID"].ToString(),
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
+                            Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
                         });
@@ -74,6 +75,7 @@ namespace NovaAPI.Controllers
                         {
                             Message_Id = reader["Message_UUID"].ToString(),
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
+                            Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
                         };

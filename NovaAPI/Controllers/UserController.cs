@@ -21,6 +21,8 @@ namespace NovaAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
+        public static string[] DefaultAvatars = System.IO.Directory.GetFiles("/Media/defaultAvatars", "*.*");
+        public static Random GetRandom = new Random();
 
         public UserController(NovaChatDatabaseContext context)
         {
@@ -35,19 +37,37 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                cmd.Parameters.AddWithValue("@token", this.GetToken());
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                if (user_uuid == Context.GetUserUUID(this.GetToken()))
                 {
-                    user = new
+                    MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
+                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                    cmd.Parameters.AddWithValue("@token", this.GetToken());
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
                     {
-                        UUID = reader["UUID"].ToString(),
-                        Username = reader["Username"].ToString(),
-                        Email = reader["Email"].ToString(),
-                        CreationDate = DateTime.Parse(reader["CreationDate"].ToString())
-                    };
+                        user = new
+                        {
+                            UUID = reader["UUID"].ToString(),
+                            Username = reader["Username"].ToString(),
+                            Email = reader["Email"].ToString(),
+                            CreationDate = DateTime.Parse(reader["CreationDate"].ToString())
+                        };
+                    }
+                }
+                else
+                {
+                    MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid)", conn);
+                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        user = new
+                        {
+                            UUID = reader["UUID"].ToString(),
+                            Username = reader["Username"].ToString(),
+                            CreationDate = DateTime.Parse(reader["CreationDate"].ToString())
+                        };
+                    }
                 }
             }
 
@@ -81,7 +101,7 @@ namespace NovaAPI.Controllers
             return StatusCode(404);
         }
 
-        [HttpPut("{user_uuid}")]
+        [HttpPatch("{user_uuid}")]
         [TokenAuthorization]
         public ActionResult UpdateUser(string user_uuid, UpdateType updateType, [FromBody] string data)
         {
@@ -133,12 +153,13 @@ namespace NovaAPI.Controllers
             {
                 conn.Open();
 
-                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Password, Email, Token) VALUES (@uuid, @user, @pass, @email, @tok)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Password, Email, Token, Avatar) VALUES (@uuid, @user, @pass, @email, @tok, @avatar)", conn);
                 cmd.Parameters.AddWithValue("@uuid", UUID);
                 cmd.Parameters.AddWithValue("@user", loginInfo.Username);
                 cmd.Parameters.AddWithValue("@pass", GetHashString(loginInfo.Password));
                 cmd.Parameters.AddWithValue("@email", loginInfo.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
+                cmd.Parameters.AddWithValue("@avatar", DefaultAvatars[GetRandom.Next(0, DefaultAvatars.Length - 1)]);
                 cmd.ExecuteNonQuery();
 
                 using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
@@ -186,15 +207,74 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"SELECT * FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=ChannelAccess)", conn);
-                cmd.Parameters.AddWithValue("@token", this.GetToken());
+                using MySqlCommand cmd = new($"SELECT * FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=@prop)", conn);
+                cmd.Parameters.AddWithValue("@prop", "ChannelAccess");
+                //cmd.Parameters.AddWithValue("@token", this.GetToken());
                 MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    channels.Add((string)reader["Property"]);
+                    channels.Add((string)reader["Value"]);
                 }
             }
             return channels;
+        }
+
+        [HttpPost("Channels/Register")]
+        [TokenAuthorization]
+        public ActionResult AddUserChannel(string user_uuid, string channel_uuid)
+        {
+            if (!CheckChannelOwner(Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                using MySqlCommand addAccessToUser = new($"INSERT INTO `{user_uuid}` (Property, Value) VALUES (@prop, @val)");
+                addAccessToUser.Parameters.AddWithValue("@prop", "ChannelAccess");
+                addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
+                addAccessToUser.ExecuteNonQuery();
+            }
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                using MySqlCommand addUserToChannel = new($"INSERT INTO `access_{channel_uuid}` (User_UUID) VALUES (@user)");
+                addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
+                addUserToChannel.ExecuteNonQuery();
+            }
+            return StatusCode(200);
+        }
+
+        [HttpDelete("Channels/Unregister")]
+        [TokenAuthorization]
+        public ActionResult RemoveUserChanne(string user_uuid, string channel_uuid)
+        {
+            if (!CheckChannelOwner(Context.GetUserUUID(this.GetToken()), channel_uuid) && Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                using MySqlCommand addAccessToUser = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop) and (Value=@val)");
+                addAccessToUser.Parameters.AddWithValue("@prop", "ChannelAccess");
+                addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
+                addAccessToUser.ExecuteNonQuery();
+            }
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                using MySqlCommand addUserToChannel = new($"DELETE FROM `access_{channel_uuid}` WHERE (User_UUID=@user)");
+                addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
+                addUserToChannel.ExecuteNonQuery();
+            }
+            return StatusCode(200);
+        }
+
+        bool CheckChannelOwner(string userUUID, string channel_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT Owner_UUID FROM Channels WHERE (Table_ID=@table) AND (Owner_UUID=@user)", conn);
+            cmd.Parameters.AddWithValue("@table", channel_uuid);
+            cmd.Parameters.AddWithValue("@user", userUUID);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows) return true;
+            return false;
         }
     }
 }
