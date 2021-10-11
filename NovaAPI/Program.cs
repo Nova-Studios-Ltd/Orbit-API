@@ -22,7 +22,9 @@ namespace NovaAPI
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    #if !DEBUG
                     webBuilder.UseKestrel();
+                    #endif
                     //webBuilder.ConfigureKestrel(options =>
                     //{
                     //    int httpsPort = 5001;

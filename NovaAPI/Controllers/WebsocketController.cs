@@ -46,21 +46,5 @@ namespace NovaAPI.Controllers
                 HttpContext.Response.StatusCode = 400;
             }
         }
-
-        private async Task Echo(WebSocket webSocket)
-        {
-            var buffer = new byte[1024];
-            var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-
-            while (!result.CloseStatus.HasValue)
-            {
-                var serverMsg = Encoding.UTF8.GetBytes($"Server: Hello. You said: {Encoding.UTF8.GetString(buffer)}");
-                await webSocket.SendAsync(new ArraySegment<byte>(serverMsg, 0, serverMsg.Length), result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-
-            }
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-        }
     }
 }

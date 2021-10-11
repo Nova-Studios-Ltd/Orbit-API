@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using MySql.Data.MySqlClient;
 using NovaAPI.Attri;
+using NovaAPI.Models;
+using NovaAPI.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +26,7 @@ namespace NovaAPI.Controllers
         [HttpPost("CreateChannel")]
         public ActionResult<string> CreateChannel(string recipient_uuid)
         {
-            string author = Context.GetUserUUID(GetToken());
+            string author = Context.GetUserUUID(this.GetToken());
             if (string.IsNullOrEmpty(recipient_uuid) || !Context.UserExsists(recipient_uuid)) return StatusCode(500);
             if (author == recipient_uuid) return StatusCode(500);
 
@@ -50,7 +52,7 @@ namespace NovaAPI.Controllers
                 // Add table id to channels table
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `Timestamp`) VALUES (@table_id, @owner_uuid, CURRENT_TIMESTAMP)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
-                addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(GetToken()));
+                addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 addChannel.ExecuteNonQuery();
             }
 
@@ -66,7 +68,7 @@ namespace NovaAPI.Controllers
                     cmd.ExecuteNonQuery();
 
                     // Add channel to author
-                    cmd = new($"INSERT INTO `{Context.GetUserUUID(GetToken())}` (Property, Value) VALUES (@property, @uuid)", conn);
+                    cmd = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}` (Property, Value) VALUES (@property, @uuid)", conn);
                     cmd.Parameters.AddWithValue("@property", "ChannelAccess");
                     cmd.Parameters.AddWithValue("@uuid", table_id);
                     cmd.ExecuteNonQuery();
@@ -82,7 +84,47 @@ namespace NovaAPI.Controllers
             return table_id;
         }
 
-        [HttpDelete("DeleteChannel/{channel_uuid}")]
+        [HttpGet("{channel_uuid}")]
+        public ActionResult<Channel> GetChannel(string channel_uuid)
+        {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            Channel channel = new();
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                MySqlCommand retreiveChannel = new($"SELECT * FROM Channels WHERE (Table_ID=@table_id)", conn);
+                retreiveChannel.Parameters.AddWithValue("@table_id", channel_uuid);
+                MySqlDataReader reader = retreiveChannel.ExecuteReader();
+                while (reader.Read())
+                {
+                    channel.Table_Id = channel_uuid;
+                    channel.Owner_UUID = (string)reader["Owner_UUID"];
+                    channel.IsGroup = (bool)reader["IsGroup"];
+                    channel.GroupName = (string)reader["GroupName"];
+                }
+                reader.Close();
+                MySqlCommand retreiveMembers = new($"SELECT User_UUID FROM `access_{channel_uuid}`", conn);
+                reader = retreiveMembers.ExecuteReader();
+                channel.Members = new();
+                while (reader.Read())
+                {
+                    channel.Members.Add((string)reader["User_UUID"]);
+                }
+
+                if (!channel.IsGroup)
+                {
+                    foreach (string member in channel.Members)
+                    {
+                        if (member == user_uuid) continue;
+                        channel.ChannelName = Context.GetUserUsername(member);
+                    }
+                }
+            }
+            return channel;
+        }
+
+        [HttpDelete("{channel_uuid}")]
         public ActionResult DeleteChannel(string channel_uuid)
         {
             using (MySqlConnection conn = Context.GetChannels())
@@ -92,7 +134,7 @@ namespace NovaAPI.Controllers
                 // Remove channel from Channels table
                 using MySqlCommand cmd = new($"DELETE FROM Channels WHERE (Table_ID=@table_id) AND (Owner_UUID=@owner_uuid)", conn);
                 cmd.Parameters.AddWithValue("@table_id", channel_uuid);
-                cmd.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(GetToken()));
+                cmd.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 if (cmd.ExecuteNonQuery() == 0) return NotFound();
 
                 // Remove channel from user
@@ -122,11 +164,16 @@ namespace NovaAPI.Controllers
             return NoContent();
         }
 
-        string GetToken()
+        bool CheckUserChannelAccess(string userUUID, string channel_uuid)
         {
-            if (!Request.Headers.TryGetValue("Authorization", out StringValues values))
-                return "";
-            return values.First();
+            using MySqlConnection conn = Context.GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT Property FROM {userUUID} WHERE (Property=@prop) AND (Value=@channel_uuid)", conn);
+            cmd.Parameters.AddWithValue("@prop", "ChannelAccess");
+            cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows) return true;
+            return false;
         }
     }
 }

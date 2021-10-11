@@ -13,6 +13,7 @@ using NovaAPI.Models;
 using NovaAPI.Attri;
 using Microsoft.Extensions.Primitives;
 using NovaAPI.Util;
+using System.IO;
 
 namespace NovaAPI.Controllers
 {
@@ -21,7 +22,7 @@ namespace NovaAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
-        public static string[] DefaultAvatars = System.IO.Directory.GetFiles("/Media/defaultAvatars", "*.*");
+        public static string[] DefaultAvatars = System.IO.Directory.GetFiles("./Media/defaultAvatars", "*.*");
         public static Random GetRandom = new Random();
 
         public UserController(NovaChatDatabaseContext context)
@@ -159,7 +160,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@pass", GetHashString(loginInfo.Password));
                 cmd.Parameters.AddWithValue("@email", loginInfo.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
-                cmd.Parameters.AddWithValue("@avatar", DefaultAvatars[GetRandom.Next(0, DefaultAvatars.Length - 1)]);
+                cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(DefaultAvatars[GetRandom.Next(0, DefaultAvatars.Length - 1)]));
                 cmd.ExecuteNonQuery();
 
                 using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
@@ -227,7 +228,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                using MySqlCommand addAccessToUser = new($"INSERT INTO `{user_uuid}` (Property, Value) VALUES (@prop, @val)");
+                using MySqlCommand addAccessToUser = new($"INSERT INTO `{user_uuid}` (Property, Value) VALUES (@prop, @val)", conn);
                 addAccessToUser.Parameters.AddWithValue("@prop", "ChannelAccess");
                 addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
                 addAccessToUser.ExecuteNonQuery();
@@ -235,7 +236,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand addUserToChannel = new($"INSERT INTO `access_{channel_uuid}` (User_UUID) VALUES (@user)");
+                using MySqlCommand addUserToChannel = new($"INSERT INTO `access_{channel_uuid}` (User_UUID) VALUES (@user)", conn);
                 addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
                 addUserToChannel.ExecuteNonQuery();
             }
@@ -250,7 +251,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                using MySqlCommand addAccessToUser = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop) and (Value=@val)");
+                using MySqlCommand addAccessToUser = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop) and (Value=@val)", conn);
                 addAccessToUser.Parameters.AddWithValue("@prop", "ChannelAccess");
                 addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
                 addAccessToUser.ExecuteNonQuery();
@@ -258,7 +259,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand addUserToChannel = new($"DELETE FROM `access_{channel_uuid}` WHERE (User_UUID=@user)");
+                using MySqlCommand addUserToChannel = new($"DELETE FROM `access_{channel_uuid}` WHERE (User_UUID=@user)", conn);
                 addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
                 addUserToChannel.ExecuteNonQuery();
             }

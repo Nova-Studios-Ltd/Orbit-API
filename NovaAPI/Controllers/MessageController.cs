@@ -28,7 +28,7 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/")]
         public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid)
         {
-            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -57,8 +57,8 @@ namespace NovaAPI.Controllers
             return messages;
         }
 
-        [HttpGet("{channel_uuid}/Messages/{message_uuid}")]
-        public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_uuid)
+        [HttpGet("{channel_uuid}/Messages/{message_id}")]
+        public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_id)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
@@ -67,7 +67,7 @@ namespace NovaAPI.Controllers
                 try
                 {
                     MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE (Message_UUID=@uuid)", conn);
-                    cmd.Parameters.AddWithValue("@uuid", message_uuid);
+                    cmd.Parameters.AddWithValue("@uuid", message_id);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
@@ -108,35 +108,53 @@ namespace NovaAPI.Controllers
             return UUID;
         }
 
-        [HttpPut("{channel_uuid}/Messages/{message_uuid}")]
-        public ActionResult<object> EditMessage(string channel_uuid, string message_uuid, SentMessage message)
+        [HttpPut("{channel_uuid}/Messages/{message_id}")]
+        public ActionResult EditMessage(string channel_uuid, string message_id, SentMessage message)
         {
-            string user = Context.GetUserUUID(GetToken());
-            if (!CheckUserChannelAccess(user, channel_uuid)) return StatusCode(403);
+            string user_uuid = Context.GetUserUUID(GetToken());
+            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"UPDATE {channel_uuid} SET Content=@content WHERE (Author_UUID=@author) AND (Message_UUID=@message_uuid)", conn);
-                cmd.Parameters.AddWithValue("@author", user);
-                cmd.Parameters.AddWithValue("@message_uuid", message_uuid);
+                cmd.Parameters.AddWithValue("@author", user_uuid);
+                cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@content", message.Content);
-                cmd.ExecuteNonQuery();
+                if (cmd.ExecuteNonQuery() > 0)
+                {
+                    Event.MessageEditEvent(channel_uuid, message_id);
+                    return StatusCode(200);
+                }
             }
-            return StatusCode(200);
+            return StatusCode(404, "Unknown/Unallowed access to message");
         }
 
-        [HttpDelete("{channel_uuid}/Messages/{message_uuid}")]
-        public ActionResult DeleteMessage(string channel_uuid, string message_uuid)
+        [HttpDelete("{channel_uuid}/Messages/{message_id}")]
+        public ActionResult DeleteMessage(string channel_uuid, string message_id)
         {
-            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            string user_uuid = Context.GetUserUUID(GetToken());
+            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"DELETE FROM {channel_uuid} WHERE Message_UUID=@message_uuid", conn);
+                using MySqlCommand cmd = new($"DELETE FROM {channel_uuid} WHERE (Message_UUID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
                 cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                cmd.Parameters.AddWithValue("@message_uuid", message_uuid);
-                cmd.ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@message_uuid", message_id);
+                cmd.Parameters.AddWithValue("@user_uuid", user_uuid);
+                if (cmd.ExecuteNonQuery() > 0)
+                {
+                    Event.MessageDeleteEvent(channel_uuid, message_id);
+                    return StatusCode(200);
+                }
             }
+            return StatusCode(404, "Unknown/Unallowed access to message");
+        }
+
+        [HttpPost("TriggerMessageEvent")]
+        public ActionResult MessageEvent(string channel_uuid, string message_id, int eventType)
+        {
+            if (eventType == 0) Event.MessageSentEvent(channel_uuid, message_id);
+            if (eventType == 1) Event.MessageDeleteEvent(channel_uuid, message_id);
             return StatusCode(200);
         }
 
