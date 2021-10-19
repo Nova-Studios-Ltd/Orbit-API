@@ -50,6 +50,7 @@ namespace NovaAPI.Controllers
                         {
                             UUID = reader["UUID"].ToString(),
                             Username = reader["Username"].ToString(),
+                            Discriminator = reader["Discriminator"].ToString(),
                             Email = reader["Email"].ToString(),
                             CreationDate = DateTime.Parse(reader["CreationDate"].ToString())
                         };
@@ -66,6 +67,7 @@ namespace NovaAPI.Controllers
                         {
                             UUID = reader["UUID"].ToString(),
                             Username = reader["Username"].ToString(),
+                            Discriminator = reader["Discriminator"].ToString(),
                             CreationDate = DateTime.Parse(reader["CreationDate"].ToString())
                         };
                     }
@@ -153,10 +155,19 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
+                using MySqlCommand dis = new($"SELECT `GetRandomDiscriminator`(@user) AS `GetRandomDiscriminator`", conn);
+                dis.Parameters.AddWithValue("@user", loginInfo.Username);
+                MySqlDataReader reader = dis.ExecuteReader();
+                string disc = null;
+                while (reader.Read()) disc = reader["GetRandomDiscriminator"].ToString();
 
-                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Password, Email, Token, Avatar) VALUES (@uuid, @user, @pass, @email, @tok, @avatar)", conn);
+                conn.Close();
+                conn.Open();
+
+                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Email, Token, Avatar) VALUES (@uuid, @user, @disc, @pass, @email, @tok, @avatar)", conn);
                 cmd.Parameters.AddWithValue("@uuid", UUID);
                 cmd.Parameters.AddWithValue("@user", loginInfo.Username);
+                cmd.Parameters.AddWithValue("@disc", disc);
                 cmd.Parameters.AddWithValue("@pass", GetHashString(loginInfo.Password));
                 cmd.Parameters.AddWithValue("@email", loginInfo.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
@@ -245,7 +256,7 @@ namespace NovaAPI.Controllers
 
         [HttpDelete("Channels/Unregister")]
         [TokenAuthorization]
-        public ActionResult RemoveUserChanne(string user_uuid, string channel_uuid)
+        public ActionResult RemoveUserChannel(string user_uuid, string channel_uuid)
         {
             if (!CheckChannelOwner(Context.GetUserUUID(this.GetToken()), channel_uuid) && Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using (MySqlConnection conn = Context.GetUsers())
