@@ -118,10 +118,10 @@ namespace NovaAPI.Controllers
         }
 
         // Channel Events
-        public async void ChannelCreatedEvent(string channel_uuid, string user_uuid)
-        {
+        //public async void ChannelCreatedEvent(string channel_uuid, string user_uuid)
+        //{
 
-        }
+        //}
 
         public void AddClient(string user_uuid, UserSocket socket)
         {
