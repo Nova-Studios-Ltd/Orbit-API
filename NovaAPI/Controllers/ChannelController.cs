@@ -18,9 +18,11 @@ namespace NovaAPI.Controllers
     public class ChannelController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
-        public ChannelController(NovaChatDatabaseContext context)
+        private readonly EventManager Event;
+        public ChannelController(NovaChatDatabaseContext context, EventManager em)
         {
             Context = context;
+            Event = em;
         }
 
         [HttpPost("CreateChannel")]
@@ -80,9 +82,15 @@ namespace NovaAPI.Controllers
                     return StatusCode(500);
                 }
             }
-
+            Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
+
+        //[HttpPost("CreateGroupChannel")]
+        //public ActionResult<string> CreateGroupChannel(List<string> recipients)
+        //{
+
+        //}
 
         [HttpGet("{channel_uuid}")]
         public ActionResult<Channel> GetChannel(string channel_uuid)

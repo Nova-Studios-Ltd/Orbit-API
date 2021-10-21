@@ -13,7 +13,7 @@ namespace NovaAPI.Controllers
 {
     public class EventManager
     {
-
+        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated }
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
@@ -23,7 +23,7 @@ namespace NovaAPI.Controllers
             Context = context;
         }
 
-        public static async void CheckPulse(object state)
+        public static void CheckPulse(object state)
         {
             List<string> deadClients = new();
             foreach (KeyValuePair<string, UserSocket> item in Clients)
@@ -55,7 +55,7 @@ namespace NovaAPI.Controllers
             while (reader.Read())
             {
                 if (Clients.ContainsKey((string)reader["User_UUID"])) {
-                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 0, Channel = channel_uuid, Message = message_id }));
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.MessageSent, Channel = channel_uuid, Message = message_id }));
                     if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
                     {
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -79,7 +79,7 @@ namespace NovaAPI.Controllers
             {
                 if (Clients.ContainsKey((string)reader["User_UUID"]))
                 {
-                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 1, Channel = channel_uuid, Message = message_id }));
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.MessageDelete, Channel = channel_uuid, Message = message_id }));
                     if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
                     {
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -103,7 +103,7 @@ namespace NovaAPI.Controllers
             {
                 if (Clients.ContainsKey((string)reader["User_UUID"]))
                 {
-                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 2, Channel = channel_uuid, Message = message_id }));
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.MessageEdit, Channel = channel_uuid, Message = message_id }));
                     if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
                     {
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -118,10 +118,30 @@ namespace NovaAPI.Controllers
         }
 
         // Channel Events
-        //public async void ChannelCreatedEvent(string channel_uuid, string user_uuid)
-        //{
+        public async void ChannelCreatedEvent(string channel_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+            MySqlDataReader reader = removeUsers.ExecuteReader();
 
-        //}
+            while (reader.Read())
+            {
+                if (Clients.ContainsKey((string)reader["User_UUID"]))
+                {
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.ChannelCreated, Channel = channel_uuid }));
+                    if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
+                    {
+                        await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                    }
+                    else
+                    {
+                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
+                        Clients.Remove((string)reader["User_UUID"]);
+                    }
+                }
+            }
+        }
 
         public void AddClient(string user_uuid, UserSocket socket)
         {
@@ -137,54 +157,5 @@ namespace NovaAPI.Controllers
             }
             //Echo(socket);
         }
-
-        //public async void ChannelSendEventAll(string json)
-        //{
-        //    using MySqlConnection conn = Context.GetChannels();
-        //    conn.Open();
-        //    using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
-        //    MySqlDataReader reader = removeUsers.ExecuteReader();
-
-        //    while (reader.Read())
-        //    {
-        //        if (Clients.ContainsKey((string)reader["User_UUID"]))
-        //        {
-        //            var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 2, Channel = channel_uuid, Message = message_id }));
-        //            if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
-        //            {
-        //                await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
-        //            }
-        //            else
-        //            {
-        //                Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-        //                Clients.Remove((string)reader["User_UUID"]);
-        //            }
-        //        }
-        //    }
-        //}
-        //public async void ChannelSendEvent(string client_uuid, string json)
-        //{
-        //    using MySqlConnection conn = Context.GetChannels();
-        //    conn.Open();
-        //    using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
-        //    MySqlDataReader reader = removeUsers.ExecuteReader();
-
-        //    while (reader.Read())
-        //    {
-        //        if (Clients.ContainsKey((string)reader["User_UUID"]))
-        //        {
-        //            var msg = Encoding.UTF8.GetBytes(json);
-        //            if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
-        //            {
-        //                await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
-        //            }
-        //            else
-        //            {
-        //                Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-        //                Clients.Remove((string)reader["User_UUID"]);
-        //            }
-        //        }
-        //    }
-        //}
     }
 }
