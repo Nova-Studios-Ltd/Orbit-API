@@ -190,10 +190,13 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"DELETE FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                cmd.Parameters.AddWithValue("@token", this.GetToken());
-                if (cmd.ExecuteNonQuery() == 0) return StatusCode(404);
+                using MySqlCommand removeUser = new($"DELETE FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
+                removeUser.Parameters.AddWithValue("@uuid", user_uuid);
+                removeUser.Parameters.AddWithValue("@token", this.GetToken());
+                if (removeUser.ExecuteNonQuery() == 0) return StatusCode(404);
+
+                using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`", conn);
+                removeUserAccess.ExecuteNonQuery();
             }
             return StatusCode(200);
         }
