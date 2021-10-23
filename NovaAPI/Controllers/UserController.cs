@@ -88,17 +88,19 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Username=@user) AND (Password=@pass)", conn);
+                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Username=@user)", conn);
                 cmd.Parameters.AddWithValue("@user", username);
-                cmd.Parameters.AddWithValue("@pass", GetHashString(password));
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    return new
-                    {
-                        UUID = reader["UUID"].ToString(),
-                        Token = reader["Token"].ToString()
-                    };
+                    if (reader["Password"].ToString() == GetHashString(password))
+                        return new
+                        {
+                            UUID = reader["UUID"].ToString(),
+                            Token = reader["Token"].ToString()
+                        };
+                    else
+                        return StatusCode(401);
                 }
             }
             return StatusCode(404);

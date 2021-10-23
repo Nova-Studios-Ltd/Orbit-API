@@ -50,7 +50,35 @@ namespace NovaAPI.Controllers
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
                     ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
                     return File(ms.ToArray(), "image/png");
+                }
+            }
+            return StatusCode(500);
+        }
+
+        [HttpHead("Avatar/{user_uuid}")]
+        public ActionResult HeadAvatar(string user_uuid, int size = -1)
+        {
+            using (MySqlConnection conn = Context.GetUsers()) 
+            {
+                conn.Open();
+                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    string basePath = "Media/avatars";
+                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string path = Path.Combine(basePath, (string)reader["Avatar"]);
+                    if (!System.IO.File.Exists(path)) return StatusCode(404);
+                    MemoryStream ms = new();
+                    size = size == -1 ? int.MaxValue : size;
+                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    Response.ContentLength = ms.Length;
+                    Response.ContentType = "image/png";
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    return StatusCode(200);
                 }
             }
             return StatusCode(500);
