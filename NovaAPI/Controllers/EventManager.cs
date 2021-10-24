@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Microsoft.Extensions.Logging;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using NovaAPI.Models;
 using System;
@@ -143,7 +144,7 @@ namespace NovaAPI.Controllers
             }
         }
 
-        public void AddClient(string user_uuid, UserSocket socket)
+        public async void AddClient(string user_uuid, UserSocket socket)
         {
             if (Clients.ContainsKey(user_uuid))
             {
@@ -153,6 +154,17 @@ namespace NovaAPI.Controllers
             }
             else
             {
+                byte[] buffer = new byte[1024];
+                WebSocketReceiveResult result = await socket.Socket.ReceiveAsync(buffer, CancellationToken.None);
+                Console.WriteLine(Encoding.UTF8.GetString(buffer).Trim());
+
+                string token = Encoding.UTF8.GetString(buffer).Trim();
+                if (Context.GetUserUUID(token) != user_uuid && !string.IsNullOrWhiteSpace(token))
+                {
+                    socket.SocketFinished.TrySetResult(null);
+                    socket.Socket.Abort();
+                }
+
                 Clients.Add(user_uuid, socket);
             }
             //Echo(socket);

@@ -23,7 +23,7 @@ namespace NovaAPI.Controllers
     {
         private readonly NovaChatDatabaseContext Context;
         public static string[] DefaultAvatars = System.IO.Directory.GetFiles("./Media/defaultAvatars", "*.*");
-        public static Random GetRandom = new Random();
+        public static Random GetRandom = new();
 
         public UserController(NovaChatDatabaseContext context)
         {
@@ -83,24 +83,24 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("/Login")]
-        public ActionResult<object> LoginUser(string username, string password)
+        public ActionResult<object> LoginUser(LoginUserInfo info)
         {
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Username=@user)", conn);
-                cmd.Parameters.AddWithValue("@user", username);
+                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
+                cmd.Parameters.AddWithValue("@email", info.Email);
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    if (reader["Password"].ToString() == GetHashString(password))
+                    if (reader["Password"].ToString() == GetHashString(info.Password))
                         return new
                         {
                             UUID = reader["UUID"].ToString(),
                             Token = reader["Token"].ToString()
                         };
                     else
-                        return StatusCode(401);
+                        return StatusCode(403);
                 }
             }
             return StatusCode(404);
@@ -150,28 +150,33 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("/Register")]
-        public ActionResult<object> RegisterUser(LoginInfo loginInfo)
+        public ActionResult<object> RegisterUser(CreateUserInfo info)
         {
             string UUID = Guid.NewGuid().ToString("N");
-            string token = GetHashString(UUID + loginInfo.Email + loginInfo.Password + loginInfo.Username + DateTime.Now.ToString());
+            string token = GetHashString(UUID + info.Email + info.Password + info.Username + DateTime.Now.ToString());
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
                 using MySqlCommand dis = new($"SELECT `GetRandomDiscriminator`(@user) AS `GetRandomDiscriminator`", conn);
-                dis.Parameters.AddWithValue("@user", loginInfo.Username);
+                dis.Parameters.AddWithValue("@user", info.Username);
                 MySqlDataReader reader = dis.ExecuteReader();
                 string disc = null;
                 while (reader.Read()) disc = reader["GetRandomDiscriminator"].ToString();
+
+                using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
+                checkForEmail.Parameters.AddWithValue("@email", info.Email);
+                MySqlDataReader read = checkForEmail.ExecuteReader();
+                if (read.HasRows) return StatusCode(200, new { Status = 1, Message = "Duplicate Email" });
 
                 conn.Close();
                 conn.Open();
 
                 using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Email, Token, Avatar) VALUES (@uuid, @user, @disc, @pass, @email, @tok, @avatar)", conn);
                 cmd.Parameters.AddWithValue("@uuid", UUID);
-                cmd.Parameters.AddWithValue("@user", loginInfo.Username);
+                cmd.Parameters.AddWithValue("@user", info.Username);
                 cmd.Parameters.AddWithValue("@disc", disc);
-                cmd.Parameters.AddWithValue("@pass", GetHashString(loginInfo.Password));
-                cmd.Parameters.AddWithValue("@email", loginInfo.Email);
+                cmd.Parameters.AddWithValue("@pass", GetHashString(info.Password));
+                cmd.Parameters.AddWithValue("@email", info.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
                 cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(DefaultAvatars[GetRandom.Next(0, DefaultAvatars.Length - 1)]));
                 cmd.ExecuteNonQuery();
