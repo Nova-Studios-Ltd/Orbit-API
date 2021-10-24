@@ -82,7 +82,7 @@ namespace NovaAPI.Controllers
             return user;
         }
 
-        [HttpGet("/Login")]
+        [HttpPost("/Login")]
         public ActionResult<object> LoginUser(LoginUserInfo info)
         {
             using (MySqlConnection conn = Context.GetUsers())
