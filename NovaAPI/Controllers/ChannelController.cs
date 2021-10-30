@@ -110,7 +110,7 @@ namespace NovaAPI.Controllers
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
                     channel.IsGroup = (bool)reader["IsGroup"];
                     channel.GroupName = (string)reader["GroupName"];
-                    channel.ChannelIcon = (string)reader["ChanneIcon"];
+                    channel.ChannelIcon = (string)reader["ChannelIcon"];
                 }
                 reader.Close();
                 MySqlCommand retreiveMembers = new($"SELECT User_UUID FROM `access_{channel_uuid}`", conn);

@@ -387,3 +387,6 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 /NovaAPI/Media/avatars
+.vscode/launch.json
+.gitignore
+.vscode/tasks.json
