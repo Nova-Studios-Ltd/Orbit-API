@@ -26,7 +26,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("{channel_uuid}/Messages/")]
-        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, long before = long.MaxValue)
+        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int before = int.MaxValue)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
@@ -35,7 +35,8 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY Message_ID ASC LIMIT {limit} WHERE Message_ID < {before}", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE Message_ID<{before} ORDER BY Message_ID ASC LIMIT {limit}", conn);
+                    cmd.Parameters.AddWithValue("@before", before);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
@@ -49,7 +50,7 @@ namespace NovaAPI.Controllers
                         });
                     }
                 }
-                catch
+                catch (Exception e)
                 {
                     return StatusCode(404, $"Channel \"{channel_uuid}\" is not available");
                 }
@@ -106,7 +107,7 @@ namespace NovaAPI.Controllers
                 using MySqlCommand getId = new($"SELECT Message_ID FROM {channel_uuid} ORDER BY Message_ID DESC LIMIT 1", conn);
                 MySqlDataReader reader = getId.ExecuteReader();
                 while (reader.Read()) {
-                    id = (string)reader["Message_ID"];
+                    id = reader["Message_ID"].ToString();
                 }
             }
             Event.MessageSentEvent(channel_uuid, id);
