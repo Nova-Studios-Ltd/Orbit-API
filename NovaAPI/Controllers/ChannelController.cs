@@ -127,7 +127,7 @@ namespace NovaAPI.Controllers
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
-                        channel.ChannelIcon = GetAvatarFile(member);
+                        channel.ChannelIcon = member;
                     }
                 }
             }
