@@ -57,22 +57,6 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        public string GetAvatarFile(string user_uuid)
-        {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    return (string)reader["Avatar"];
-                }
-            }
-            return "";
-        }
-
         [HttpHead("Avatar/{user_uuid}")]
         public ActionResult HeadAvatar(string user_uuid, int size = -1)
         {

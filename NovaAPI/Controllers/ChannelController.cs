@@ -127,11 +127,27 @@ namespace NovaAPI.Controllers
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
-                        channel.ChannelIcon = new MediaController(Context).GetAvatarFile(member);
+                        channel.ChannelIcon = GetAvatarFile(member);
                     }
                 }
             }
             return channel;
+        }
+
+        private string GetAvatarFile(string user_uuid)
+        {
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    return (string)reader["Avatar"];
+                }
+            }
+            return "";
         }
 
         [HttpDelete("{channel_uuid}")]
