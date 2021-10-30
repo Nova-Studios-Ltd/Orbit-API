@@ -92,8 +92,8 @@ namespace NovaAPI.Controllers
         [HttpPost("{channel_uuid}/Messages/")]
         public ActionResult<string> SendMessage(string channel_uuid, SentMessage message)
         {
-            string UUID = Guid.NewGuid().ToString("N");
             string user = Context.GetUserUUID(GetToken());
+            string id = "";
             if (!CheckUserChannelAccess(user, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -102,9 +102,15 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@author", user);
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
+                
+                using MySqlCommand getId = new($"SELECT Message_ID FROM {channel_uuid} ORDER BY Message_ID DESC LIMIT 1", conn);
+                MySqlDataReader reader = getId.ExecuteReader();
+                while (reader.Read()) {
+                    id = (string)reader["Message_ID"];
+                }
             }
-            Event.MessageSentEvent(channel_uuid, UUID);
-            return UUID;
+            Event.MessageSentEvent(channel_uuid, id);
+            return id;
         }
 
         [HttpPut("{channel_uuid}/Messages/{message_id}")]
