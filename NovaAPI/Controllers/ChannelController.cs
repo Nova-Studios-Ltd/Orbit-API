@@ -110,6 +110,7 @@ namespace NovaAPI.Controllers
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
                     channel.IsGroup = (bool)reader["IsGroup"];
                     channel.GroupName = (string)reader["GroupName"];
+                    channel.ChannelIcon = (string)reader["ChanneIcon"];
                 }
                 reader.Close();
                 MySqlCommand retreiveMembers = new($"SELECT User_UUID FROM `access_{channel_uuid}`", conn);
@@ -126,6 +127,7 @@ namespace NovaAPI.Controllers
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
+                        channel.ChannelIcon = new MediaController(Context).GetAvatarFile(member);
                     }
                 }
             }

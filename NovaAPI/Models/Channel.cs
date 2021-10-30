@@ -12,6 +12,7 @@ namespace NovaAPI.Models
         public bool IsGroup { get; set; }
         public string GroupName { get; set; }
         public string ChannelName { get; set; }
+        public string ChannelIcon { get; set; }
         public List<string> Members { get; set; }
     }
 }
