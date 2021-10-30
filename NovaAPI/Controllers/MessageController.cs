@@ -26,7 +26,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("{channel_uuid}/Messages/")]
-        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int before = int.MaxValue)
+        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, long before = long.MaxValue)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
