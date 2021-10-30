@@ -85,25 +85,32 @@ namespace NovaAPI.Controllers
         [HttpPost("/Login")]
         public ActionResult<object> LoginUser(LoginUserInfo info)
         {
-            using (MySqlConnection conn = Context.GetUsers())
+            try
             {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
-                cmd.Parameters.AddWithValue("@email", info.Email);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using (MySqlConnection conn = Context.GetUsers())
                 {
-                    if (reader["Password"].ToString() == GetHashString(info.Password))
-                        return new
-                        {
-                            UUID = reader["UUID"].ToString(),
-                            Token = reader["Token"].ToString()
-                        };
-                    else
-                        return StatusCode(403);
+                    conn.Open();
+                    MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
+                    cmd.Parameters.AddWithValue("@email", info.Email);
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        if (reader["Password"].ToString() == GetHashString(info.Password))
+                            return new
+                            {
+                                UUID = reader["UUID"].ToString(),
+                                Token = reader["Token"].ToString()
+                            };
+                        else
+                            return StatusCode(403);
+                    }
                 }
+                return StatusCode(404);
             }
-            return StatusCode(404);
+            catch
+            {
+                return StatusCode(500);
+            }
         }
 
         [HttpPatch("{user_uuid}")]
@@ -162,6 +169,7 @@ namespace NovaAPI.Controllers
                 MySqlDataReader reader = dis.ExecuteReader();
                 string disc = null;
                 while (reader.Read()) disc = reader["GetRandomDiscriminator"].ToString();
+                reader.Close();
 
                 using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
                 checkForEmail.Parameters.AddWithValue("@email", info.Email);

@@ -38,7 +38,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_UUID CHAR(255) NOT NULL, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE Message_IDs(Message_UUID)) ENGINE = InnoDB; ", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID INT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -169,7 +169,7 @@ namespace NovaAPI.Controllers
                 using MySqlCommand deleteAccessTable = new($"DROP TABLE `access_{channel_uuid}`", conn);
                 deleteAccessTable.ExecuteNonQuery();
             }
-            return NoContent();
+            return StatusCode(200, "Channel has been removed");
         }
 
         bool CheckUserChannelAccess(string userUUID, string channel_uuid)

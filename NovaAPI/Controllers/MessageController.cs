@@ -26,7 +26,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("{channel_uuid}/Messages/")]
-        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid)
+        public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int before = int.MaxValue)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
@@ -35,13 +35,13 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY CreationDate ASC LIMIT 30", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} ORDER BY Message_ID ASC LIMIT {limit} WHERE Message_ID < {before}", conn);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
                         messages.Add(new ChannelMessage
                         {
-                            Message_Id = reader["Message_UUID"].ToString(),
+                            Message_Id = reader["Message_ID"].ToString(),
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
@@ -51,7 +51,7 @@ namespace NovaAPI.Controllers
                 }
                 catch
                 {
-                    return NotFound();
+                    return StatusCode(404, $"Channel \"{channel_uuid}\" is not available");
                 }
             }
             return messages;
@@ -66,14 +66,14 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE (Message_UUID=@uuid)", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE (Message_ID=@uuid)", conn);
                     cmd.Parameters.AddWithValue("@uuid", message_id);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
                         return new ChannelMessage
                         {
-                            Message_Id = reader["Message_UUID"].ToString(),
+                            Message_Id = reader["Message_ID"].ToString(),
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
@@ -98,8 +98,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO {channel_uuid} (Message_UUID, Author_UUID, Content) VALUES (@message_id, @author, @content)", conn);
-                cmd.Parameters.AddWithValue("@message_id", UUID);
+                using MySqlCommand cmd = new($"INSERT INTO {channel_uuid} (Author_UUID, Content) VALUES (@author, @content)", conn);
                 cmd.Parameters.AddWithValue("@author", user);
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
@@ -116,7 +115,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"UPDATE {channel_uuid} SET Content=@content WHERE (Author_UUID=@author) AND (Message_UUID=@message_uuid)", conn);
+                using MySqlCommand cmd = new($"UPDATE {channel_uuid} SET Content=@content WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
                 cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@content", message.Content);
@@ -137,7 +136,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"DELETE FROM {channel_uuid} WHERE (Message_UUID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
+                using MySqlCommand cmd = new($"DELETE FROM {channel_uuid} WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
                 cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                 cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@user_uuid", user_uuid);
