@@ -205,6 +205,40 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
+        [HttpPost("Channel/{channel_uuid}")]
+        [TokenAuthorization]
+        public ActionResult SetChannelAvatar(string channel_uuid, IFormFile file) {
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) (Owner_UUID=@owner_uuid)", conn);
+                getAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                getAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
+                using MySqlDataReader reader = getAvatar.ExecuteReader();
+                while (reader.Read())
+                {
+                    string basePath = "Media/channelIcons";
+                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string oldAvatar = Path.Combine(basePath, (string)reader["Avatar"]);
+                    if (!Regex.IsMatch((string)reader["Avatar"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
+                        System.IO.File.Delete(oldAvatar);
+                    string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
+                    string newAvatarPath = Path.Combine("Media/channelIcons", newAvatar);
+                    FileStream fs = System.IO.File.OpenWrite(newAvatarPath);
+                    file.CopyTo(fs);
+                    fs.Close();
+                    conn.Close();
+                    conn.Open();
+                    MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
+                    setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                    setAvatar.Parameters.AddWithValue("@avatar", newAvatar);
+                    setAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
+                    setAvatar.ExecuteNonQuery();
+                    return StatusCode(200);
+                }
+            }
+            return StatusCode(404);
+        }
         public static string CreateMD5(string input)
         {
             // Use input string to calculate MD5 hash
