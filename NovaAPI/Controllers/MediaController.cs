@@ -32,6 +32,7 @@ namespace NovaAPI.Controllers
             Context = context;
         }
 
+        // User related
         [HttpGet("Avatar/{user_uuid}")]
         public ActionResult GetAvatar(string user_uuid, int size=-1)
         {
@@ -148,6 +149,9 @@ namespace NovaAPI.Controllers
             }
             return StatusCode(404);
         }
+
+        // Channel (Group) related 
+        [HttpGet("Channel/{}")]
 
         public static string CreateMD5(string input)
         {
