@@ -88,11 +88,11 @@ namespace NovaAPI.Controllers
             return table_id;
         }
 
-        //[HttpPost("CreateGroupChannel")]
-        //public ActionResult<string> CreateGroupChannel(List<string> recipients)
-        //{
+        // [HttpPost("CreateGroupChannel")]
+        // public ActionResult<string> CreateGroupChannel(List<string> recipients)
+        // {
 
-        //}
+        // }
 
         [HttpGet("{channel_uuid}")]
         public ActionResult<Channel> GetChannel(string channel_uuid)
@@ -112,7 +112,8 @@ namespace NovaAPI.Controllers
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
                     channel.IsGroup = (bool)reader["IsGroup"];
                     channel.GroupName = (string)reader["GroupName"];
-                    channel.ChannelIcon = reader["ChannelIcon"].ToString();
+                    channel.ChannelIcon = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}?size=64";
+                        
                 }
                 reader.Close();
                 MySqlCommand retreiveMembers = new($"SELECT User_UUID FROM `access_{channel_uuid}`", conn);
@@ -129,7 +130,7 @@ namespace NovaAPI.Controllers
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
-                        channel.ChannelIcon = member;
+                        channel.ChannelIcon = $"https://api.novastudios.tk/Media/Avatar/{member}?size=64";
                     }
                 }
             }
