@@ -22,8 +22,6 @@ namespace NovaAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
-        public static string[] DefaultAvatars = System.IO.Directory.GetFiles("./Media/defaultAvatars", "*.*");
-        public static Random GetRandom = new();
 
         public UserController(NovaChatDatabaseContext context)
         {
@@ -186,7 +184,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@pass", GetHashString(info.Password));
                 cmd.Parameters.AddWithValue("@email", info.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
-                cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(DefaultAvatars[GetRandom.Next(0, DefaultAvatars.Length - 1)]));
+                cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
                 cmd.ExecuteNonQuery();
 
                 using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
