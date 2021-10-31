@@ -209,16 +209,16 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) (Owner_UUID=@owner_uuid)", conn);
+                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
                 getAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                 getAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 using MySqlDataReader reader = getAvatar.ExecuteReader();
                 while (reader.Read())
                 {
                     string basePath = "Media/channelIcons";
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
-                    string oldAvatar = Path.Combine(basePath, (string)reader["Avatar"]);
-                    if (!Regex.IsMatch((string)reader["Avatar"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
+                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string oldAvatar = Path.Combine(basePath, (string)reader["ChannelIcon"]);
+                    if (!Regex.IsMatch((string)reader["ChannelIcon"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
                         System.IO.File.Delete(oldAvatar);
                     string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
                     string newAvatarPath = Path.Combine("Media/channelIcons", newAvatar);
