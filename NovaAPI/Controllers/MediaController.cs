@@ -34,7 +34,7 @@ namespace NovaAPI.Controllers
 
         // User related
         [HttpGet("Avatar/{user_uuid}")]
-        public ActionResult GetAvatar(string user_uuid, int size = -1)
+        public ActionResult GetAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
             {
@@ -50,7 +50,7 @@ namespace NovaAPI.Controllers
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
                     Response.Headers.Add("Access-Control-Allow-Origin", "*");
                     return File(ms.ToArray(), "image/png");
                 }
@@ -59,9 +59,9 @@ namespace NovaAPI.Controllers
         }
 
         [HttpHead("Avatar/{user_uuid}")]
-        public ActionResult HeadAvatar(string user_uuid, int size = -1)
+        public ActionResult HeadAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
-            using (MySqlConnection conn = Context.GetUsers()) 
+            using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
                 MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
@@ -75,11 +75,9 @@ namespace NovaAPI.Controllers
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
-                    Response.ContentLength = ms.Length;
-                    Response.ContentType = "image/png";
+                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
                     Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    return StatusCode(200);
+                    return File(ms.ToArray(), "image/png");
                 }
             }
             return StatusCode(500);
@@ -152,7 +150,7 @@ namespace NovaAPI.Controllers
 
         // Channel (Group) related 
         [HttpGet("Channel/{channel_uuid}")]
-        public ActionResult GetChannelAvatar(string channel_uuid, int size = -1)
+        public ActionResult GetChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -169,7 +167,7 @@ namespace NovaAPI.Controllers
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
                     Response.Headers.Add("Access-Control-Allow-Origin", "*");
                     return File(ms.ToArray(), "image/png");
                 }
@@ -178,7 +176,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpHead("Channel/{channel_uuid}")]
-        public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1)
+        public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
             {
@@ -195,7 +193,7 @@ namespace NovaAPI.Controllers
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
                     Response.ContentLength = ms.Length;
                     Response.ContentType = "image/png";
                     Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -239,6 +237,7 @@ namespace NovaAPI.Controllers
             }
             return StatusCode(404);
         }
+        
         public static string CreateMD5(string input)
         {
             // Use input string to calculate MD5 hash
@@ -256,7 +255,7 @@ namespace NovaAPI.Controllers
                 return sb.ToString();
             }
         }
-        private Image ResizeImage(Image img, int maxWidth, int maxHeight)
+        private Image ResizeImage(Image img, int maxWidth, int maxHeight, bool keepAspect)
         {
             if (img.Height < maxHeight && img.Width < maxWidth) return img;
             using (img)
@@ -264,8 +263,8 @@ namespace NovaAPI.Controllers
                 Double xRatio = (double)img.Width / maxWidth;
                 Double yRatio = (double)img.Height / maxHeight;
                 Double ratio = Math.Max(xRatio, yRatio);
-                int nnx = (int)Math.Floor(img.Width / ratio);
-                int nny = (int)Math.Floor(img.Height / ratio);
+                int nnx = (keepAspect)? (int)Math.Floor(img.Width / ratio) : maxWidth;
+                int nny = (keepAspect)? (int)Math.Floor(img.Height / ratio): maxHeight;
                 Bitmap cpy = new Bitmap(nnx, nny, PixelFormat.Format32bppArgb);
                 using (Graphics gr = Graphics.FromImage(cpy))
                 {
