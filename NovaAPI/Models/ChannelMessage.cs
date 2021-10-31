@@ -12,5 +12,6 @@ namespace NovaAPI.Models
         public string Author_UUID { get; set; }
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
+        public string Avatar { get; set; }
     }
 }

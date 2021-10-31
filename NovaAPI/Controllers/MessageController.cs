@@ -46,7 +46,8 @@ namespace NovaAPI.Controllers
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
-                            Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
+                            Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
+                            Avatar = $"https://api.novastudios.tk/Media/Avatar/${(reader["Author_UUID"].ToString())}?size=64"
                         });
                     }
                 }
@@ -78,7 +79,8 @@ namespace NovaAPI.Controllers
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
-                            Timestamp = DateTime.Parse(reader["CreationDate"].ToString())
+                            Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
+                            Avatar = $"https://api.novastudios.tk/Media/Avatar/${(reader["Author_UUID"].ToString())}?size=64"
                         };
                     }
                 }
