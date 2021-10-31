@@ -34,7 +34,7 @@ namespace NovaAPI.Controllers
 
         // User related
         [HttpGet("Avatar/{user_uuid}")]
-        public ActionResult GetAvatar(string user_uuid, int size=-1)
+        public ActionResult GetAvatar(string user_uuid, int size = -1)
         {
             using (MySqlConnection conn = Context.GetUsers())
             {
@@ -151,7 +151,59 @@ namespace NovaAPI.Controllers
         }
 
         // Channel (Group) related 
-        [HttpGet("Channel/{}")]
+        [HttpGet("Channel/{channel_uuid}")]
+        public ActionResult GetChannelAvatar(string channel_uuid, int size = -1)
+        {
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                MySqlCommand cmd = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", channel_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (reader["ChannelIcon"] == null) return StatusCode(404);
+                    string basePath = "Media/channelIcons";
+                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
+                    if (!System.IO.File.Exists(path)) return StatusCode(404);
+                    MemoryStream ms = new();
+                    size = size == -1 ? int.MaxValue : size;
+                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    return File(ms.ToArray(), "image/png");
+                }
+            }
+            return StatusCode(500);
+        }
+
+        [HttpHead("Channel/{channel_uuid}")]
+        public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1)
+        {
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (Table_ID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", channel_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (reader["ChannelIcon"] == null) return StatusCode(404);
+                    string basePath = "Media/channelIcons";
+                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
+                    if (!System.IO.File.Exists(path)) return StatusCode(404);
+                    MemoryStream ms = new();
+                    size = size == -1 ? int.MaxValue : size;
+                    ResizeImage(Image.FromFile(path), size, size).Save(ms, ImageFormat.Png);
+                    Response.ContentLength = ms.Length;
+                    Response.ContentType = "image/png";
+                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    return StatusCode(200);
+                }
+            }
+            return StatusCode(500);
+        }
 
         public static string CreateMD5(string input)
         {
