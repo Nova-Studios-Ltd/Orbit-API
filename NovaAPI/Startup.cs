@@ -71,7 +71,7 @@ namespace NovaAPI
             //}
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ExampleAPI v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaAPI v1"));
 
             app.UseHttpsRedirection();
 
