@@ -48,7 +48,7 @@ namespace NovaAPI.Controllers
                         {
                             UUID = reader["UUID"].ToString(),
                             Username = reader["Username"].ToString(),
-                            Discriminator = reader["Discriminator"].ToString(),
+                            Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                             Email = reader["Email"].ToString(),
                             CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
                             Avatar = $"https://api.novastudios.tk/Media/Avatar/${(reader["UUID"].ToString())}?size=64"
@@ -66,7 +66,7 @@ namespace NovaAPI.Controllers
                         {
                             UUID = reader["UUID"].ToString(),
                             Username = reader["Username"].ToString(),
-                            Discriminator = reader["Discriminator"].ToString(),
+                            Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                             CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
                             Avatar = $"https://api.novastudios.tk/Media/Avatar/${(reader["UUID"].ToString())}?size=64"
                         };
