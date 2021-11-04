@@ -192,6 +192,7 @@ namespace NovaAPI.Controllers
                 foreach (string recipient in recipients)
                 {
                     if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) continue;
+                    Event.UserNewGroup(channel_uuid, recipient);
                     using MySqlCommand cmd = new($"INSERT INTO `access_{channel_uuid}` (User_UUID) VALUES (@uuid)", conn);
                     cmd.Parameters.AddWithValue("@uuid", recipient);
                     cmd.ExecuteNonQuery();

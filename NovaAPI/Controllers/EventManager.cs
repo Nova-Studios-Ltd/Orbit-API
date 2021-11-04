@@ -14,7 +14,7 @@ namespace NovaAPI.Controllers
 {
     public class EventManager
     {
-        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated }
+        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, GroupNewMember, UserNewGroup, GroupDeleteMember, UserDeleteGroup }
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
@@ -118,7 +118,7 @@ namespace NovaAPI.Controllers
             }
         }
 
-        // Channel Events
+        // Channel/Group creation event (General purpose event)
         public async void ChannelCreatedEvent(string channel_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -140,6 +140,54 @@ namespace NovaAPI.Controllers
                         Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
                         Clients.Remove((string)reader["User_UUID"]);
                     }
+                }
+            }
+        }
+
+        // Group Events
+
+        // Sent to all user of a group alerting them to a new user
+        public async void GroupNewMember(string channel_uuid, string user_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+            MySqlDataReader reader = removeUsers.ExecuteReader();
+
+            while (reader.Read())
+            {
+                if (Clients.ContainsKey((string)reader["User_UUID"]) && (string)reader["User_UUID"] != user_uuid)
+                {
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.GroupNewMember, User = user_uuid }));
+                    if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
+                    {
+                        await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                    }
+                    else
+                    {
+                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
+                        Clients.Remove((string)reader["User_UUID"]);
+                    }
+                }
+            }
+        }
+
+        // User Events
+
+        // Sent to user to alert client of new group
+        public async void UserNewGroup(string channel_uuid, string user_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.UserNewGroup, Channel = channel_uuid }));
+                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                {
+                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                else
+                {
+                    Clients[user_uuid].SocketFinished.TrySetResult(null);
+                    Clients.Remove(user_uuid);
                 }
             }
         }
