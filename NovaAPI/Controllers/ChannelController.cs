@@ -117,6 +117,10 @@ namespace NovaAPI.Controllers
                     addUserAccess.ExecuteNonQuery();
                 }
 
+                using MySqlCommand addAuthor = new($"INSERT INTO  `access_{table_id}` (User_UUID) VALUES (@recipient)", conn);
+                addAuthor.Parameters.AddWithValue("@recipient", Context.GetUserUUID(this.GetToken()));
+                addAuthor.ExecuteNonQuery();
+
                 // Add table id to channels table
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
