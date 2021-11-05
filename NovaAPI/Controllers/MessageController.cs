@@ -38,7 +38,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE Message_ID<{before} ORDER BY Message_ID ASC LIMIT {limit}", conn);
+                    MySqlCommand cmd = new($"SELECT * FROM {channel_uuid} WHERE Message_ID<{before} ORDER BY Message_ID DESC LIMIT {limit}", conn);
                     cmd.Parameters.AddWithValue("@before", before);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
