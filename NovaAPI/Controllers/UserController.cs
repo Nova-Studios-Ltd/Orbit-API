@@ -195,6 +195,27 @@ namespace NovaAPI.Controllers
             HttpContext.Request.Headers.Add("Authorization", token);
             return GetUser(UUID);
         }
+        
+        [HttpGet("{username}/{discriminator}/UUID")]
+        public ActionResult<string> GetUserUUIDFromUsername(string username, string discriminator)
+        {
+            if (int.TryParse(discriminator, out int disc)) 
+            {
+                using (MySqlConnection conn = Context.GetUsers()) 
+                {
+                    conn.Open();
+                    using MySqlCommand getUser = new($"Select UUID FROM Users WHERE (Username=@username) AND (Discriminator=@disc)", conn);
+                    getUser.Parameters.AddWithValue("@username", username);
+                    getUser.Parameters.AddWithValue("@disc", disc);
+                    MySqlDataReader reader = getUser.ExecuteReader();
+                    while (reader.Read()) 
+                    {
+                        return reader["UUID"].ToString();
+                    }
+                }
+            }
+            return StatusCode(404, $"Unable to find user {username}#{discriminator}");
+        }
 
         [HttpDelete("{user_uuid}")]
         [TokenAuthorization]

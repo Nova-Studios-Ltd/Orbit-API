@@ -32,6 +32,9 @@ namespace NovaAPI.Controllers
             List<ChannelMessage> messages = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
+
+                // Testing stuff
+
                 conn.Open();
                 try
                 {
@@ -53,7 +56,7 @@ namespace NovaAPI.Controllers
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(404, $"Channel \"{channel_uuid}\" is not available");
+                    return StatusCode(404, $"Channel \"{channel_uuid}\" is not available {e.Message}");
                 }
             }
             return messages;

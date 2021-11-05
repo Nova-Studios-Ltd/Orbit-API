@@ -117,8 +117,12 @@ namespace NovaAPI.Controllers
                     addUserAccess.ExecuteNonQuery();
                 }
 
+                using MySqlCommand addAuthor = new($"INSERT INTO  `access_{table_id}` (User_UUID) VALUES (@recipient)", conn);
+                addAuthor.Parameters.AddWithValue("@recipient", Context.GetUserUUID(this.GetToken()));
+                addAuthor.ExecuteNonQuery();
+
                 // Add table id to channels table
-                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup` `Timestamp`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP)", conn);
+                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 addChannel.Parameters.AddWithValue("@icon", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
@@ -163,6 +167,7 @@ namespace NovaAPI.Controllers
         public ActionResult AddUserToGroupChannel(string channel_uuid, List<string> recipients)
         {
             if (!CheckUserChannelAccess(Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
+            Channel c = GetChannel(channel_uuid).Value;
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
@@ -188,6 +193,13 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
+                if (!c.IsGroup && c.Members.Count > 2) {
+                    using MySqlCommand updateType = new($"UPDATE Channels SET IsGroup=@isGroup WHERE (Table_ID=@channel_uuid)", conn);
+                    updateType.Parameters.AddWithValue("@isGroup", true);
+                    updateType.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                    updateType.ExecuteNonQuery();
+                }
+
                 // Add user to channel
                 foreach (string recipient in recipients)
                 {
@@ -235,6 +247,20 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
+        [HttpPatch("{channel_uuid}/Name")]
+        public ActionResult UpdateGroupName(string channel_uuid, string new_name) 
+        {
+            if (string.IsNullOrEmpty(new_name) && string.IsNullOrWhiteSpace(new_name)) return StatusCode(400, "Name cannot be empty");
+            using (MySqlConnection conn = Context.GetChannels()) {
+                conn.Open();
+                using MySqlCommand updateType = new($"UPDATE Channels SET GroupName=@name WHERE (Table_ID=@channel_uuid)", conn);
+                updateType.Parameters.AddWithValue("@name", new_name);
+                updateType.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                updateType.ExecuteNonQuery();
+            }
+            return StatusCode(200);
+        }
+
         // General Channel
         [HttpGet("{channel_uuid}")]
         public ActionResult<Channel> GetChannel(string channel_uuid)
@@ -277,22 +303,6 @@ namespace NovaAPI.Controllers
                 }
             }
             return channel;
-        }
-
-        private string GetAvatarFile(string user_uuid)
-        {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    return (string)reader["Avatar"];
-                }
-            }
-            return "";
         }
 
         [HttpDelete("{channel_uuid}")]
@@ -359,6 +369,22 @@ namespace NovaAPI.Controllers
                 if ((string)reader["Owner_UUID"] == user_uuid) return true;
             }
             return false;
+        }
+
+        private string GetAvatarFile(string user_uuid)
+        {
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+                cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    return (string)reader["Avatar"];
+                }
+            }
+            return "";
         }
     }
 }
