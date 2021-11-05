@@ -104,12 +104,12 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO {channel_uuid} (Author_UUID, Content) VALUES (@author, @content)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content) VALUES (@author, @content)", conn);
                 cmd.Parameters.AddWithValue("@author", user);
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
                 
-                using MySqlCommand getId = new($"SELECT Message_ID FROM {channel_uuid} ORDER BY Message_ID DESC LIMIT 1", conn);
+                using MySqlCommand getId = new($"SELECT Message_ID FROM `{channel_uuid}` ORDER BY Message_ID DESC LIMIT 1", conn);
                 MySqlDataReader reader = getId.ExecuteReader();
                 while (reader.Read()) {
                     id = reader["Message_ID"].ToString();
@@ -127,7 +127,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"UPDATE {channel_uuid} SET Content=@content WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
+                using MySqlCommand cmd = new($"UPDATE `{channel_uuid}` SET Content=@content WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
                 cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@content", message.Content);
@@ -148,7 +148,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"DELETE FROM {channel_uuid} WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
+                using MySqlCommand cmd = new($"DELETE FROM `{channel_uuid}` WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
                 cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                 cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@user_uuid", user_uuid);
