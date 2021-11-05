@@ -203,6 +203,7 @@ namespace NovaAPI.Controllers
             {
                 using (MySqlConnection conn = Context.GetUsers()) 
                 {
+                    conn.Open();
                     using MySqlCommand getUser = new($"Select UUID FROM Users WHERE (Username=@username) AND (Discriminator=@disc)", conn);
                     getUser.Parameters.AddWithValue("@username", username);
                     getUser.Parameters.AddWithValue("@disc", disc);
