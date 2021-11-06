@@ -21,6 +21,7 @@ namespace NovaAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
         private readonly NovaChatDatabaseContext Context;
 
         public UserController(NovaChatDatabaseContext context)
@@ -95,7 +96,7 @@ namespace NovaAPI.Controllers
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
-                        if (reader["Password"].ToString() == GetHashString(info.Password))
+                        if (reader["Password"].ToString() == EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]))
                             return new
                             {
                                 UUID = reader["UUID"].ToString(),
@@ -132,11 +133,13 @@ namespace NovaAPI.Controllers
                 else if (updateType == UpdateType.Password)
                 {
                     dynamic u = GetUser(user_uuid).Value;
-                    using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Token=@newToken WHERE (UUID=@uuid) AND (Token=@token)", conn);
+                    byte[] salt = EncryptionUtils.GetSalt(64);
+                    using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken WHERE (UUID=@uuid) AND (Token=@token)", conn);
                     cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                    cmd.Parameters.AddWithValue("@pass", GetHashString(data));
+                    cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(data, salt));
+                    cmd.Parameters.AddWithValue("@salt", salt);
                     cmd.Parameters.AddWithValue("@token", this.GetToken());
-                    cmd.Parameters.AddWithValue("@newToken", GetHashString(user_uuid + u.Email + data + u.Username + DateTime.Now.ToString()));
+                    cmd.Parameters.AddWithValue("@newToken", EncryptionUtils.GetSaltedHashString(user_uuid + u.Email + data + u.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8)));
                     cmd.ExecuteNonQuery();
                 }
                 else if (updateType == UpdateType.Email)
@@ -160,7 +163,7 @@ namespace NovaAPI.Controllers
         public ActionResult<object> RegisterUser(CreateUserInfo info)
         {
             string UUID = Guid.NewGuid().ToString("N");
-            string token = GetHashString(UUID + info.Email + info.Password + info.Username + DateTime.Now.ToString());
+            string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8));
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
@@ -178,12 +181,16 @@ namespace NovaAPI.Controllers
 
                 conn.Close();
                 conn.Open();
+                
+                // Get Salt
+                byte[] salt = EncryptionUtils.GetSalt(64);
 
-                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Email, Token, Avatar) VALUES (@uuid, @user, @disc, @pass, @email, @tok, @avatar)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Salt, Email, Token, Avatar) VALUES (@uuid, @user, @disc, @pass, @salt, @email, @tok, @avatar)", conn);
                 cmd.Parameters.AddWithValue("@uuid", UUID);
                 cmd.Parameters.AddWithValue("@user", info.Username);
                 cmd.Parameters.AddWithValue("@disc", disc);
-                cmd.Parameters.AddWithValue("@pass", GetHashString(info.Password));
+                cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(info.Password, salt));
+                cmd.Parameters.AddWithValue("@salt", salt);
                 cmd.Parameters.AddWithValue("@email", info.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
                 cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
@@ -233,20 +240,6 @@ namespace NovaAPI.Controllers
                 removeUserAccess.ExecuteNonQuery();
             }
             return StatusCode(200);
-        }
-
-        public static byte[] GetHash(string inputString)
-        {
-            using HashAlgorithm algorithm = SHA256.Create();
-            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(inputString));
-        }
-
-        public static string GetHashString(string inputString)
-        {
-            StringBuilder sb = new();
-            foreach (byte b in GetHash(inputString))
-                sb.Append(b.ToString("X2"));
-            return sb.ToString();
         }
 
         // User info
