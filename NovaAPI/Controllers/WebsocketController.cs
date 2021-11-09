@@ -47,7 +47,7 @@ namespace NovaAPI.Controllers
             }
         }
 
-        [HttpPost("TestReconnect")]
+        [HttpGet("TestReconnect")]
         [TokenAuthorization]
         public ActionResult TestReconnect()
         {
