@@ -217,5 +217,24 @@ namespace NovaAPI.Controllers
             }
             //Echo(socket);
         }
+
+
+        // Random testing stuff
+        public async void SendReconnectEvent(string user_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 420 }));
+                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                {
+                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                else
+                {
+                    Clients[user_uuid].SocketFinished.TrySetResult(null);
+                    Clients.Remove(user_uuid);
+                }
+            }
+        }
     }
 }

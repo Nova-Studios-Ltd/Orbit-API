@@ -46,5 +46,13 @@ namespace NovaAPI.Controllers
                 HttpContext.Response.StatusCode = 400;
             }
         }
+
+        [HttpPost("TestReconnect")]
+        [TokenAuthorization]
+        public ActionResult TestReconnect()
+        {
+            Event.SendReconnectEvent(Context.GetUserUUID(this.GetToken()));
+            return StatusCode(200);
+        }
     }
 }
