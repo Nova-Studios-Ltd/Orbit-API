@@ -49,9 +49,9 @@ namespace NovaAPI.Controllers
 
         [HttpGet("TestReconnect")]
         [TokenAuthorization]
-        public ActionResult TestReconnect()
+        public ActionResult TestReconnect(int setAttempts)
         {
-            Event.SendReconnectEvent(Context.GetUserUUID(this.GetToken()));
+            Event.SendReconnectEvent(Context.GetUserUUID(this.GetToken()), setAttempts);
             return StatusCode(200);
         }
     }

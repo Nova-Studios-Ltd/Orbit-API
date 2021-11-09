@@ -220,11 +220,11 @@ namespace NovaAPI.Controllers
 
 
         // Random testing stuff
-        public async void SendReconnectEvent(string user_uuid)
+        public async void SendReconnectEvent(string user_uuid, int attempts)
         {
             if (Clients.ContainsKey(user_uuid))
             {
-                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 420 }));
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 420, Attempts = attempts }));
                 if (Clients[user_uuid].Socket.State == WebSocketState.Open)
                 {
                     await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
