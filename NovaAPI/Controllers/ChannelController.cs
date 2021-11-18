@@ -32,6 +32,7 @@ namespace NovaAPI.Controllers
             string author = Context.GetUserUUID(this.GetToken());
             if (string.IsNullOrEmpty(recipient_uuid) || !Context.UserExsists(recipient_uuid)) return StatusCode(500);
             if (author == recipient_uuid) return StatusCode(500);
+            if (UsersShareChannel(author, recipient_uuid)) return StatusCode(403, "Channel Already Created");
 
             string table_id = Guid.NewGuid().ToString("N");
             using (MySqlConnection conn = Context.GetChannels())
@@ -90,7 +91,7 @@ namespace NovaAPI.Controllers
 
         // Groups
         [HttpPost("CreateGroupChannel")]
-        public ActionResult<string> CreateGroupChannel(List<string> recipients)
+        public ActionResult<string> CreateGroupChannel(string group_name, List<string> recipients)
         {
             string author = Context.GetUserUUID(this.GetToken());
             if (recipients.Any(x => x == author)) return StatusCode(500);
@@ -122,11 +123,12 @@ namespace NovaAPI.Controllers
                 addAuthor.ExecuteNonQuery();
 
                 // Add table id to channels table
-                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP)", conn);
+                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`, `GroupName`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP, @gn)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 addChannel.Parameters.AddWithValue("@icon", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
                 addChannel.Parameters.AddWithValue("@group", true);
+                addChannel.Parameters.AddWithValue("@gn", group_name);
                 addChannel.ExecuteNonQuery();
             }
 
@@ -385,6 +387,42 @@ namespace NovaAPI.Controllers
                 }
             }
             return "";
+        }
+
+        private bool UsersShareChannel(string user_uuid1, string user_uuid2) {
+            List<string> user1_channels = GetUserChannels(user_uuid1);
+            List<string> user2_channels = GetUserChannels(user_uuid2);
+            
+            string[] matchingChannels = user1_channels.Intersect(user2_channels).ToArray();
+
+            foreach (string channel in matchingChannels)
+            {
+                Channel c = GetChannel(channel).Value;
+                if (!c.IsGroup)
+                {
+                    if (c.Members.Contains(user_uuid1) && c.Members.Contains(user_uuid2))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private List<string> GetUserChannels(string user_uuid) {
+            List<string> channels = new();
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}` WHERE (Property=@prop)", conn);
+                cmd.Parameters.AddWithValue("@prop", "ChannelAccess");
+                MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    channels.Add((string)reader["Value"]);
+                }
+            }
+            return channels;
         }
     }
 }
