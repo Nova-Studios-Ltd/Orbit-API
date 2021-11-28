@@ -216,17 +216,18 @@ namespace NovaAPI.Controllers
         }
 
         [HttpDelete("{channel_uuid}/Members")]
-        public ActionResult RemoveUserFromGroupChannel(string channel_uuid, string recipient) 
+        public ActionResult RemoveUserFromGroupChannel(string channel_uuid, string recipient)
         {
-            if (!CheckUserChannelOwner(channel_uuid, recipient)) return StatusCode(403);
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!CheckUserChannelOwner(channel_uuid, user_uuid) || recipient != user_uuid) return StatusCode(403);
             if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
                 try
                 {
-                    // Add channel to user
-                    using MySqlCommand cmd = new($"REMOVE FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=@property) AND (Value=@uuid)", conn);
+                    // Delete channel from user
+                    using MySqlCommand cmd = new($"DELETE FROM `{recipient}` WHERE (Property=@property) AND (Value=@uuid)", conn);
                     cmd.Parameters.AddWithValue("@property", "ChannelAccess");
                     cmd.Parameters.AddWithValue("@uuid", channel_uuid);
                     cmd.ExecuteNonQuery();
