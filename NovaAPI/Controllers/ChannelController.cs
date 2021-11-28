@@ -44,7 +44,7 @@ namespace NovaAPI.Controllers
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
-                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL, DELETED BOOLEAN NOT NULL DEFAULT FALSE UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL, DELETED BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
                 createAccessTable.ExecuteNonQuery();
 
                 // Add users to access table
@@ -106,7 +106,7 @@ namespace NovaAPI.Controllers
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
-                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL, DELETED BOOLEAN NOT NULL DEFAULT FALSE UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL, DELETED BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
                 createAccessTable.ExecuteNonQuery();
 
                 // Add users to access table
