@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NovaAPI.Attri;
 using Microsoft.Extensions.Primitives;
+using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
@@ -28,7 +29,7 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/")]
         public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int before = int.MaxValue)
         {
-            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
+            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -65,7 +66,7 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/{message_id}")]
         public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_id)
         {
-            if (!CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
@@ -98,14 +99,14 @@ namespace NovaAPI.Controllers
         [HttpPost("{channel_uuid}/Messages/")]
         public ActionResult<string> SendMessage(string channel_uuid, SentMessage message)
         {
-            string user = Context.GetUserUUID(GetToken());
+            string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
-            if (!CheckUserChannelAccess(user, channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content) VALUES (@author, @content)", conn);
-                cmd.Parameters.AddWithValue("@author", user);
+                cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.ExecuteNonQuery();
                 
@@ -123,7 +124,7 @@ namespace NovaAPI.Controllers
         public ActionResult EditMessage(string channel_uuid, string message_id, SentMessage message)
         {
             string user_uuid = Context.GetUserUUID(GetToken());
-            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
@@ -144,7 +145,7 @@ namespace NovaAPI.Controllers
         public ActionResult DeleteMessage(string channel_uuid, string message_id)
         {
             string user_uuid = Context.GetUserUUID(GetToken());
-            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
@@ -174,18 +175,6 @@ namespace NovaAPI.Controllers
             if (!Request.Headers.TryGetValue("Authorization", out StringValues values))
                 return "";
             return values.First();
-        }
-
-        bool CheckUserChannelAccess(string userUUID, string channel_uuid)
-        {
-            using MySqlConnection conn = Context.GetUsers();
-            conn.Open();
-            using MySqlCommand cmd = new($"SELECT Property FROM {userUUID} WHERE (Property=@prop) AND (Value=@channel_uuid)", conn);
-            cmd.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
-            cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-            MySqlDataReader reader = cmd.ExecuteReader();
-            if (reader.HasRows) return true;
-            return false;
         }
     }
 }

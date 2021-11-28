@@ -18,6 +18,7 @@ namespace NovaAPI.Controllers
     [TokenAuthorization]
     public class ChannelController : ControllerBase
     {
+        // "The codebase must grow" - Andy 2021
         private readonly NovaChatDatabaseContext Context;
         private readonly EventManager Event;
         public ChannelController(NovaChatDatabaseContext context, EventManager em) 
@@ -169,7 +170,7 @@ namespace NovaAPI.Controllers
         [HttpPatch("{channel_uuid}/Members")]
         public ActionResult AddUserToGroupChannel(string channel_uuid, List<string> recipients) 
         {
-            if (!CheckUserChannelAccess(Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
             Channel c = GetChannel(channel_uuid).Value;
             using (MySqlConnection conn = Context.GetUsers())
             {
@@ -271,7 +272,7 @@ namespace NovaAPI.Controllers
         public ActionResult<Channel> GetChannel(string channel_uuid) 
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             Channel channel = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -289,17 +290,15 @@ namespace NovaAPI.Controllers
                         
                 }
                 reader.Close();
-                MySqlCommand retreiveMembers = new($"SELECT User_UUID FROM `access_{channel_uuid}`", conn);
+                MySqlCommand retreiveMembers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
                 reader = retreiveMembers.ExecuteReader();
                 channel.Members = new();
                 while (reader.Read())
                 {
-                    channel.Members.Add((string)reader["User_UUID"]);
-                }
-
-                if (!channel.IsGroup)
-                {
-                    foreach (string member in channel.Members)
+                    string member = (string)reader["User_UUID"];
+                    if (!(bool)reader["DELETED"])
+                        channel.Members.Add(member);
+                    if (!channel.IsGroup)
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
@@ -311,103 +310,138 @@ namespace NovaAPI.Controllers
         }
 
         [HttpDelete("{channel_uuid}")]
-        public ActionResult DeleteChannel(string channel_uuid) 
+        public ActionResult RemoveChannel(string channel_uuid)
         {
-            using (MySqlConnection conn = Context.GetChannels())
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+
+            Channel channel = GetChannel(channel_uuid).Value;
+
+            // Handle Standard Channel
+            if (!channel.IsGroup)
             {
-                Channel c = GetChannel(channel_uuid).Value;
-                if (c == null) return StatusCode(404);
-                conn.Open();
+                // Remove Channel from User props
+                using MySqlConnection userConn = Context.GetUsers();
+                userConn.Open();
+                using MySqlCommand removeFromUser = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop1) OR (Property=@prop2) AND (Value=@channel)", userConn);
+                removeFromUser.Parameters.AddWithValue("@prop1", "ArchivedChannelAccess");
+                removeFromUser.Parameters.AddWithValue("@prop2", "ActiveChannelAccess");
+                removeFromUser.Parameters.AddWithValue("@channel", channel_uuid);
+                if (removeFromUser.ExecuteNonQuery() == 0) return StatusCode(404);
+                userConn.Close();
 
-                if (c.IsGroup)
+                if (channel.Members.Count <= 1)
                 {
-                    // Remove channel from Channels table
-                    using MySqlCommand cmd = new($"DELETE FROM Channels WHERE (Table_ID=@table_id) AND (Owner_UUID=@owner_uuid)", conn);
+                    // Remove Access Table and Chat History
+                    using MySqlConnection channelCon = Context.GetChannels();
+                    channelCon.Open();
+                    using MySqlCommand removeChannel = new($"DROP TABLE `{channel_uuid}`, `access_{channel_uuid}`", channelCon);
+                    removeChannel.ExecuteNonQuery();
+                  
+                    // Remove Channel
+                    using MySqlCommand cmd = new($"DELETE FROM Channels WHERE (Table_ID=@table_id)", channelCon);
                     cmd.Parameters.AddWithValue("@table_id", channel_uuid);
-                    cmd.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                     if (cmd.ExecuteNonQuery() == 0) return NotFound();
+                    channelCon.Close();
+                    return StatusCode(200, "Channel Removed");
+                }
+                else
+                {
+                    // Set user to deleted in access table
+                    using MySqlConnection channelCon = Context.GetChannels();
+                    channelCon.Open();
+                    using MySqlCommand updateAccess = new($"UPDATE `access_{channel_uuid}` SET DELETED=1 WHERE (User_UUID=@uuid)", channelCon);
+                    updateAccess.Parameters.AddWithValue("@uuid", user_uuid);
+                    if (updateAccess.ExecuteNonQuery() == 0) return StatusCode(404);
+                    channelCon.Close();
+                    return StatusCode(200, "Channel Removed");
+                }
+            }
+            else
+            {
+                if (CheckUserChannelOwner(channel_uuid, user_uuid))
+                {
+                    // Delete channel from Channels table
+                    using MySqlConnection channelCon = Context.GetChannels();
+                    channelCon.Open();
+                    using MySqlCommand removeChannel = new($"DELETE FROM Channels WHERE (Table_ID=@table_id) AND (Owner_UUID=@owner_uuid)", channelCon);
+                    removeChannel.Parameters.AddWithValue("@table_id", channel_uuid);
+                    removeChannel.Parameters.AddWithValue("@owner_uuid", user_uuid);
+                    if (removeChannel.ExecuteNonQuery() == 0) return StatusCode(404);
 
-                    // Remove channel from user
-                    using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+                    // Get all users with access
+                    using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", channelCon);
                     MySqlDataReader reader = removeUsers.ExecuteReader();
                     using MySqlConnection userDb = Context.GetUsers();
                     userDb.Open();
                     while (reader.Read())
-                    {
+                    {   
+                        // Delete channel from User props table
                         using MySqlCommand removeAccess = new($"DELETE FROM `{reader["User_UUID"]}` WHERE (Property=@prop) AND (Value=@value)", userDb);
-                        removeAccess.Parameters.AddWithValue("@prop", "ChannelAccess");
+                        removeAccess.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
                         removeAccess.Parameters.AddWithValue("@value", channel_uuid);
                         removeAccess.ExecuteNonQuery();
                     }
+                    userDb.Close();
 
-                    conn.Close();
-                    conn.Open();
+                    using MySqlCommand removeChannelTables = new($"DROP TABLE `{channel_uuid}`, `access_{channel_uuid}`", channelCon);
+                    removeChannelTables.ExecuteNonQuery();
+                    channelCon.Close();
 
-                    // Remove channel table (removing messages)
-                    using MySqlCommand deleteChannel = new($"DROP TABLE `{channel_uuid}`", conn);
-                    deleteChannel.ExecuteNonQuery();
-
-                    // Remove channel access table
-                    using MySqlCommand deleteAccessTable = new($"DROP TABLE `access_{channel_uuid}`", conn);
-                    deleteAccessTable.ExecuteNonQuery();
+                    return StatusCode(200, "Group Removed");
                 }
                 else
                 {
-                    if (c.Members.Count <= 1)
-                    {
-                        // Remove channel from Channels table
-                        using MySqlCommand cmd = new($"DELETE FROM Channels WHERE (Table_ID=@table_id)", conn);
-                        cmd.Parameters.AddWithValue("@table_id", channel_uuid);
-                        if (cmd.ExecuteNonQuery() == 0) return NotFound();
+                    // Delete channel from User props table
+                    using MySqlConnection userDb = Context.GetUsers();
+                    userDb.Open();
+                    using MySqlCommand removeAccess = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop) AND (Value=@value)", userDb);
+                    removeAccess.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
+                    removeAccess.Parameters.AddWithValue("@value", channel_uuid);
+                    removeAccess.ExecuteNonQuery();
+                    userDb.Close();
 
-                        // Remove channel from user
-                        using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
-                        MySqlDataReader reader = removeUsers.ExecuteReader();
-                        using MySqlConnection userDb = Context.GetUsers();
-                        userDb.Open();
-                        while (reader.Read())
-                        {
-                            using MySqlCommand removeAccess = new($"DELETE FROM `{reader["User_UUID"]}` WHERE (Property=@prop) AND (Value=@value)", userDb);
-                            removeAccess.Parameters.AddWithValue("@prop", "ChannelAccess");
-                            removeAccess.Parameters.AddWithValue("@value", channel_uuid);
-                            removeAccess.ExecuteNonQuery();
-                        }
-
-                        conn.Close();
-                        conn.Open();
-
-                        // Remove channel table (removing messages)
-                        using MySqlCommand deleteChannel = new($"DROP TABLE `{channel_uuid}`", conn);
-                        deleteChannel.ExecuteNonQuery();
-
-                        // Remove channel access table
-                        using MySqlCommand deleteAccessTable = new($"DROP TABLE `access_{channel_uuid}`", conn);
-                        deleteAccessTable.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        using MySqlCommand removeUser =
-                            new MySqlCommand($"DELETE FROM `access_{channel_uuid}` WHERE User_UUID=@uuid", conn);
-                        removeUser.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
-                        removeUser.ExecuteNonQuery();
-                    }
+                    // Delete user from Channel Access table
+                    using MySqlConnection channelsDB = Context.GetChannels();
+                    channelsDB.Open();
+                    using MySqlCommand cmd = new($"DELETE FROM `access_{channel_uuid}` WHERE (User_UUID=@uuid)", channelsDB);
+                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
+                    cmd.ExecuteNonQuery();
+                    return StatusCode(200, "Group Removed");
                 }
             }
-            return StatusCode(200, "Channel has been removed");
         }
 
-
-        bool CheckUserChannelAccess(string userUUID, string channel_uuid) 
+        [HttpPatch("{channel_uuid}/Archive")]
+        public ActionResult ArchiveChannel(string channel_uuid)
         {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+            if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Archive group");
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
-            using MySqlCommand cmd = new($"SELECT Property FROM {userUUID} WHERE (Property=@prop) AND (Value=@channel_uuid)", conn);
-            cmd.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
-            cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-            MySqlDataReader reader = cmd.ExecuteReader();
-            if (reader.HasRows) return true;
-            return false;
+            using MySqlCommand cmd = new($"UPDATE `{user_uuid}` SET Property=@prop WHERE (Value=@channel)", conn);
+            cmd.Parameters.AddWithValue("@prop", "ArchivedChannelAccess");
+            cmd.Parameters.AddWithValue("@channel", channel_uuid);
+            if (cmd.ExecuteNonQuery() > 0) return StatusCode(200);
+            return StatusCode(404);
         }
+
+        [HttpPatch("{channel_uuid}/Unarchive")]
+        public ActionResult UnarchiveChannel(string channel_uuid)
+        {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+            if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Unarchive group");
+            using MySqlConnection conn = Context.GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"UPDATE `{user_uuid}` SET Property=@prop WHERE (Value=@channel)", conn);
+            cmd.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
+            cmd.Parameters.AddWithValue("@channel", channel_uuid);
+            if (cmd.ExecuteNonQuery() > 0) return StatusCode(200);
+            return StatusCode(404);
+        }
+
 
         bool CheckUserChannelOwner(string channel_uuid, string user_uuid) 
         {
@@ -423,25 +457,9 @@ namespace NovaAPI.Controllers
             return false;
         }
 
-        private string GetAvatarFile(string user_uuid) 
-        {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    return (string)reader["Avatar"];
-                }
-            }
-            return "";
-        }
-
         private bool UsersShareChannel(string user_uuid1, string user_uuid2) {
-            List<string> user1_channels = GetUserChannels(user_uuid1);
-            List<string> user2_channels = GetUserChannels(user_uuid2);
+            List<string> user1_channels = GetActiveUserChannels(user_uuid1);
+            List<string> user2_channels = GetActiveUserChannels(user_uuid2);
             
             string[] matchingChannels = user1_channels.Intersect(user2_channels).ToArray();
 
@@ -459,13 +477,30 @@ namespace NovaAPI.Controllers
             return false;
         }
 
-        private List<string> GetUserChannels(string user_uuid) {
+        private List<string> GetActiveUserChannels(string user_uuid) {
             List<string> channels = new();
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}` WHERE (Property=@prop)", conn);
-                cmd.Parameters.AddWithValue("@prop", "ChannelAccess");
+                cmd.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
+                MySqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    channels.Add((string)reader["Value"]);
+                }
+            }
+            return channels;
+        }
+
+        private List<string> GetArchivedUserChannels(string user_uuid)
+        {
+            List<string> channels = new();
+            using (MySqlConnection conn = Context.GetUsers())
+            {
+                conn.Open();
+                using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}` WHERE (Property=@prop)", conn);
+                cmd.Parameters.AddWithValue("@prop", "ArchivedChannelAccess");
                 MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
