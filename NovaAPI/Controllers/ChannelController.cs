@@ -89,6 +89,7 @@ namespace NovaAPI.Controllers
             return table_id;
         }
 
+
         // Groups
         [HttpPost("CreateGroupChannel")]
         public ActionResult<string> CreateGroupChannel(string group_name, List<string> recipients) 
@@ -264,6 +265,7 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
+
         // General Channel
         [HttpGet("{channel_uuid}")]
         public ActionResult<Channel> GetChannel(string channel_uuid) 
@@ -393,6 +395,7 @@ namespace NovaAPI.Controllers
             }
             return StatusCode(200, "Channel has been removed");
         }
+
 
         bool CheckUserChannelAccess(string userUUID, string channel_uuid) 
         {

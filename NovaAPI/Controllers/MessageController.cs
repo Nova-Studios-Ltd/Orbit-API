@@ -181,7 +181,7 @@ namespace NovaAPI.Controllers
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
             using MySqlCommand cmd = new($"SELECT Property FROM {userUUID} WHERE (Property=@prop) AND (Value=@channel_uuid)", conn);
-            cmd.Parameters.AddWithValue("@prop", "ChannelAccess");
+            cmd.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
             cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
             MySqlDataReader reader = cmd.ExecuteReader();
             if (reader.HasRows) return true;
