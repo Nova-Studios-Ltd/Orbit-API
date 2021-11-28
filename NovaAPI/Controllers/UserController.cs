@@ -262,53 +262,7 @@ namespace NovaAPI.Controllers
             }
             return channels;
         }
-
-        [HttpPost("Channels/Register")]
-        [TokenAuthorization]
-        public ActionResult AddUserChannel(string user_uuid, string channel_uuid)
-        {
-            if (!CheckChannelOwner(Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                using MySqlCommand addAccessToUser = new($"INSERT INTO `{user_uuid}` (Property, Value) VALUES (@prop, @val)", conn);
-                addAccessToUser.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
-                addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
-                addAccessToUser.ExecuteNonQuery();
-            }
-            using (MySqlConnection conn = Context.GetChannels())
-            {
-                conn.Open();
-                using MySqlCommand addUserToChannel = new($"INSERT INTO `access_{channel_uuid}` (User_UUID) VALUES (@user)", conn);
-                addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
-                addUserToChannel.ExecuteNonQuery();
-            }
-            return StatusCode(200);
-        }
-
-        [HttpDelete("Channels/Unregister")]
-        [TokenAuthorization]
-        public ActionResult RemoveUserChannel(string user_uuid, string channel_uuid)
-        {
-            if (!CheckChannelOwner(Context.GetUserUUID(this.GetToken()), channel_uuid) && Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                using MySqlCommand addAccessToUser = new($"DELETE FROM `{user_uuid}` WHERE (Property=@prop) and (Value=@val)", conn);
-                addAccessToUser.Parameters.AddWithValue("@prop", "ActiveChannelAccess");
-                addAccessToUser.Parameters.AddWithValue("@val", channel_uuid);
-                addAccessToUser.ExecuteNonQuery();
-            }
-            using (MySqlConnection conn = Context.GetChannels())
-            {
-                conn.Open();
-                using MySqlCommand addUserToChannel = new($"DELETE FROM `access_{channel_uuid}` WHERE (User_UUID=@user)", conn);
-                addUserToChannel.Parameters.AddWithValue("@user", user_uuid);
-                addUserToChannel.ExecuteNonQuery();
-            }
-            return StatusCode(200);
-        }
-
+        
         bool CheckChannelOwner(string userUUID, string channel_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
