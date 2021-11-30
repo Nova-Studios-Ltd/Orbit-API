@@ -223,6 +223,10 @@ namespace NovaAPI.Controllers
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!CheckUserChannelOwner(channel_uuid, user_uuid) || recipient != user_uuid) return StatusCode(403);
             if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
+            Channel c = GetChannel(channel_uuid).Value;
+            if (c == null) return StatusCode(400);
+            if (c.IsGroup) return StatusCode(405);
+            
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
@@ -249,6 +253,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@uuid", recipient);
                 cmd.ExecuteNonQuery();
             }
+            Event.ChannelDeleteEvent(channel_uuid, user_uuid);
             return StatusCode(200);
         }
 
@@ -343,6 +348,7 @@ namespace NovaAPI.Controllers
                     cmd.Parameters.AddWithValue("@table_id", channel_uuid);
                     if (cmd.ExecuteNonQuery() == 0) return NotFound();
                     channelCon.Close();
+                    Event.ChannelDeleteEvent(channel_uuid, user_uuid);
                     return StatusCode(200, "Channel Removed");
                 }
                 else
@@ -354,6 +360,7 @@ namespace NovaAPI.Controllers
                     updateAccess.Parameters.AddWithValue("@uuid", user_uuid);
                     if (updateAccess.ExecuteNonQuery() == 0) return StatusCode(404);
                     channelCon.Close();
+                    Event.ChannelDeleteEvent(channel_uuid, user_uuid);
                     return StatusCode(200, "Channel Removed");
                 }
             }

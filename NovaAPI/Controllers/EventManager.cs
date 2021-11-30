@@ -169,6 +169,20 @@ namespace NovaAPI.Controllers
             }
         }
 
+        public async void ChannelDeleteEvent(string channel_uuid, string user_uuid)
+        {
+            if (!Clients.ContainsKey(user_uuid)) return;
+            var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.ChannelDeleted, Channel = channel_uuid }));
+            if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+            {
+                await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            else
+            {
+                Clients[user_uuid].SocketFinished.TrySetResult(null);
+                Clients.Remove(user_uuid);
+            }
+        }
         // Group Events
 
         // Sent to all user of a group alerting them to a new user
