@@ -387,7 +387,9 @@ namespace NovaAPI.Controllers
                     using MySqlCommand removeChannelTables = new($"DROP TABLE `{channel_uuid}`, `access_{channel_uuid}`", channelCon);
                     removeChannelTables.ExecuteNonQuery();
                     channelCon.Close();
-
+                    
+                    Event.ChannelDeleteEvent(channel_uuid);
+                    
                     return StatusCode(200, "Group Removed");
                 }
                 else

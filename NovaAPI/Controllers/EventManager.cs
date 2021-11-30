@@ -14,7 +14,7 @@ namespace NovaAPI.Controllers
 {
     public class EventManager
     {
-        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, GroupNewMember, UserNewGroup, GroupDeleteMember, UserDeleteGroup }
+        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup }
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
@@ -131,6 +131,31 @@ namespace NovaAPI.Controllers
                 if (Clients.ContainsKey((string)reader["User_UUID"]))
                 {
                     var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.ChannelCreated, Channel = channel_uuid }));
+                    if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
+                    {
+                        await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                    }
+                    else
+                    {
+                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
+                        Clients.Remove((string)reader["User_UUID"]);
+                    }
+                }
+            }
+        }
+
+        public async void ChannelDeleteEvent(string channel_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+            MySqlDataReader reader = removeUsers.ExecuteReader();
+
+            while (reader.Read())
+            {
+                if (Clients.ContainsKey((string)reader["User_UUID"]))
+                {
+                    var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.ChannelDeleted, Channel = channel_uuid }));
                     if (Clients[(string)reader["User_UUID"]].Socket.State == WebSocketState.Open)
                     {
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
