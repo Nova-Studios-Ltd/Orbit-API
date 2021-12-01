@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NovaAPI.Util
 {
-    public static class AuthUtils
+    public static class ChannelUtils
     {
         public static bool CheckUserChannelAccess(NovaChatDatabaseContext Context, string user_uuid, string channel_uuid)
         {

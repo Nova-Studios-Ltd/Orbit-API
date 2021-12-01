@@ -24,7 +24,7 @@ namespace NovaAPI.Controllers
         readonly NovaChatDatabaseContext Context;
 
         // For la dumb endpoint
-        public static string[] DefaultAvatars = System.IO.Directory.GetFiles("./Media/defaultAvatars", "*.*");
+        public static string[] DefaultAvatars = System.IO.Directory.GetFiles(Globals.DefaultAvatarMedia, "*.*");
         public static Random GetRandom = new();
 
         public MediaController(NovaChatDatabaseContext context)
@@ -149,7 +149,7 @@ namespace NovaAPI.Controllers
         }
 
         // Channel (Group) related 
-        [HttpGet("Channel/{channel_uuid}")]
+        [HttpGet("Channel/{channel_uuid}/Icon")]
         public ActionResult GetChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetChannels())
@@ -175,7 +175,7 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        [HttpHead("Channel/{channel_uuid}")]
+        [HttpHead("Channel/{channel_uuid}/Icon")]
         public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -203,7 +203,7 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        [HttpPost("Channel/{channel_uuid}")]
+        [HttpPost("Channel/{channel_uuid}/Icon")]
         [TokenAuthorization]
         public ActionResult SetChannelAvatar(string channel_uuid, IFormFile file) {
             using (MySqlConnection conn = Context.GetChannels())
@@ -236,6 +236,34 @@ namespace NovaAPI.Controllers
                 }
             }
             return StatusCode(404);
+        }
+
+        [HttpGet("Channel/{channel_uuid}/{content_id}")]
+        public ActionResult GetContent(string channel_uuid, string content_id)
+        {
+            string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
+            if (!System.IO.File.Exists(path)) return StatusCode(404);
+
+            FileStream fs = System.IO.File.OpenRead(path);
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return File(fs, "image/png");
+        }
+        // Content Related
+        [HttpPost("Channel/{channel_uuid}")]
+        [TokenAuthorization]
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file)
+        {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (!ChannelUtils.CheckUserChannelAccess(Context, channel_uuid, user_uuid)) return StatusCode(403);
+            if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
+            if (file.Length >= 20971520) return StatusCode(413);
+            if (!Globals.ContentTypes.Any(x => file.ContentType.Contains(x))) return StatusCode(415);
+            string filename = CreateMD5(file.FileName);
+            string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename + "." + Path.GetExtension(filename));
+            FileStream fs = System.IO.File.OpenWrite(fileLoc);
+            file.CopyTo(fs);
+            fs.Close();
+            return filename;
         }
         
         public static string CreateMD5(string input)

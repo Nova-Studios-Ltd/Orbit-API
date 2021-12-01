@@ -7,8 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using NovaAPI.Attri;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
@@ -29,13 +32,11 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/")]
         public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int before = int.MaxValue)
         {
-            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
+            if (!ChannelUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
-
                 // Testing stuff
-
                 conn.Open();
                 try
                 {
@@ -50,6 +51,7 @@ namespace NovaAPI.Controllers
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
+                            Attachments = JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()),
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["Author_UUID"].ToString())}?size=64"
                         });
@@ -66,7 +68,7 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/{message_id}")]
         public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_id)
         {
-            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
@@ -101,13 +103,14 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content) VALUES (@author, @content)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content, Attachments) VALUES (@author, @content, @attachments)", conn);
                 cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@content", message.Content);
+                cmd.Parameters.AddWithValue("@attachments", JsonConvert.SerializeObject(message.Attachments));
                 cmd.ExecuteNonQuery();
                 
                 using MySqlCommand getId = new($"SELECT Message_ID FROM `{channel_uuid}` ORDER BY Message_ID DESC LIMIT 1", conn);
@@ -124,7 +127,7 @@ namespace NovaAPI.Controllers
         public ActionResult EditMessage(string channel_uuid, string message_id, SentMessage message)
         {
             string user_uuid = Context.GetUserUUID(GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
@@ -145,7 +148,7 @@ namespace NovaAPI.Controllers
         public ActionResult DeleteMessage(string channel_uuid, string message_id)
         {
             string user_uuid = Context.GetUserUUID(GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();

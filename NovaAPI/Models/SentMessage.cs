@@ -8,5 +8,6 @@ namespace NovaAPI.Models
     public class SentMessage
     {
         public string Content { get; set; }
+        public List<string> Attachments { get; set; } 
     }
 }

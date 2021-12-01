@@ -18,25 +18,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Media\defaultAvatars\defaultAvatar1.png">
+    <None Update="DefaultAvatars\defaultAvatar1.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Media\defaultAvatars\defaultAvatar2.png">
+    <None Update="DefaultAvatars\defaultAvatar2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Media\defaultAvatars\defaultAvatar3.jpg">
+    <None Update="DefaultAvatars\defaultAvatar3.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Media\defaultAvatars\defaultAvatar4.jpg">
+    <None Update="DefaultAvatars\defaultAvatar4.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Media\defaultAvatars\defaultAvatar5.jpg">
+    <None Update="DefaultAvatars\defaultAvatar5.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Media\avatars\" />
   </ItemGroup>
 
 </Project>

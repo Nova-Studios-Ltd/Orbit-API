@@ -41,7 +41,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -86,6 +86,8 @@ namespace NovaAPI.Controllers
                     return StatusCode(500);
                 }
             }
+
+            Directory.CreateDirectory(Path.Combine(Globals.ChannelMedia, table_id));
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
@@ -104,7 +106,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , Attachments JSON NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -170,7 +172,7 @@ namespace NovaAPI.Controllers
         [HttpPatch("{channel_uuid}/Members")]
         public ActionResult AddUserToGroupChannel(string channel_uuid, List<string> recipients) 
         {
-            if (!AuthUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(this.GetToken()), channel_uuid)) return StatusCode(403);
             Channel c = GetChannel(channel_uuid).Value;
             using (MySqlConnection conn = Context.GetUsers())
             {
@@ -277,7 +279,7 @@ namespace NovaAPI.Controllers
         public ActionResult<Channel> GetChannel(string channel_uuid) 
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             Channel channel = new();
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -318,7 +320,7 @@ namespace NovaAPI.Controllers
         public ActionResult RemoveChannel(string channel_uuid)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
 
             Channel channel = GetChannel(channel_uuid).Value;
 
@@ -425,7 +427,7 @@ namespace NovaAPI.Controllers
         public ActionResult ArchiveChannel(string channel_uuid)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
             if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Archive group");
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
@@ -440,7 +442,7 @@ namespace NovaAPI.Controllers
         public ActionResult UnarchiveChannel(string channel_uuid)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!AuthUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
             if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Unarchive group");
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();

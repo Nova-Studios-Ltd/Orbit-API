@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using NovaAPI.Controllers;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Text;
+using NovaAPI.Util;
 
 namespace NovaAPI
 {
@@ -75,6 +77,12 @@ namespace NovaAPI
 
             app.UseHttpsRedirection();
 
+            if (!Directory.Exists(Globals.RootMedia)) Directory.CreateDirectory(Globals.RootMedia);
+            if (!Directory.Exists(Globals.ChannelMedia)) Directory.CreateDirectory(Globals.ChannelMedia);
+            if (!Directory.Exists(Globals.DefaultAvatarMedia)) Directory.CreateDirectory(Globals.DefaultAvatarMedia);
+            if (!Directory.Exists(Globals.AvatarMedia)) Directory.CreateDirectory(Globals.AvatarMedia);
+            
+            
             app.UseRouting();
 
             WebSocketOptions wsOptions = new() { KeepAliveInterval = TimeSpan.FromSeconds(120) };
