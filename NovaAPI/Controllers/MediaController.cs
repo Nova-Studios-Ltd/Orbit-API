@@ -257,7 +257,7 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(Context, channel_uuid, user_uuid)) return StatusCode(403);
             if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520) return StatusCode(413);
-            if (!Globals.ContentTypes.Any(x => file.ContentType.Contains(x))) return StatusCode(415);
+            if (!Globals.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
             string filename = CreateMD5(file.FileName);
             string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename + "." + Path.GetExtension(filename));
             FileStream fs = System.IO.File.OpenWrite(fileLoc);
