@@ -96,14 +96,34 @@ namespace NovaAPI.Controllers
                     MySqlCommand cmd = new($"SELECT * FROM `{channel_uuid}` WHERE (Message_ID=@uuid)", conn);
                     cmd.Parameters.AddWithValue("@uuid", message_id);
                     using MySqlDataReader reader = cmd.ExecuteReader();
+                    using MySqlConnection meta = Context.GetChannels();
+                    meta.Open();
+                    using MySqlCommand retreiveMeta = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                     while (reader.Read())
                     {
+                        List<Attachment> Attachments = new();
+                        foreach (string content_id in JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()))
+                        {
+                            retreiveMeta.Parameters.AddWithValue("@uuid", content_id);
+                            MySqlDataReader metaReader = retreiveMeta.ExecuteReader();
+                            while (metaReader.Read())
+                            {
+                                Attachments.Add(new Attachment
+                                {
+                                    ContentUrl = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}/{content_id}",
+                                    Filename = metaReader["Filename"].ToString(),
+                                    Size = int.Parse(metaReader["Size"].ToString())
+                                });
+                            }
+                        }
+
                         return new ChannelMessage
                         {
                             Message_Id = reader["Message_ID"].ToString(),
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
+                            Attachments = Attachments,
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["Author_UUID"].ToString())}?size=64"
                         };
