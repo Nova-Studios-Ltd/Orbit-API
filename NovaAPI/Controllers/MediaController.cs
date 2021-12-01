@@ -254,7 +254,8 @@ namespace NovaAPI.Controllers
         public ActionResult<string> PostContent(string channel_uuid, IFormFile file)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!ChannelUtils.CheckUserChannelAccess(Context, channel_uuid, user_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            string c = Path.Combine(Globals.ChannelMedia, channel_uuid);
             if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520) return StatusCode(413);
             if (!Globals.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
