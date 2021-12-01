@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MimeTypes;
 
 namespace NovaAPI.Controllers
 {
@@ -243,11 +244,11 @@ namespace NovaAPI.Controllers
         {
             string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
-
             FileStream fs = System.IO.File.OpenRead(path);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return File(fs, "image/png");
+            return File(fs, RetreiveMimeType(content_id));
         }
+
         // Content Related
         [HttpPost("Channel/{channel_uuid}")]
         [TokenAuthorization]
@@ -259,8 +260,18 @@ namespace NovaAPI.Controllers
             if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520) return StatusCode(413);
             if (!Globals.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
-            string filename = CreateMD5(file.FileName);
-            string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename + "." + Path.GetExtension(filename));
+            string filename = Guid.NewGuid().ToString();
+            string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename);
+
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size) VALUES (@uuid, @filename, @mime, @size)", conn);
+            cmd.Parameters.AddWithValue("@uuid", filename);
+            cmd.Parameters.AddWithValue("@filename", file.FileName);
+            cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)));
+            cmd.Parameters.AddWithValue("@size", file.Length);
+            if (cmd.ExecuteNonQuery() == 0) return StatusCode(500);
+
             FileStream fs = System.IO.File.OpenWrite(fileLoc);
             file.CopyTo(fs);
             fs.Close();
@@ -310,6 +321,20 @@ namespace NovaAPI.Controllers
                 return cpy;
             }
 
+        }
+
+        public string RetreiveMimeType(string content_id)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["MimeType"].ToString();
+            }
+            return "";
         }
     }
 }
