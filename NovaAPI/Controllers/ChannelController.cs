@@ -87,7 +87,7 @@ namespace NovaAPI.Controllers
                 }
             }
 
-            Directory.CreateDirectory(Path.Combine(Globals.ChannelMedia, table_id));
+            Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
@@ -351,6 +351,9 @@ namespace NovaAPI.Controllers
                     if (cmd.ExecuteNonQuery() == 0) return NotFound();
                     channelCon.Close();
                     Event.ChannelDeleteEvent(channel_uuid, user_uuid);
+
+                    Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
+
                     return StatusCode(200, "Channel Removed");
                 }
                 else
@@ -398,7 +401,9 @@ namespace NovaAPI.Controllers
                     channelCon.Close();
                     
                     Event.ChannelDeleteEvent(channel_uuid);
-                    
+
+                    Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
+
                     return StatusCode(200, "Group Removed");
                 }
                 else

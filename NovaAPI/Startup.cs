@@ -77,10 +77,10 @@ namespace NovaAPI
 
             app.UseHttpsRedirection();
 
-            if (!Directory.Exists(Globals.RootMedia)) Directory.CreateDirectory(Globals.RootMedia);
-            if (!Directory.Exists(Globals.ChannelMedia)) Directory.CreateDirectory(Globals.ChannelMedia);
-            if (!Directory.Exists(Globals.DefaultAvatarMedia)) Directory.CreateDirectory(Globals.DefaultAvatarMedia);
-            if (!Directory.Exists(Globals.AvatarMedia)) Directory.CreateDirectory(Globals.AvatarMedia);
+            if (!Directory.Exists(GlobalUtils.RootMedia)) Directory.CreateDirectory(GlobalUtils.RootMedia);
+            if (!Directory.Exists(GlobalUtils.ChannelMedia)) Directory.CreateDirectory(GlobalUtils.ChannelMedia);
+            if (!Directory.Exists(GlobalUtils.DefaultAvatarMedia)) Directory.CreateDirectory(GlobalUtils.DefaultAvatarMedia);
+            if (!Directory.Exists(GlobalUtils.AvatarMedia)) Directory.CreateDirectory(GlobalUtils.AvatarMedia);
             
             
             app.UseRouting();

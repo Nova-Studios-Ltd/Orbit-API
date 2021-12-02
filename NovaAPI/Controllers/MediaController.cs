@@ -25,7 +25,7 @@ namespace NovaAPI.Controllers
         readonly NovaChatDatabaseContext Context;
 
         // For la dumb endpoint
-        public static string[] DefaultAvatars = System.IO.Directory.GetFiles(Globals.DefaultAvatarMedia, "*.*");
+        public static string[] DefaultAvatars = System.IO.Directory.GetFiles(GlobalUtils.DefaultAvatarMedia, "*.*");
         public static Random GetRandom = new();
 
         public MediaController(NovaChatDatabaseContext context)
@@ -242,7 +242,7 @@ namespace NovaAPI.Controllers
         [HttpGet("Channel/{channel_uuid}/{content_id}")]
         public ActionResult GetContent(string channel_uuid, string content_id)
         {
-            string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
+            string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -252,7 +252,7 @@ namespace NovaAPI.Controllers
         [HttpHead("Channel/{channel_uuid}/{content_id}")]
         public ActionResult HeadContent(string channel_uuid, string content_id)
         {
-            string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
+            string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
             Response.ContentLength = fs.Length;
@@ -268,12 +268,12 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            string c = Path.Combine(Globals.ChannelMedia, channel_uuid);
-            if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
+            string c = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid);
+            if (!Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520) return StatusCode(413);
-            if (!Globals.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
+            if (!GlobalUtils.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
             string filename = Guid.NewGuid().ToString("N");
-            string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename);
+            string fileLoc = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, filename);
 
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
