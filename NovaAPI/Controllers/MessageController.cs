@@ -45,7 +45,7 @@ namespace NovaAPI.Controllers
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     using MySqlConnection meta = Context.GetChannels();
                     meta.Open();
-                    using MySqlCommand retreiveMeta = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
+                    using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                     while (reader.Read())
                     {
                         List<Attachment> Attachments = new();
@@ -98,7 +98,7 @@ namespace NovaAPI.Controllers
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     using MySqlConnection meta = Context.GetChannels();
                     meta.Open();
-                    using MySqlCommand retreiveMeta = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
+                    using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                     while (reader.Read())
                     {
                         List<Attachment> Attachments = new();

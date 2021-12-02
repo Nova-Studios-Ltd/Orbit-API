@@ -323,7 +323,7 @@ namespace NovaAPI.Controllers
 
         }
 
-        public string RetreiveMimeType(string content_id)
+        private string RetreiveMimeType(string content_id)
         {
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
