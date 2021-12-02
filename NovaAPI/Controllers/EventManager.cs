@@ -18,6 +18,7 @@ namespace NovaAPI.Controllers
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
+        readonly Mutex ClientSync = new();
 
         public EventManager(NovaChatDatabaseContext context)
         {
@@ -63,8 +64,7 @@ namespace NovaAPI.Controllers
                     }
                     else
                     {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -87,8 +87,7 @@ namespace NovaAPI.Controllers
                     }
                     else
                     {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -110,9 +109,7 @@ namespace NovaAPI.Controllers
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
                     }
                     else
-                    {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                    {RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -137,8 +134,7 @@ namespace NovaAPI.Controllers
                     }
                     else
                     {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -162,8 +158,7 @@ namespace NovaAPI.Controllers
                     }
                     else
                     {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -179,8 +174,7 @@ namespace NovaAPI.Controllers
             }
             else
             {
-                Clients[user_uuid].SocketFinished.TrySetResult(null);
-                Clients.Remove(user_uuid);
+                RemoveClient(user_uuid);
             }
         }
         // Group Events
@@ -204,8 +198,7 @@ namespace NovaAPI.Controllers
                     }
                     else
                     {
-                        Clients[(string)reader["User_UUID"]].SocketFinished.TrySetResult(null);
-                        Clients.Remove((string)reader["User_UUID"]);
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -225,14 +218,22 @@ namespace NovaAPI.Controllers
                 }
                 else
                 {
-                    Clients[user_uuid].SocketFinished.TrySetResult(null);
-                    Clients.Remove(user_uuid);
+                    RemoveClient(user_uuid);
                 }
             }
         }
 
+        public void RemoveClient(string user_uuid)
+        {
+            ClientSync.WaitOne();
+            Clients[user_uuid].SocketFinished.TrySetResult(null);
+            Clients.Remove(user_uuid);
+            ClientSync.ReleaseMutex();
+        }
+
         public async void AddClient(string user_uuid, UserSocket socket)
         {
+            ClientSync.WaitOne();
             if (Clients.ContainsKey(user_uuid))
             {
                 Clients[user_uuid].SocketFinished.TrySetResult(null);
@@ -254,6 +255,7 @@ namespace NovaAPI.Controllers
 
                 Clients.Add(user_uuid, socket);
             }
+            ClientSync.ReleaseMutex();
             //Echo(socket);
         }
 
