@@ -260,7 +260,7 @@ namespace NovaAPI.Controllers
             if (!Directory.Exists(Path.Combine(Globals.ChannelMedia, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520) return StatusCode(413);
             if (!Globals.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
-            string filename = Guid.NewGuid().ToString();
+            string filename = Guid.NewGuid().ToString("N");
             string fileLoc = Path.Combine(Globals.ChannelMedia, channel_uuid, filename);
 
             using MySqlConnection conn = Context.GetChannels();
