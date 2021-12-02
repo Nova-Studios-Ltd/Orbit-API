@@ -18,7 +18,7 @@ namespace NovaAPI.Controllers
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
-        readonly Mutex ClientSync = new();
+        static readonly Mutex ClientSync = new();
 
         public EventManager(NovaChatDatabaseContext context)
         {

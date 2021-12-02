@@ -193,35 +193,42 @@ namespace NovaAPI.Controllers
         [HttpDelete("{channel_uuid}/Messages/{message_id}")]
         public ActionResult DeleteMessage(string channel_uuid, string message_id)
         {
-            string user_uuid = Context.GetUserUUID(GetToken());
-            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            using (MySqlConnection conn = Context.GetChannels())
+            try
             {
-                conn.Open();
-
-                string[] attachmentUUIDs = null;
-                MySqlCommand getAUUID = new($"SELECT * FROM `{channel_uuid}` WHERE (Message_ID=@uuid)", conn);
-                getAUUID.Parameters.AddWithValue("@uuid", message_id);
-                using MySqlDataReader reader = getAUUID.ExecuteReader();
-                while (reader.Read())
+                string user_uuid = Context.GetUserUUID(GetToken());
+                if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+                using (MySqlConnection conn = Context.GetChannels())
                 {
-                    attachmentUUIDs = JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()).ToArray();
-                }
-                reader.Close();
-                if (attachmentUUIDs == null) attachmentUUIDs = new string[0];
+                    conn.Open();
 
-                using MySqlCommand cmd = new($"DELETE FROM `{channel_uuid}` WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
-                cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                cmd.Parameters.AddWithValue("@message_uuid", message_id);
-                cmd.Parameters.AddWithValue("@user_uuid", user_uuid);
-                if (cmd.ExecuteNonQuery() > 0)
-                {
-                    Event.MessageDeleteEvent(channel_uuid, message_id);
-                    GlobalUtils.RemoveAttachmentContent(Context, channel_uuid, attachmentUUIDs);
-                    return StatusCode(200);
+                    string[] attachmentUUIDs = null;
+                    MySqlCommand getAUUID = new($"SELECT * FROM `{channel_uuid}` WHERE (Message_ID=@uuid)", conn);
+                    getAUUID.Parameters.AddWithValue("@uuid", message_id);
+                    using MySqlDataReader reader = getAUUID.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        attachmentUUIDs = JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()).ToArray();
+                    }
+                    reader.Close();
+                    if (attachmentUUIDs == null) attachmentUUIDs = new string[0];
+
+                    using MySqlCommand cmd = new($"DELETE FROM `{channel_uuid}` WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
+                    cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                    cmd.Parameters.AddWithValue("@message_uuid", message_id);
+                    cmd.Parameters.AddWithValue("@user_uuid", user_uuid);
+                    if (cmd.ExecuteNonQuery() > 0)
+                    {
+                        Event.MessageDeleteEvent(channel_uuid, message_id);
+                        GlobalUtils.RemoveAttachmentContent(Context, channel_uuid, attachmentUUIDs);
+                        return StatusCode(200);
+                    }
                 }
+                return StatusCode(404, "Unknown/Unallowed access to message");
             }
-            return StatusCode(404, "Unknown/Unallowed access to message");
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
         [HttpPost("TriggerMessageEvent")]
