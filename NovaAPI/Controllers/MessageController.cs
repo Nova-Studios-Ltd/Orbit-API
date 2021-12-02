@@ -45,12 +45,12 @@ namespace NovaAPI.Controllers
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     using MySqlConnection meta = Context.GetChannels();
                     meta.Open();
-                    using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                     while (reader.Read())
                     {
                         List<Attachment> Attachments = new();
                         foreach (string content_id in JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()))
                         {
+                            using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                             retreiveMeta.Parameters.AddWithValue("@uuid", content_id);
                             MySqlDataReader metaReader = retreiveMeta.ExecuteReader();
                             while (metaReader.Read())
@@ -98,12 +98,12 @@ namespace NovaAPI.Controllers
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     using MySqlConnection meta = Context.GetChannels();
                     meta.Open();
-                    using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                     while (reader.Read())
                     {
                         List<Attachment> Attachments = new();
                         foreach (string content_id in JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString()))
                         {
+                            using MySqlCommand retreiveMeta = new("SELECT * FROM ChannelMedia WHERE (File_UUID=@uuid)", meta);
                             retreiveMeta.Parameters.AddWithValue("@uuid", content_id);
                             MySqlDataReader metaReader = retreiveMeta.ExecuteReader();
                             while (metaReader.Read())
