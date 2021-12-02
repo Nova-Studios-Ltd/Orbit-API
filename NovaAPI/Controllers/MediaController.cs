@@ -245,6 +245,18 @@ namespace NovaAPI.Controllers
             string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
+            Response.ContentLength = fs.Length;
+            Response.ContentType = RetreiveMimeType(content_id);
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return StatusCode(200);
+        }
+
+        [HttpHead("Channel/{channel_uuid}/{content_id}")]
+        public ActionResult HeadContent(string channel_uuid, string content_id)
+        {
+            string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
+            if (!System.IO.File.Exists(path)) return StatusCode(404);
+            FileStream fs = System.IO.File.OpenRead(path);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return File(fs, RetreiveMimeType(content_id));
         }
