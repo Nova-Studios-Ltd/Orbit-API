@@ -62,6 +62,7 @@ namespace NovaAPI.Controllers
                                     Size = int.Parse(metaReader["Size"].ToString())
                                 });
                             }
+                            metaReader.Close();
                         }
 
                         messages.Add(new ChannelMessage
@@ -115,6 +116,7 @@ namespace NovaAPI.Controllers
                                     Size = int.Parse(metaReader["Size"].ToString())
                                 });
                             }
+                            metaReader.Close();
                         }
 
                         return new ChannelMessage
