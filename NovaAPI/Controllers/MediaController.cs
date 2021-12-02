@@ -277,11 +277,21 @@ namespace NovaAPI.Controllers
 
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
-            using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size) VALUES (@uuid, @filename, @mime, @size)", conn);
+            using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @filename, @mime, @size, @width, @height)", conn);
             cmd.Parameters.AddWithValue("@uuid", filename);
             cmd.Parameters.AddWithValue("@filename", file.FileName);
             cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)));
             cmd.Parameters.AddWithValue("@size", file.Length);
+            int width = 0;
+            int height = 0;
+            if (MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)).Contains("image"))
+            {
+                Image m = Image.FromStream(file.OpenReadStream());
+                width = m.Width;
+                height = m.Height;
+            }
+            cmd.Parameters.AddWithValue("@width", width);
+            cmd.Parameters.AddWithValue("@height", height);
             if (cmd.ExecuteNonQuery() == 0) return StatusCode(500);
 
             FileStream fs = System.IO.File.OpenWrite(fileLoc);

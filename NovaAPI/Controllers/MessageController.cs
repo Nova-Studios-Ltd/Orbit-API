@@ -59,7 +59,9 @@ namespace NovaAPI.Controllers
                                 {
                                     ContentUrl = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
-                                    Size = int.Parse(metaReader["Size"].ToString())
+                                    Size = int.Parse(metaReader["Size"].ToString()),
+                                    ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
+                                    ContentHeight = int.Parse(metaReader["ContentHeight"].ToString())
                                 });
                             }
                             metaReader.Close();
@@ -113,7 +115,9 @@ namespace NovaAPI.Controllers
                                 {
                                     ContentUrl = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
-                                    Size = int.Parse(metaReader["Size"].ToString())
+                                    Size = int.Parse(metaReader["Size"].ToString()),
+                                    ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
+                                    ContentHeight = int.Parse(metaReader["ContentHeight"].ToString())
                                 });
                             }
                             metaReader.Close();
