@@ -245,10 +245,8 @@ namespace NovaAPI.Controllers
             string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
-            Response.ContentLength = fs.Length;
-            Response.ContentType = RetreiveMimeType(content_id);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return StatusCode(200);
+            return File(fs, RetreiveMimeType(content_id));
         }
 
         [HttpHead("Channel/{channel_uuid}/{content_id}")]
@@ -257,8 +255,10 @@ namespace NovaAPI.Controllers
             string path = Path.Combine(Globals.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
+            Response.ContentLength = fs.Length;
+            Response.ContentType = RetreiveMimeType(content_id);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return File(fs, RetreiveMimeType(content_id));
+            return StatusCode(200);
         }
 
         // Content Related
