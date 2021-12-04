@@ -2,6 +2,7 @@
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using NovaAPI.Models;
+using NovaAPI.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,6 @@ namespace NovaAPI.Controllers
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
-        static readonly Mutex ClientSync = new();
 
         public EventManager(NovaChatDatabaseContext context)
         {
@@ -225,15 +225,15 @@ namespace NovaAPI.Controllers
 
         public void RemoveClient(string user_uuid)
         {
-            ClientSync.WaitOne();
+            GlobalUtils.ClientSync.WaitOne();
             Clients[user_uuid].SocketFinished.TrySetResult(null);
             Clients.Remove(user_uuid);
-            ClientSync.ReleaseMutex();
+            GlobalUtils.ClientSync.ReleaseMutex();
         }
 
         public async void AddClient(string user_uuid, UserSocket socket)
         {
-            ClientSync.WaitOne();
+            GlobalUtils.ClientSync.WaitOne();
             if (Clients.ContainsKey(user_uuid))
             {
                 Clients[user_uuid].SocketFinished.TrySetResult(null);
@@ -255,7 +255,7 @@ namespace NovaAPI.Controllers
 
                 Clients.Add(user_uuid, socket);
             }
-            ClientSync.ReleaseMutex();
+            GlobalUtils.ClientSync.ReleaseMutex();
             //Echo(socket);
         }
 

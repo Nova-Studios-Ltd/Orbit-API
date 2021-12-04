@@ -1,6 +1,7 @@
 using MySql.Data.MySqlClient;
 using NovaAPI.Controllers;
 using System.IO;
+using System.Threading;
 
 namespace NovaAPI.Util
 {
@@ -12,6 +13,7 @@ namespace NovaAPI.Util
         public static readonly string AvatarMedia = RootMedia + "/Avatars";
 
         public static readonly string[] ContentTypes = new string[] {"png", "jpeg", "jpg", "mp4", "mp3"};
+        public static readonly Mutex ClientSync = new();
 
         public static void RemoveAttachmentContent(NovaChatDatabaseContext context, string channel_uuid, string[] content_uuids)
         {
