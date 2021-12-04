@@ -233,7 +233,7 @@ namespace NovaAPI.Controllers
 
         public async void AddClient(string user_uuid, UserSocket socket)
         {
-            //ClientSync.WaitOne();
+            ClientSync.WaitOne();
             if (Clients.ContainsKey(user_uuid))
             {
                 Clients[user_uuid].SocketFinished.TrySetResult(null);
@@ -255,7 +255,7 @@ namespace NovaAPI.Controllers
 
                 Clients.Add(user_uuid, socket);
             }
-            //ClientSync.ReleaseMutex();
+            ClientSync.ReleaseMutex();
             //Echo(socket);
         }
 
