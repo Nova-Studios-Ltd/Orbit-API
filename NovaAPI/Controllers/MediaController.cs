@@ -56,7 +56,7 @@ namespace NovaAPI.Controllers
                     return File(ms.ToArray(), "image/png");
                 }
             }
-            return StatusCode(500);
+            return StatusCode(404);
         }
 
         [HttpHead("Avatar/{user_uuid}")]
