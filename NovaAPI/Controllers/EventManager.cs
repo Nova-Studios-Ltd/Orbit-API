@@ -225,15 +225,15 @@ namespace NovaAPI.Controllers
 
         public void RemoveClient(string user_uuid)
         {
-            GlobalUtils.ClientSync.WaitOne();
+            //GlobalUtils.ClientSync.WaitOne();
             Clients[user_uuid].SocketFinished.TrySetResult(null);
             Clients.Remove(user_uuid);
-            GlobalUtils.ClientSync.ReleaseMutex();
+            //GlobalUtils.ClientSync.ReleaseMutex();
         }
 
         public async void AddClient(string user_uuid, UserSocket socket)
         {
-            GlobalUtils.ClientSync.WaitOne();
+            //GlobalUtils.ClientSync.WaitOne();
             if (Clients.ContainsKey(user_uuid))
             {
                 Clients[user_uuid].SocketFinished.TrySetResult(null);
@@ -255,7 +255,7 @@ namespace NovaAPI.Controllers
 
                 Clients.Add(user_uuid, socket);
             }
-            GlobalUtils.ClientSync.ReleaseMutex();
+            //GlobalUtils.ClientSync.ReleaseMutex();
             //Echo(socket);
         }
 
