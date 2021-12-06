@@ -177,12 +177,12 @@ namespace NovaAPI.Controllers
                 using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
                 checkForEmail.Parameters.AddWithValue("@email", info.Email);
                 MySqlDataReader read = checkForEmail.ExecuteReader();
-                if (read.HasRows) return StatusCode(200, new { Status = 1, Message = "Duplicate Email" });
+                if (read.HasRows) return StatusCode(409);
 
                 conn.Close();
                 conn.Open();
                 
-                // Get Salt
+                // Get Salt - Sometimes things are better wtih a bit of salt
                 byte[] salt = EncryptionUtils.GetSalt(64);
 
                 using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Salt, Email, Token, Avatar) VALUES (@uuid, @user, @disc, @pass, @salt, @email, @tok, @avatar)", conn);
