@@ -162,6 +162,7 @@ namespace NovaAPI.Controllers
         [HttpPost("/Register")]
         public ActionResult<object> RegisterUser(CreateUserInfo info)
         {
+            // This should work
             string UUID = Guid.NewGuid().ToString("N");
             string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8));
             using (MySqlConnection conn = Context.GetUsers())
