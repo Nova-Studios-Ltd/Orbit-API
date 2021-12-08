@@ -287,7 +287,9 @@ namespace NovaAPI.Controllers
             int height = 0;
             if (MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)).Contains("image"))
             {
-                Image m = Image.FromStream(file.OpenReadStream());
+                MemoryStream ms = new();
+                file.OpenReadStream().CopyTo(ms);
+                Image m = Image.FromStream(ms);
                 width = m.Width;
                 height = m.Height;
             }
