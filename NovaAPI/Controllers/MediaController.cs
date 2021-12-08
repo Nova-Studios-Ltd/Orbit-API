@@ -289,7 +289,7 @@ namespace NovaAPI.Controllers
             {
                 MemoryStream ms = new();
                 file.OpenReadStream().CopyTo(ms);
-                FileStream debugDumb = System.IO.File.OpenWrite($"{GlobalUtils.RootDebug}/{DateTime.Now}.log");
+                FileStream debugDumb = System.IO.File.OpenWrite($"{GlobalUtils.RootDebug}/{CreateMD5(DateTime.Now.ToString())}.log");
                 ms.CopyTo(debugDumb);
                 debugDumb.Close();
                 Image m = Image.FromStream(ms);
