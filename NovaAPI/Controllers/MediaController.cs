@@ -270,7 +270,7 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             string c = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid);
             if (!Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) return StatusCode(404);
-            Console.WriteLine(file.Length);
+            Console.WriteLine(file.FileName);
             if (file.Length >= 20971520 && file.Length > 0) return StatusCode(413);
             if (!GlobalUtils.ContentTypes.Any(x => file.FileName.Contains(x))) return StatusCode(415);
             string filename = Guid.NewGuid().ToString("N");
