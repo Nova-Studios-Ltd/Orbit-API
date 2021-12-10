@@ -165,6 +165,7 @@ namespace NovaAPI.Controllers
                     return StatusCode(500);
                 }
             }
+            Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
