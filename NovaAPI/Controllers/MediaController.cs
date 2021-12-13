@@ -287,12 +287,7 @@ namespace NovaAPI.Controllers
             int height = 0;
             if (MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)).Contains("image"))
             {
-                MemoryStream ms = new();
-                file.OpenReadStream().CopyTo(ms);
-                FileStream debugDumb = System.IO.File.OpenWrite($"{GlobalUtils.RootDebug}/{CreateMD5(DateTime.Now.ToString())}.log");
-                ms.CopyTo(debugDumb);
-                debugDumb.Close();
-                Image m = Image.FromStream(ms);
+                Image m = Image.FromStream(file.OpenReadStream());
                 width = m.Width;
                 height = m.Height;
             }
