@@ -41,7 +41,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -106,7 +106,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , Attachments JSON NOT NULL, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , Attachments JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel

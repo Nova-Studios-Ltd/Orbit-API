@@ -177,10 +177,12 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"UPDATE `{channel_uuid}` SET Content=@content WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
+                using MySqlCommand cmd = new($"UPDATE `{channel_uuid}` SET Content=@content,EditedDate=@date,Edited=@edited WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
                 cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@message_uuid", message_id);
                 cmd.Parameters.AddWithValue("@content", message.Content);
+                cmd.Parameters.AddWithValue("@date", DateTime.Now);
+                cmd.Parameters.AddWithValue("@edited", true);
                 if (cmd.ExecuteNonQuery() > 0)
                 {
                     Event.MessageEditEvent(channel_uuid, message_id);
