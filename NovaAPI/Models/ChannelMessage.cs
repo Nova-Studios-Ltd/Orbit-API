@@ -13,6 +13,8 @@ namespace NovaAPI.Models
         public string Content { get; set; }
         public List<Attachment> Attachments { get; set; }
         public DateTime Timestamp { get; set; }
+        public DateTime EditedTimestamp { get; set; }
+        public bool Edited { get; set; }
         public string Avatar { get; set; }
     }
 }
