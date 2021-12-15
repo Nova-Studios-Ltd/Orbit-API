@@ -396,6 +396,7 @@ namespace NovaAPI.Controllers
                         removeAccess.ExecuteNonQuery();
                     }
                     userDb.Close();
+                    reader.Close();
 
                     using MySqlCommand removeChannelTables = new($"DROP TABLE `{channel_uuid}`, `access_{channel_uuid}`", channelCon);
                     removeChannelTables.ExecuteNonQuery();
