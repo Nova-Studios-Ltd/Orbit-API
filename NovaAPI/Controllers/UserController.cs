@@ -21,7 +21,7 @@ namespace NovaAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+        private static RNGCryptoServiceProvider rngCsp = new();
         private readonly NovaChatDatabaseContext Context;
 
         public UserController(NovaChatDatabaseContext context)
@@ -114,48 +114,54 @@ namespace NovaAPI.Controllers
             }
         }
 
-        [HttpPatch("{user_uuid}")]
+        [HttpPatch("{user_uuid}/Username")]
         [TokenAuthorization]
-        public ActionResult UpdateUser(string user_uuid, UpdateType updateType, [FromBody] string data)
+        public ActionResult ChangeUsername(string user_uuid, [FromBody] string username)
         {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                if (string.IsNullOrEmpty(data)) return StatusCode(400);
-                if (updateType == UpdateType.Username)
-                {
-                    using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                    cmd.Parameters.AddWithValue("@user", data);
-                    cmd.Parameters.AddWithValue("@token", this.GetToken());
-                    cmd.ExecuteNonQuery();
-                }
-                else if (updateType == UpdateType.Password)
-                {
-                    dynamic u = GetUser(user_uuid).Value;
-                    byte[] salt = EncryptionUtils.GetSalt(64);
-                    using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                    cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(data, salt));
-                    cmd.Parameters.AddWithValue("@salt", salt);
-                    cmd.Parameters.AddWithValue("@token", this.GetToken());
-                    cmd.Parameters.AddWithValue("@newToken", EncryptionUtils.GetSaltedHashString(user_uuid + u.Email + data + u.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8)));
-                    cmd.ExecuteNonQuery();
-                }
-                else if (updateType == UpdateType.Email)
-                {
-                    using MySqlCommand cmd = new($"UPDATE Users SET Email=@email WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                    cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                    cmd.Parameters.AddWithValue("@email", data);
-                    cmd.Parameters.AddWithValue("@token", this.GetToken());
-                    cmd.ExecuteNonQuery();
-                }
-                else
-                {
-                    return StatusCode(500);
-                }
-            }
+            if (string.IsNullOrEmpty(username)) return StatusCode(400);
+            if (!Context.UserExsists(user_uuid)) return StatusCode(404);
+            using MySqlConnection conn = Context.GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE (UUID=@uuid) AND (Token=@token)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            cmd.Parameters.AddWithValue("@user", username);
+            cmd.Parameters.AddWithValue("@token", this.GetToken());
+            cmd.ExecuteNonQuery();
+            return StatusCode(200);
+        }
 
+        [HttpPatch("{user_uuid}/Password")]
+        [TokenAuthorization]
+        public ActionResult ChangePassword(string user_uuid, [FromBody] string password)
+        {
+            if (string.IsNullOrEmpty(password)) return StatusCode(400);
+            if (!Context.UserExsists(user_uuid)) return StatusCode(404);
+            dynamic u = GetUser(user_uuid).Value;
+            byte[] salt = EncryptionUtils.GetSalt(64);
+            using MySqlConnection conn = Context.GetUsers();
+            using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken WHERE (UUID=@uuid) AND (Token=@token)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(password, salt));
+            cmd.Parameters.AddWithValue("@salt", salt);
+            cmd.Parameters.AddWithValue("@token", this.GetToken());
+            cmd.Parameters.AddWithValue("@newToken", EncryptionUtils.GetSaltedHashString(user_uuid + u.Email + password + u.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8)));
+            cmd.ExecuteNonQuery();
+            return StatusCode(200);
+        }
+
+        [HttpPatch("{user_uuid}/Email")]
+        [TokenAuthorization]
+        public ActionResult ChangeEmail(string user_uuid, [FromBody] string email)
+        {
+            if (string.IsNullOrEmpty(email)) return StatusCode(400);
+            if (!Context.UserExsists(user_uuid)) return StatusCode(404);
+            using MySqlConnection conn = Context.GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"UPDATE Users SET Email=@email WHERE (UUID=@uuid) AND (Token=@token)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@token", this.GetToken());
+            cmd.ExecuteNonQuery();
             return StatusCode(200);
         }
 
