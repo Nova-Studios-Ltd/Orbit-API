@@ -75,7 +75,7 @@ namespace NovaAPI
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaAPI v1"));
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             if (!Directory.Exists(GlobalUtils.RootMedia)) Directory.CreateDirectory(GlobalUtils.RootMedia);
             if (!Directory.Exists(GlobalUtils.RootDebug)) Directory.CreateDirectory(GlobalUtils.RootDebug);
