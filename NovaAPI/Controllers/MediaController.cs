@@ -25,7 +25,7 @@ namespace NovaAPI.Controllers
     {
         readonly NovaChatDatabaseContext Context;
 
-        // For la dumb endpoint
+        // For la dumb endpoint s
         public static string[] DefaultAvatars = System.IO.Directory.GetFiles(GlobalUtils.DefaultAvatarMedia, "*.*");
         public static Random GetRandom = new();
 
