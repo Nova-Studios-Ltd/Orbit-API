@@ -45,8 +45,8 @@ namespace NovaAPI.Controllers
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    string basePath = "Media/avatars";
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string basePath = GlobalUtils.AvatarMedia;
+                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string path = Path.Combine(basePath, (string)reader["Avatar"]);
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
@@ -70,8 +70,8 @@ namespace NovaAPI.Controllers
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    string basePath = "Media/avatars";
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string basePath = GlobalUtils.AvatarMedia;
+                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string path = Path.Combine(basePath, (string)reader["Avatar"]);
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
