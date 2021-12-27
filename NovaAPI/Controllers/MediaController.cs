@@ -48,6 +48,7 @@ namespace NovaAPI.Controllers
                     string basePath = GlobalUtils.AvatarMedia;
                     if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string path = Path.Combine(basePath, (string)reader["Avatar"]);
+                    Console.WriteLine(path);
                     if (!System.IO.File.Exists(path)) return StatusCode(404);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
