@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MimeTypes;
+using System.Diagnostics;
 
 namespace NovaAPI.Controllers
 {
@@ -48,6 +49,7 @@ namespace NovaAPI.Controllers
                     string basePath = GlobalUtils.AvatarMedia;
                     if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string path = Path.Combine(basePath, (string)reader["Avatar"]);
+                    Console.WriteLine(path);
                     if (!System.IO.File.Exists(path)) return StatusCode(404, path);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;

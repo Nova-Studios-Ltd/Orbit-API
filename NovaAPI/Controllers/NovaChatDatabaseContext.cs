@@ -14,8 +14,14 @@ namespace NovaAPI.Controllers
 
         public NovaChatDatabaseContext(IConfigurationRoot config)
         {
+#if !DEBUG
             MainDatabase = config.GetConnectionString("MainDatabase");
             ChannelsDatabase = config.GetConnectionString("ChannelMessages");
+#endif
+#if DEBUG
+            MainDatabase = "server=10.0.0.250;port=3306;database=NovaChatUsers;user=nova;password=17201311;";
+            ChannelsDatabase = "server=10.0.0.250;port=3306;database=NovaChatChannels;user=nova;password=17201311;";
+#endif
         }
 
         public MySqlConnection GetUsers()
