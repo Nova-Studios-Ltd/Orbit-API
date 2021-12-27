@@ -99,10 +99,10 @@ namespace NovaAPI.Controllers
                 using MySqlDataReader reader = getAvatar.ExecuteReader();
                 while (reader.Read())
                 {
-                    string basePath = "Media/avatars";
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string basePath = GlobalUtils.AvatarMedia;
+                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string oldAvatar = Path.Combine(basePath, (string)reader["Avatar"]);
-                    if (!Regex.IsMatch((string)reader["Avatar"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
+                    if (!((string)reader["Avatar"]).Contains("default") && System.IO.File.Exists(oldAvatar))
                         System.IO.File.Delete(oldAvatar);
                     string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
                     string newAvatarPath = Path.Combine("Media/avatars", newAvatar);
