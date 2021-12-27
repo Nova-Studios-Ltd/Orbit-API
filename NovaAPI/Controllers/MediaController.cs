@@ -48,8 +48,7 @@ namespace NovaAPI.Controllers
                     string basePath = GlobalUtils.AvatarMedia;
                     if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
                     string path = Path.Combine(basePath, (string)reader["Avatar"]);
-                    Console.WriteLine(path);
-                    if (!System.IO.File.Exists(path)) return StatusCode(404);
+                    if (!System.IO.File.Exists(path)) return StatusCode(404, path);
                     MemoryStream ms = new();
                     size = size == -1 ? int.MaxValue : size;
                     ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
