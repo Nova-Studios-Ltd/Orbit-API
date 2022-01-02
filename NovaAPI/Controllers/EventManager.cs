@@ -15,7 +15,7 @@ namespace NovaAPI.Controllers
 {
     public class EventManager
     {
-        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup }
+        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
@@ -257,6 +257,55 @@ namespace NovaAPI.Controllers
             }
             //GlobalUtils.ClientSync.ReleaseMutex();
             //Echo(socket);
+        }
+
+        // Keystore events
+        public async void RefreshKeystore(string user_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.RefreshKeystore }));
+                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                {
+                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                else
+                {
+                    RemoveClient(user_uuid);
+                }
+            }
+        }
+
+        public async void KeyAddedToKeystore(string user_uuid, string key_user_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.KeyAddedToKeystore, KeyUserUUID = key_user_uuid }));
+                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                {
+                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                else
+                {
+                    RemoveClient(user_uuid);
+                }
+            }
+        }
+
+        public async void KeyRemovedFromKeystore(string user_uuid, string key_user_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = EventType.KeyRemoveFromKeystore, KeyUserUUID = key_user_uuid }));
+                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                {
+                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+                else
+                {
+                    RemoveClient(user_uuid);
+                }
+            }
         }
 
 

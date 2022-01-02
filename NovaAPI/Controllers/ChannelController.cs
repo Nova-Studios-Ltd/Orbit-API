@@ -41,7 +41,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, IV VARCHAR(1000) NOT NULL, EncryptedKeys JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -79,6 +79,20 @@ namespace NovaAPI.Controllers
                     cmd.Parameters.AddWithValue("@uuid", table_id);
                     cmd.ExecuteNonQuery();
 
+                    // Exchange pub keys
+                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, Key) VALUES (@uuid, @key)", conn);
+                    ownerExchangeKey.Parameters.AddWithValue("@uuid", recipient_uuid);
+                    ownerExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(recipient_uuid));
+                    ownerExchangeKey.ExecuteNonQuery();
+
+                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, Key) VALUES (@uuid, @key)", conn);
+                    recipientExchangeKey.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
+                    recipientExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
+                    recipientExchangeKey.ExecuteNonQuery();
+
+                    Event.KeyAddedToKeystore(Context.GetUserUUID(this.GetToken()), recipient_uuid);
+                    Event.KeyAddedToKeystore(recipient_uuid, Context.GetUserUUID(this.GetToken()));
+
                     cmd.Dispose();
                 }
                 catch
@@ -91,7 +105,6 @@ namespace NovaAPI.Controllers
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
-
 
         // Groups
         [HttpPost("CreateGroupChannel")]
@@ -106,7 +119,7 @@ namespace NovaAPI.Controllers
                 conn.Open();
 
                 // Create table to hold sent messages
-                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , Attachments JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL , Content VARCHAR(4000) NOT NULL , Attachments JSON NOT NULL, IV VARCHAR(1000) NOT NULL, EncryptedKeys JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
                 createTable.ExecuteNonQuery();
 
                 // Create table to hold the users attached to this channel
@@ -150,6 +163,12 @@ namespace NovaAPI.Controllers
                         addToRec.Parameters.AddWithValue("@property", "ActiveChannelAccess");
                         addToRec.Parameters.AddWithValue("@uuid", table_id);
                         addToRec.ExecuteNonQuery();
+
+                        // Send pub keys
+                        SendPubKey(recipient, recipients, Context.GetUserPubKey(recipient));
+
+                        // Send all others keys to the author
+                        Context.SetUserPubKey(Context.GetUserUUID(this.GetToken()), recipient, Context.GetUserPubKey(recipient));
                     }
 
                     // Add channel to author
@@ -157,6 +176,9 @@ namespace NovaAPI.Controllers
                     cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
                     cmd.Parameters.AddWithValue("@uuid", table_id);
                     cmd.ExecuteNonQuery();
+
+                    // Send author's pub key
+                    SendPubKey(Context.GetUserUUID(this.GetToken()), recipients, Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
 
                     cmd.Dispose();
                 }
@@ -166,6 +188,14 @@ namespace NovaAPI.Controllers
                 }
             }
             Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
+            // Refresh keystores
+            foreach (string r in recipients)
+            {
+                Event.RefreshKeystore(r);
+            }
+
+            Event.RefreshKeystore(author);
+
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
@@ -526,6 +556,15 @@ namespace NovaAPI.Controllers
                 }
             }
             return channels;
+        }
+
+        private void SendPubKey(string user_uuid, List<string> recipient, string key)
+        {
+            foreach (string r in recipient)
+            {
+                if (r == user_uuid) continue;
+                Context.SetUserPubKey(user_uuid, r, key);
+            }
         }
     }
 }

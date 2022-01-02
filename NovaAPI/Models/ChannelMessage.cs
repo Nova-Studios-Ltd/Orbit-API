@@ -11,6 +11,8 @@ namespace NovaAPI.Models
         public string Author { get; set; }
         public string Author_UUID { get; set; }
         public string Content { get; set; }
+        public string IV { get; set; }
+        public Dictionary<string, string> EncryptedKeys { get; set; }
         public List<Attachment> Attachments { get; set; }
         public DateTime Timestamp { get; set; }
         public DateTime EditedTimestamp { get; set; }

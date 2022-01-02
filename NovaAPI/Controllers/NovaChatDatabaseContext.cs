@@ -64,7 +64,6 @@ namespace NovaAPI.Controllers
             }
             return "";
         }
-
         public bool UserExsists(string user_uuid)
         {
             using (MySqlConnection conn = GetUsers())
@@ -79,6 +78,29 @@ namespace NovaAPI.Controllers
                 }
             }
             return false;
+        }
+        public string GetUserPubKey(string user_uuid)
+        {
+            using MySqlConnection conn = GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT PubKey FROM User WHERE UUID=@uuid", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["PubKey"].ToString();
+            }
+            return "";
+        }
+
+        public void SetUserPubKey(string user_uuid, string key_user_uuid, string key)
+        {
+            using MySqlConnection conn = GetUsers();
+            conn.Open();
+            using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, Key) VALUES (@uuid, @key)", conn);
+            cmd.Parameters.AddWithValue("@uuid", key_user_uuid);
+            cmd.Parameters.AddWithValue("@key", key);
+            cmd.ExecuteNonQuery();
         }
     }
 }

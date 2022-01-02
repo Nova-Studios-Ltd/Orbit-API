@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 
 namespace NovaAPI.Models
 {
-    public class SentMessage
+    public class AESMemoryEncryptData
     {
         public string Content { get; set; }
         public string IV { get; set; }
-        public Dictionary<string, string> EncryptedKeys { get; set; }
-        public List<string> Attachments { get; set; } 
     }
 }

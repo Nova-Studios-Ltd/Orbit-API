@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Google.Protobuf;
 using NovaAPI.Attri;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
@@ -74,6 +73,8 @@ namespace NovaAPI.Controllers
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
+                            IV = reader["IV"].ToString(),
+                            EncryptedKeys = JsonConvert.DeserializeObject<Dictionary<string, string>>(reader["EncryptedKeys"].ToString()),
                             Attachments = Attachments,
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
@@ -132,6 +133,8 @@ namespace NovaAPI.Controllers
                             Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
+                            IV = reader["IV"].ToString(),
+                            EncryptedKeys = JsonConvert.DeserializeObject<Dictionary<string, string>>(reader["EncryptedKeys"].ToString()),
                             Attachments = Attachments,
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
@@ -157,10 +160,12 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content, Attachments) VALUES (@author, @content, @attachments)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content, Attachments, IV, EncryptedKeys) VALUES (@author, @content, @attachments, @iv, @keys)", conn);
                 cmd.Parameters.AddWithValue("@author", user_uuid);
                 cmd.Parameters.AddWithValue("@content", message.Content);
                 cmd.Parameters.AddWithValue("@attachments", JsonConvert.SerializeObject(message.Attachments));
+                cmd.Parameters.AddWithValue("@iv", message.IV);
+                cmd.Parameters.AddWithValue("@keys", JsonConvert.SerializeObject(message.EncryptedKeys));
                 cmd.ExecuteNonQuery();
                 
                 using MySqlCommand getId = new($"SELECT Message_ID FROM `{channel_uuid}` ORDER BY Message_ID DESC LIMIT 1", conn);
