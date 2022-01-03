@@ -18,7 +18,7 @@ namespace NovaAPI.Controllers
     public enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
     public class EventManager
     {
-        private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
+        private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 5);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
 
@@ -45,7 +45,7 @@ namespace NovaAPI.Controllers
             }
         }
 
-        public static void CheckPulse(object state)
+        public async static void CheckPulse(object state)
         {
             List<string> deadClients = new();
             foreach (KeyValuePair<string, UserSocket> item in Clients)
@@ -56,8 +56,8 @@ namespace NovaAPI.Controllers
                     deadClients.Add(item.Key);
                 }
 
-                //var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = -1}));
-                //await item.Value.Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = -1}));
+                await item.Value.Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
             }
 
             foreach (string client in deadClients)
