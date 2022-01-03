@@ -80,12 +80,12 @@ namespace NovaAPI.Controllers
                     cmd.ExecuteNonQuery();
 
                     // Exchange pub keys
-                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, Key) VALUES (@uuid, @key)", conn);
+                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
                     ownerExchangeKey.Parameters.AddWithValue("@uuid", recipient_uuid);
                     ownerExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(recipient_uuid));
                     ownerExchangeKey.ExecuteNonQuery();
 
-                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, Key) VALUES (@uuid, @key)", conn);
+                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
                     recipientExchangeKey.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
                     recipientExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
                     recipientExchangeKey.ExecuteNonQuery();
