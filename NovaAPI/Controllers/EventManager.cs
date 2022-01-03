@@ -1,28 +1,48 @@
 ﻿using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
+using NovaAPI.Attri;
 using NovaAPI.Models;
 using NovaAPI.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace NovaAPI.Controllers
 {
+    public enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
     public class EventManager
     {
-        enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 10);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
 
+        public delegate void Single(string arg1);
+        public delegate void Double(string arg1, string arg2);
+
+        public Dictionary<EventType, dynamic> Events = new();
+
         public EventManager(NovaChatDatabaseContext context)
         {
             Context = context;
+            MethodInfo[] methods = Assembly.GetExecutingAssembly().GetTypes()
+                      .SelectMany(t => t.GetMethods())
+                      .Where(m => m.GetCustomAttributes(typeof(WebsocketEvent), false).Length > 0)
+                      .ToArray();
+            foreach (MethodInfo method in methods)
+            {
+                WebsocketEvent we = method.GetCustomAttribute<WebsocketEvent>();
+                if (we == null) continue;
+                if (method.GetParameters().Length == 1)
+                    Events[we.Type] = method.CreateDelegate(typeof(Single), this);
+                else
+                    Events[we.Type] = method.CreateDelegate(typeof(Double), this);
+            }
         }
 
         public static void CheckPulse(object state)
@@ -47,6 +67,7 @@ namespace NovaAPI.Controllers
         }
 
         // Message Events
+        [WebsocketEvent(EventType.MessageSent)]
         public async void MessageSentEvent(string channel_uuid, string message_id)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -69,6 +90,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
+        [WebsocketEvent(EventType.MessageDelete)]
         public async void MessageDeleteEvent(string channel_uuid, string message_id)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -92,6 +114,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
+        [WebsocketEvent(EventType.MessageEdit)]
         public async void MessageEditEvent(string channel_uuid, string message_id)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -116,6 +139,7 @@ namespace NovaAPI.Controllers
         }
 
         // Channel/Group creation event (General purpose event)
+        [WebsocketEvent(EventType.ChannelCreated)]
         public async void ChannelCreatedEvent(string channel_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -139,7 +163,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
-
+        [WebsocketEvent(EventType.ChannelDeleted)]
         public async void ChannelDeleteEvent(string channel_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -163,7 +187,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
-
+        
         public async void ChannelDeleteEvent(string channel_uuid, string user_uuid)
         {
             if (!Clients.ContainsKey(user_uuid)) return;
@@ -177,9 +201,8 @@ namespace NovaAPI.Controllers
                 RemoveClient(user_uuid);
             }
         }
-        // Group Events
 
-        // Sent to all user of a group alerting them to a new user
+        [WebsocketEvent(EventType.GroupNewMember)]
         public async void GroupNewMember(string channel_uuid, string user_uuid)
         {
             using MySqlConnection conn = Context.GetChannels();
@@ -204,9 +227,7 @@ namespace NovaAPI.Controllers
             }
         }
 
-        // User Events
-
-        // Sent to user to alert client of new group
+        [WebsocketEvent(EventType.UserNewGroup)]
         public async void UserNewGroup(string channel_uuid, string user_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
@@ -223,6 +244,7 @@ namespace NovaAPI.Controllers
             }
         }
 
+
         public void RemoveClient(string user_uuid)
         {
             //GlobalUtils.ClientSync.WaitOne();
@@ -230,7 +252,6 @@ namespace NovaAPI.Controllers
             Clients.Remove(user_uuid);
             //GlobalUtils.ClientSync.ReleaseMutex();
         }
-
         public async void AddClient(string user_uuid, UserSocket socket)
         {
             //GlobalUtils.ClientSync.WaitOne();
@@ -260,6 +281,7 @@ namespace NovaAPI.Controllers
         }
 
         // Keystore events
+        [WebsocketEvent(EventType.RefreshKeystore)]
         public async void RefreshKeystore(string user_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
@@ -275,7 +297,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
-
+        [WebsocketEvent(EventType.KeyAddedToKeystore)]
         public async void KeyAddedToKeystore(string user_uuid, string key_user_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
@@ -291,7 +313,7 @@ namespace NovaAPI.Controllers
                 }
             }
         }
-
+        [WebsocketEvent(EventType.KeyRemoveFromKeystore)]
         public async void KeyRemovedFromKeystore(string user_uuid, string key_user_uuid)
         {
             if (Clients.ContainsKey(user_uuid))

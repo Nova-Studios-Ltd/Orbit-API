@@ -54,5 +54,20 @@ namespace NovaAPI.Controllers
             Event.SendReconnectEvent(Context.GetUserUUID(this.GetToken()), setAttempts);
             return StatusCode(200);
         }
+
+        [HttpPost("/AllEvents/Event/{event_id}")]
+        [TokenAuthorization]
+        public ActionResult FireEvent(EventType event_id, string arg1, string arg2)
+        {
+            try
+            {
+                Event.Events[event_id](arg1);
+            }
+            catch
+            {
+                Event.Events[event_id](arg1, arg2);
+            }
+            return StatusCode(200);
+        }
     }
 }
