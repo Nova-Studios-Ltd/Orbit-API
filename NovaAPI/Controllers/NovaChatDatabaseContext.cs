@@ -83,7 +83,7 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection conn = GetUsers();
             conn.Open();
-            using MySqlCommand cmd = new($"SELECT PubKey FROM User WHERE UUID=@uuid", conn);
+            using MySqlCommand cmd = new($"SELECT PubKey FROM Users WHERE UUID=@uuid", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             MySqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())

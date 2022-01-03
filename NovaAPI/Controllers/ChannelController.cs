@@ -65,8 +65,8 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                try
-                {
+                //try
+                //{
                     // Add channel to receiver
                     MySqlCommand cmd = new($"INSERT INTO `{recipient_uuid}` (Property, Value) VALUES (@property, @uuid)", conn);
                     cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
@@ -80,12 +80,12 @@ namespace NovaAPI.Controllers
                     cmd.ExecuteNonQuery();
 
                     // Exchange pub keys
-                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
+                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (`UUID`, `PubKey`) VALUES (`@uuid`, `@key`)", conn);
                     ownerExchangeKey.Parameters.AddWithValue("@uuid", recipient_uuid);
                     ownerExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(recipient_uuid));
                     ownerExchangeKey.ExecuteNonQuery();
 
-                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
+                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (`UUID`, `PubKey`) VALUES (`@uuid`, `@key`)", conn);
                     recipientExchangeKey.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
                     recipientExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
                     recipientExchangeKey.ExecuteNonQuery();
@@ -94,11 +94,11 @@ namespace NovaAPI.Controllers
                     Event.KeyAddedToKeystore(recipient_uuid, Context.GetUserUUID(this.GetToken()));
 
                     cmd.Dispose();
-                }
+                /*}
                 catch
                 {
                     return StatusCode(500);
-                }
+                }*/
             }
 
             Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
@@ -130,7 +130,7 @@ namespace NovaAPI.Controllers
                 foreach (string recipient in recipients)
                 {
                     if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) continue;
-                    using MySqlCommand addUserAccess = new($"INSERT INTO  `access_{table_id}` (User_UUID) VALUES (@recipient)", conn);
+                    using MySqlCommand addUserAccess = new($"INSERT INTO `access_{table_id}` (User_UUID) VALUES (@recipient)", conn);
                     addUserAccess.Parameters.AddWithValue("@recipient", recipient);
                     addUserAccess.ExecuteNonQuery();
                 }
