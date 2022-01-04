@@ -265,7 +265,7 @@ namespace NovaAPI.Controllers
         // Content Related
         [HttpPost("Channel/{channel_uuid}")]
         [TokenAuthorization]
-        public ActionResult<string> PostContent(string channel_uuid, IFormFile file)
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, int width=0, int height=0)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
@@ -284,14 +284,6 @@ namespace NovaAPI.Controllers
             cmd.Parameters.AddWithValue("@filename", file.FileName);
             cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)));
             cmd.Parameters.AddWithValue("@size", file.Length);
-            int width = 0;
-            int height = 0;
-            if (MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)).Contains("image"))
-            {
-                Image m = Image.FromStream(file.OpenReadStream());
-                width = m.Width;
-                height = m.Height;
-            }
             cmd.Parameters.AddWithValue("@width", width);
             cmd.Parameters.AddWithValue("@height", height);
             if (cmd.ExecuteNonQuery() == 0) return StatusCode(500);
