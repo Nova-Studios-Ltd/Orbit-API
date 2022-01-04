@@ -247,7 +247,8 @@ namespace NovaAPI.Controllers
             if (!System.IO.File.Exists(path)) return StatusCode(404);
             FileStream fs = System.IO.File.OpenRead(path);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return File(fs, RetreiveMimeType(content_id));
+            //return File(fs, RetreiveMimeType(content_id));
+            return File(fs, "application/octet-stream");
         }
 
         [HttpHead("Channel/{channel_uuid}/{content_id}")]
