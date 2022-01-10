@@ -154,7 +154,6 @@ namespace NovaAPI.Controllers
                 conn.Open();
                 try
                 {
-
                     foreach (string recipient in recipients)
                     {
                         if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) continue;
@@ -172,10 +171,14 @@ namespace NovaAPI.Controllers
                     }
 
                     // Add channel to author
-                    MySqlCommand cmd = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}` (Property, Value) VALUES (@property, @uuid)", conn);
+                    MySqlCommand cmd = new($"INSERT INTO `{author}` (Property, Value) VALUES (@property, @uuid)", conn);
                     cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
                     cmd.Parameters.AddWithValue("@uuid", table_id);
-                    cmd.ExecuteNonQuery();
+                    if (cmd.ExecuteNonQuery() == 0)
+                    {
+                        RemoveChannel(table_id);
+                        return StatusCode(500);
+                    }
 
                     // Send author's pub key
                     SendPubKey(Context.GetUserUUID(this.GetToken()), recipients, Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));

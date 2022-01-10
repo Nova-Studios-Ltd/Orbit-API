@@ -18,7 +18,7 @@ namespace NovaAPI.Controllers
     public enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
     public class EventManager
     {
-        private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 5);
+        private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 30);
         private static readonly Dictionary<string, UserSocket> Clients = new();
         private readonly NovaChatDatabaseContext Context;
 
@@ -48,6 +48,7 @@ namespace NovaAPI.Controllers
         public async static void CheckPulse(object state)
         {
             List<string> deadClients = new();
+            Console.WriteLine("Checking for dead clients...");
             foreach (KeyValuePair<string, UserSocket> item in Clients)
             {
                 if (item.Value.Socket.State != WebSocketState.Open)
@@ -58,12 +59,31 @@ namespace NovaAPI.Controllers
 
                 var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = -1}));
                 await item.Value.Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                /*try
+                {
+                    byte[] buffer = new byte[1024];
+                    CancellationToken timeout = new CancellationTokenSource(1500).Token;
+                    await item.Value.Socket.ReceiveAsync(buffer, timeout);
+                    if (Encoding.UTF8.GetString(buffer).Trim() != "<Beep>")
+                    {
+                        item.Value.SocketFinished.TrySetResult(null);
+                        deadClients.Add(item.Key);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    item.Value.SocketFinished.TrySetResult(null);
+                    deadClients.Add(item.Key);
+                }*/
             }
 
+            Console.WriteLine($"Removing {deadClients.Count} dead clients");
             foreach (string client in deadClients)
             {
                 Clients.Remove(client);
             }
+            Console.WriteLine($"Removed {deadClients.Count} dead clients");
         }
 
         // Message Events
@@ -132,7 +152,8 @@ namespace NovaAPI.Controllers
                         await Clients[(string)reader["User_UUID"]].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
                     }
                     else
-                    {RemoveClient((string)reader["User_UUID"]);
+                    {
+                        RemoveClient((string)reader["User_UUID"]);
                     }
                 }
             }
@@ -265,7 +286,6 @@ namespace NovaAPI.Controllers
             {
                 byte[] buffer = new byte[1024];
                 WebSocketReceiveResult result = await socket.Socket.ReceiveAsync(buffer, CancellationToken.None);
-                Console.WriteLine(Encoding.UTF8.GetString(buffer).Trim());
 
                 string token = Encoding.UTF8.GetString(buffer).Trim();
                 if (Context.GetUserUUID(token) != user_uuid && !string.IsNullOrWhiteSpace(token))
