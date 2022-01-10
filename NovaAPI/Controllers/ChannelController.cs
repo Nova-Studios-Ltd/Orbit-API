@@ -164,7 +164,12 @@ namespace NovaAPI.Controllers
                         addToRec.ExecuteNonQuery();
 
                         // Send pub keys
-                        SendPubKey(recipient, recipients, Context.GetUserPubKey(recipient));
+                        //SendPubKey(recipient, recipients, Context.GetUserPubKey(recipient));
+                        foreach (string r in recipients)
+                        {
+                            if (r != recipient)
+                                Context.SetUserPubKey(r, recipient, Context.GetUserPubKey(recipient));
+                        }
 
                         // Send all others keys to the author
                         Context.SetUserPubKey(Context.GetUserUUID(this.GetToken()), recipient, Context.GetUserPubKey(recipient));
