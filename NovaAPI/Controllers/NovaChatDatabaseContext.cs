@@ -95,12 +95,16 @@ namespace NovaAPI.Controllers
 
         public void SetUserPubKey(string user_uuid, string key_user_uuid, string key)
         {
-            using MySqlConnection conn = GetUsers();
-            conn.Open();
-            using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
-            cmd.Parameters.AddWithValue("@uuid", key_user_uuid);
-            cmd.Parameters.AddWithValue("@key", key);
-            cmd.ExecuteNonQuery();
+            try
+            {
+                using MySqlConnection conn = GetUsers();
+                conn.Open();
+                using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
+                cmd.Parameters.AddWithValue("@uuid", key_user_uuid);
+                cmd.Parameters.AddWithValue("@key", key);
+                cmd.ExecuteNonQuery();
+            }
+            catch { }
         }
     }
 }
