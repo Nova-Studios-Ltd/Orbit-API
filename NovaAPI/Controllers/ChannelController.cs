@@ -154,48 +154,41 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
-                try
+                foreach (string recipient in recipients)
                 {
-                    foreach (string recipient in recipients)
+                    if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) continue;
+                    // Add channel to receiver
+                    MySqlCommand addToRec = new($"INSERT INTO `{recipient}` (Property, Value) VALUES (@property, @uuid)", conn);
+                    addToRec.Parameters.AddWithValue("@property", "ActiveChannelAccess");
+                    addToRec.Parameters.AddWithValue("@uuid", table_id);
+                    addToRec.ExecuteNonQuery();
+
+                    // Send pub keys
+                    //SendPubKey(recipient, recipients, Context.GetUserPubKey(recipient));
+                    foreach (string r in recipients)
                     {
-                        if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) continue;
-                        // Add channel to receiver
-                        MySqlCommand addToRec = new($"INSERT INTO `{recipient}` (Property, Value) VALUES (@property, @uuid)", conn);
-                        addToRec.Parameters.AddWithValue("@property", "ActiveChannelAccess");
-                        addToRec.Parameters.AddWithValue("@uuid", table_id);
-                        addToRec.ExecuteNonQuery();
-
-                        // Send pub keys
-                        //SendPubKey(recipient, recipients, Context.GetUserPubKey(recipient));
-                        foreach (string r in recipients)
-                        {
-                            if (r != recipient)
-                                Context.SetUserPubKey(r, recipient, Context.GetUserPubKey(recipient));
-                        }
-
-                        // Send all others keys to the author
-                        Context.SetUserPubKey(Context.GetUserUUID(this.GetToken()), recipient, Context.GetUserPubKey(recipient));
+                        if (r != recipient)
+                            Context.SetUserPubKey(r, recipient, Context.GetUserPubKey(recipient));
                     }
 
-                    // Add channel to author
-                    MySqlCommand cmd = new($"INSERT INTO `{author}` (Property, Value) VALUES (@property, @uuid)", conn);
-                    cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
-                    cmd.Parameters.AddWithValue("@uuid", table_id);
-                    if (cmd.ExecuteNonQuery() == 0)
-                    {
-                        RemoveChannel(table_id);
-                        return StatusCode(500);
-                    }
-
-                    // Send author's pub key
-                    SendPubKey(Context.GetUserUUID(this.GetToken()), recipients, Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
-
-                    cmd.Dispose();
+                    // Send all others keys to the author
+                    Context.SetUserPubKey(Context.GetUserUUID(this.GetToken()), recipient, Context.GetUserPubKey(recipient));
                 }
-                catch
+
+                // Add channel to author
+                MySqlCommand cmd = new($"INSERT INTO `{author}` (Property, Value) VALUES (@property, @uuid)", conn);
+                cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
+                cmd.Parameters.AddWithValue("@uuid", table_id);
+                if (cmd.ExecuteNonQuery() == 0)
                 {
+                    RemoveChannel(table_id);
                     return StatusCode(500);
                 }
+
+                // Send author's pub key
+                SendPubKey(Context.GetUserUUID(this.GetToken()), recipients, Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
+
+                cmd.Dispose();
             }
             Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
             // Refresh keystores
