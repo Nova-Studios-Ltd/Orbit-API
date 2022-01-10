@@ -79,15 +79,23 @@ namespace NovaAPI.Controllers
                 cmd.ExecuteNonQuery();
 
                 // Exchange pub keys
-                using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
-                ownerExchangeKey.Parameters.AddWithValue("@uuid", recipient_uuid);
-                ownerExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(recipient_uuid));
-                ownerExchangeKey.ExecuteNonQuery();
+                try
+                {
+                    using MySqlCommand ownerExchangeKey = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
+                    ownerExchangeKey.Parameters.AddWithValue("@uuid", recipient_uuid);
+                    ownerExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(recipient_uuid));
+                    ownerExchangeKey.ExecuteNonQuery();
+                }
+                catch { }
 
-                using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
-                recipientExchangeKey.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
-                recipientExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
-                recipientExchangeKey.ExecuteNonQuery();
+                try
+                {
+                    using MySqlCommand recipientExchangeKey = new($"INSERT INTO `{recipient_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
+                    recipientExchangeKey.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
+                    recipientExchangeKey.Parameters.AddWithValue("@key", Context.GetUserPubKey(Context.GetUserUUID(this.GetToken())));
+                    recipientExchangeKey.ExecuteNonQuery();
+                }
+                catch { }
 
                 Event.KeyAddedToKeystore(Context.GetUserUUID(this.GetToken()), recipient_uuid);
                 Event.KeyAddedToKeystore(recipient_uuid, Context.GetUserUUID(this.GetToken()));
@@ -385,7 +393,7 @@ namespace NovaAPI.Controllers
                     channelCon.Close();
                     Event.ChannelDeleteEvent(channel_uuid, user_uuid);
 
-                    Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
+                    if (Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
 
                     return StatusCode(200, "Channel Removed");
                 }
