@@ -162,8 +162,8 @@ namespace NovaAPI.Controllers
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    if (reader["ChanneIcon"] == "") return StatusCode(204);
                     if (reader["ChannelIcon"] == null) return StatusCode(404);
+                    if (reader["ChannelIcon"].ToString() == "") return StatusCode(204);
                     string basePath = "Media/channelIcons";
                     if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
                     string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
