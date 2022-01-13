@@ -258,6 +258,8 @@ namespace NovaAPI.Controllers
                     string oldAvatar = Path.Combine(basePath, (string)reader["ChannelIcon"]);
                     if (!Regex.IsMatch((string)reader["ChannelIcon"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
                         System.IO.File.Delete(oldAvatar);
+                    conn.Close();
+                    conn.Open();
                     MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
                     setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                     setAvatar.Parameters.AddWithValue("@avatar", "");
