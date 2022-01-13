@@ -82,6 +82,7 @@ namespace NovaAPI
             if (!Directory.Exists(GlobalUtils.ChannelMedia)) Directory.CreateDirectory(GlobalUtils.ChannelMedia);
             if (!Directory.Exists(GlobalUtils.DefaultAvatarMedia)) Directory.CreateDirectory(GlobalUtils.DefaultAvatarMedia);
             if (!Directory.Exists(GlobalUtils.AvatarMedia)) Directory.CreateDirectory(GlobalUtils.AvatarMedia);
+            if (!Directory.Exists(GlobalUtils.ChannelAvatarMedia)) Directory.CreateDirectory(GlobalUtils.ChannelAvatarMedia);
             
             
             app.UseRouting();
