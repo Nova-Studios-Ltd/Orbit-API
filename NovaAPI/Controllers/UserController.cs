@@ -21,7 +21,7 @@ namespace NovaAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private static RNGCryptoServiceProvider rngCsp = new();
+        private static readonly RNGCryptoServiceProvider rngCsp = new();
         private readonly NovaChatDatabaseContext Context;
         private readonly EventManager Event;
 
@@ -220,6 +220,9 @@ namespace NovaAPI.Controllers
 
                 using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", conn);
                 createKeystore.ExecuteNonQuery();
+
+                using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", conn);
+                createFriends.ExecuteNonQuery();
             }
             HttpContext.Request.Headers.Add("Authorization", token);
             return GetUser(UUID);
