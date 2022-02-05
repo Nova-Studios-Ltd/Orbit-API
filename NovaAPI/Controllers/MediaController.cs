@@ -163,6 +163,7 @@ namespace NovaAPI.Controllers
                 while (reader.Read())
                 {
                     if (reader["ChannelIcon"] == null) return StatusCode(404);
+                    if (reader["ChannelIcon"].ToString() == "") return StatusCode(204);
                     string basePath = "Media/channelIcons";
                     if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
                     string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
@@ -188,6 +189,7 @@ namespace NovaAPI.Controllers
                 using MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
+                    if (reader["ChanneIcon"] == "") return StatusCode(204);
                     if (reader["ChannelIcon"] == null) return StatusCode(404);
                     string basePath = "Media/channelIcons";
                     if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
@@ -232,6 +234,35 @@ namespace NovaAPI.Controllers
                     MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
                     setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                     setAvatar.Parameters.AddWithValue("@avatar", newAvatar);
+                    setAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
+                    setAvatar.ExecuteNonQuery();
+                    return StatusCode(200);
+                }
+            }
+            return StatusCode(404);
+        }
+
+        [HttpPost("Channel/{channel_uuid}/ClearIcon")]
+        public ActionResult ClearChannelAvatar(string channel_uuid) {
+            using (MySqlConnection conn = Context.GetChannels())
+            {
+                conn.Open();
+                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
+                getAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                getAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
+                using MySqlDataReader reader = getAvatar.ExecuteReader();
+                while (reader.Read())
+                {
+                    string basePath = "Media/channelIcons";
+                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
+                    string oldAvatar = Path.Combine(basePath, (string)reader["ChannelIcon"]);
+                    if (!Regex.IsMatch((string)reader["ChannelIcon"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
+                        System.IO.File.Delete(oldAvatar);
+                    conn.Close();
+                    conn.Open();
+                    MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
+                    setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
+                    setAvatar.Parameters.AddWithValue("@avatar", "");
                     setAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                     setAvatar.ExecuteNonQuery();
                     return StatusCode(200);

@@ -261,7 +261,7 @@ namespace NovaAPI.Controllers
             if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
             Channel c = GetChannel(channel_uuid).Value;
             if (c == null) return StatusCode(400);
-            if (c.IsGroup) return StatusCode(405);
+            if (!c.IsGroup) return StatusCode(405);
             
             using (MySqlConnection conn = Context.GetUsers())
             {
