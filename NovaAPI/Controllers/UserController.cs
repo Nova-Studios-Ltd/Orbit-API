@@ -36,7 +36,6 @@ namespace NovaAPI.Controllers
         public ActionResult<object> GetUser(string user_uuid)
         {
             object user = null;
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
