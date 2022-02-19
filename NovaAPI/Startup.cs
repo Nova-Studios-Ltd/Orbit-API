@@ -99,7 +99,8 @@ namespace NovaAPI
 
             app.UseAuthorization();
             app.UseAuthentication();
-
+            app.UseCors("Origins");
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
