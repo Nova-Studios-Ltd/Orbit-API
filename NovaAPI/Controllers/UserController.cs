@@ -32,6 +32,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpGet("{user_uuid}")]
+        [HttpGet("@me")]
         [TokenAuthorization]
         public ActionResult<object> GetUser(string user_uuid)
         {
@@ -86,6 +87,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPatch("{user_uuid}/Username")]
+        [HttpPatch("@me/Username")]
         [TokenAuthorization]
         public ActionResult ChangeUsername(string user_uuid, [FromBody] string username)
         {

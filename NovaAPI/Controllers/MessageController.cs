@@ -17,6 +17,7 @@ using System.IO;
 namespace NovaAPI.Controllers
 {
     [Route("Message")]
+    [Route("/")]
     [ApiController]
     [TokenAuthorization]
     public class MessageController : ControllerBase
