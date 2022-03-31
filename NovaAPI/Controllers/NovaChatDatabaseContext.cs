@@ -29,6 +29,12 @@ namespace NovaAPI.Controllers
             return new MySqlConnection(MainDatabase);
         }
 
+        public MySqlConnection GetUserConn()
+        {
+            MySqlConnection conn = new MySqlConnection(MainDatabase);
+            return conn;
+        }
+
         public MySqlConnection GetChannels()
         {
             return new MySqlConnection(ChannelsDatabase);

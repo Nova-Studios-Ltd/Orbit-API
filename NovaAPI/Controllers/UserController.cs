@@ -139,6 +139,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("/Login")]
+        [Obsolete("Please use /Auth/Login instead")]
         public ActionResult<ReturnLoginUserInfo> LoginUser(LoginUserInfo info)
         {
             try
@@ -176,6 +177,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("/Register")]
+        [Obsolete("Please use /Auth/Register instead")]
         public ActionResult<object> RegisterUser(CreateUserInfo info)
         {
             string UUID = Guid.NewGuid().ToString("N");

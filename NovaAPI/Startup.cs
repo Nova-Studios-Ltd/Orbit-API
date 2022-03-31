@@ -16,6 +16,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Text;
 using NovaAPI.Util;
+using NovaAPI.Attri;
 
 namespace NovaAPI
 {
@@ -39,9 +40,15 @@ namespace NovaAPI
             {
                 return new EventManager((NovaChatDatabaseContext)sp.GetService(typeof(NovaChatDatabaseContext)));
             });
+
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nova API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo 
+                { 
+                    Title = "Nova API", 
+                    Version = "v1"
+                });
+
                 c.AddSecurityDefinition("basicAuth", new OpenApiSecurityScheme()
                 {
                     Description = "Standard Authorization header using the Bearer scheme. Example: \"{token}\"",
@@ -57,7 +64,8 @@ namespace NovaAPI
                             Reference = new OpenApiReference {
                                 Type = ReferenceType.SecurityScheme,
                                 Id = "basicAuth" }
-                        }, new List<string>() }
+                        }, new List<string>() 
+                    }
                 });
             });
         }
@@ -73,7 +81,9 @@ namespace NovaAPI
             //}
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaAPI v1"));
+            app.UseSwaggerUI((c) => {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaAPI v1");
+            });
 
             //app.UseHttpsRedirection();
 
