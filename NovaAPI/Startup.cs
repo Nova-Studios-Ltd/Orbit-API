@@ -34,6 +34,13 @@ namespace NovaAPI
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "Origins", builder =>
+                {
+                    builder.WithOrigins("http://localhost");
+                });
+            });
             services.AddControllers();
             services.Add(new ServiceDescriptor(typeof(NovaChatDatabaseContext), new NovaChatDatabaseContext(Configuration)));
             services.AddTransient<EventManager>(sp =>
@@ -93,8 +100,7 @@ namespace NovaAPI
             if (!Directory.Exists(GlobalUtils.DefaultAvatarMedia)) Directory.CreateDirectory(GlobalUtils.DefaultAvatarMedia);
             if (!Directory.Exists(GlobalUtils.AvatarMedia)) Directory.CreateDirectory(GlobalUtils.AvatarMedia);
             if (!Directory.Exists(GlobalUtils.ChannelAvatarMedia)) Directory.CreateDirectory(GlobalUtils.ChannelAvatarMedia);
-            
-            
+
             app.UseRouting();
 
             WebSocketOptions wsOptions = new() { KeepAliveInterval = TimeSpan.FromSeconds(120) };
@@ -102,7 +108,8 @@ namespace NovaAPI
 
             app.UseAuthorization();
             app.UseAuthentication();
-
+            app.UseCors("Origins");
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
