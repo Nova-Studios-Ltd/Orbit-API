@@ -89,7 +89,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@salt", salt);
                 cmd.Parameters.AddWithValue("@email", info.Email);
                 cmd.Parameters.AddWithValue("@tok", token);
-                cmd.Parameters.AddWithValue("@avatar", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
+                cmd.Parameters.AddWithValue("@avatar", "");
                 cmd.Parameters.AddWithValue("@pubKey", info.Key.Pub);
                 cmd.Parameters.AddWithValue("@privKey", info.Key.Priv);
                 cmd.Parameters.AddWithValue("@iv", info.Key.PrivIV);

@@ -19,19 +19,24 @@ using System.Diagnostics;
 
 namespace NovaAPI.Controllers
 {
+    [Route("Media")]
+    [Obsolete("Obsolete")]
     [ApiController]
-    public class MediaController : ControllerBase
+    public class MediaControllerObsolete : ControllerBase
     {
         readonly NovaChatDatabaseContext Context;
 
+        // For la dumb endpoint
+        public static string[] DefaultAvatars = System.IO.Directory.GetFiles(GlobalUtils.DefaultAvatarMedia, "*.*");
+        public static Random GetRandom = new();
 
-        public MediaController(NovaChatDatabaseContext context)
+        public MediaControllerObsolete(NovaChatDatabaseContext context)
         {
             Context = context;
         }
 
         // User related
-        [HttpGet("/User/{user_uuid}/Avatar")]
+        [HttpGet("Avatar/{user_uuid}")]
         public ActionResult GetAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -56,7 +61,7 @@ namespace NovaAPI.Controllers
             return StatusCode(404);
         }
 
-        [HttpHead("/User/{user_uuid}/Avatar")]
+        [HttpHead("Avatar/{user_uuid}")]
         public ActionResult HeadAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -81,7 +86,7 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        [HttpPost("/User/{user_uuid}/Avatar")]
+        [HttpPost("Avatar/{user_uuid}")]
         [TokenAuthorization]
         public ActionResult SetAvatar(string user_uuid, IFormFile file)
         {
@@ -117,7 +122,7 @@ namespace NovaAPI.Controllers
         }
 
         // Channel (Group) related 
-        [HttpGet("/Channel/{channel_uuid}/Icon")]
+        [HttpGet("Channel/{channel_uuid}/Icon")]
         public ActionResult GetChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetChannels())
@@ -144,7 +149,7 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        [HttpHead("/Channel/{channel_uuid}/Icon")]
+        [HttpHead("Channel/{channel_uuid}/Icon")]
         public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             using (MySqlConnection conn = Context.GetUsers())
@@ -173,7 +178,7 @@ namespace NovaAPI.Controllers
             return StatusCode(500);
         }
 
-        [HttpPost("/Channel/{channel_uuid}/Icon")]
+        [HttpPost("Channel/{channel_uuid}/Icon")]
         [TokenAuthorization]
         public ActionResult SetChannelAvatar(string channel_uuid, IFormFile file) {
             using (MySqlConnection conn = Context.GetChannels())
@@ -208,7 +213,7 @@ namespace NovaAPI.Controllers
             return StatusCode(404);
         }
 
-        [HttpPost("/Channel/{channel_uuid}/ClearIcon")]
+        [HttpPost("Channel/{channel_uuid}/ClearIcon")]
         public ActionResult ClearChannelAvatar(string channel_uuid) {
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -237,7 +242,7 @@ namespace NovaAPI.Controllers
             return StatusCode(404);
         }
 
-        [HttpGet("/Channel/{channel_uuid}/{content_id}")]
+        [HttpGet("Channel/{channel_uuid}/{content_id}")]
         public ActionResult GetContent(string channel_uuid, string content_id)
         {
             string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
@@ -260,7 +265,7 @@ namespace NovaAPI.Controllers
         }
 
         // Content Related
-        [HttpPost("/Channel/{channel_uuid}")]
+        [HttpPost("Channel/{channel_uuid}")]
         [TokenAuthorization]
         public ActionResult<string> PostContent(string channel_uuid, IFormFile file, int width=0, int height=0)
         {
@@ -308,7 +313,7 @@ namespace NovaAPI.Controllers
                 return sb.ToString();
             }
         }
-        private static Image ResizeImage(Image img, int maxWidth, int maxHeight, bool keepAspect)
+        private Image ResizeImage(Image img, int maxWidth, int maxHeight, bool keepAspect)
         {
             if (img.Height < maxHeight && img.Width < maxWidth) return img;
             using (img)
