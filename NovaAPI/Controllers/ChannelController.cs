@@ -58,7 +58,7 @@ namespace NovaAPI.Controllers
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `Timestamp`) VALUES (@table_id, @owner_uuid, @icon, CURRENT_TIMESTAMP)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                addChannel.Parameters.AddWithValue("@icon", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
+                addChannel.Parameters.AddWithValue("@icon", "");
                 addChannel.ExecuteNonQuery();
             }
 
@@ -145,7 +145,7 @@ namespace NovaAPI.Controllers
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`, `GroupName`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP, @gn)", conn);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                addChannel.Parameters.AddWithValue("@icon", Path.GetFileName(MediaController.DefaultAvatars[MediaController.GetRandom.Next(0, MediaController.DefaultAvatars.Length - 1)]));
+                addChannel.Parameters.AddWithValue("@icon", "");
                 addChannel.Parameters.AddWithValue("@group", true);
                 addChannel.Parameters.AddWithValue("@gn", group_name);
                 addChannel.ExecuteNonQuery();
