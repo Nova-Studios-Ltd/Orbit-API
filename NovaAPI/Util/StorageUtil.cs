@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using NovaAPI.Controllers;
+using NovaAPI.Structs;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,53 +11,78 @@ namespace NovaAPI.Util
 {
     public static class StorageUtil
     {
-        public static void InitStorage(string directory)
+        public static string NC3Storage = "";
+        public static string UserData = "";
+        public static string ChannelData = "";
+        public static string ChannelContent = "";
+        public static string ChannelIcon = "";
+
+        private static NovaChatDatabaseContext Context;
+
+        public enum MediaType { Avatar, ChannelIcon, ChannelContent }
+        public static void InitStorage(string directory, IConfigurationRoot config)
         {
-            string nc3Storage = Path.Combine(directory, "NC3Storage");
+            Context = new NovaChatDatabaseContext(config);
+
+            NC3Storage = Path.Combine(directory, "NC3Storage");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            if (!Directory.Exists(nc3Storage))
+            if (!Directory.Exists(NC3Storage))
             {
-                Directory.CreateDirectory(nc3Storage);
-                Console.WriteLine("Storage Directory Created");
+                Directory.CreateDirectory(NC3Storage);
+                Console.WriteLine($"Storage ({NC3Storage}) Directory Created");
             }
-            else Console.WriteLine("Found Storage Directory. Continuing...");
+            else Console.WriteLine($"Found Storage ({NC3Storage}) Directory. Continuing...");
 
-            string userData = Path.Combine(nc3Storage, "UserData");
-            if (!Directory.Exists(userData))
+            UserData = Path.Combine(NC3Storage, "UserData");
+            if (!Directory.Exists(UserData))
             {
-                Directory.CreateDirectory(userData);
-                Console.WriteLine("UserData Directory Created");
+                Directory.CreateDirectory(UserData);
+                Console.WriteLine($"UserData ({UserData}) Directory Created");
             }
-            else Console.WriteLine("Found UserData Directory. Continuing...");
+            else Console.WriteLine($"Found UserData ({UserData}) Directory. Continuing...");
 
-            string channelData = Path.Combine(nc3Storage, "ChannelData");
-            if (!Directory.Exists(channelData))
+            ChannelData = Path.Combine(NC3Storage, "ChannelData");
+            if (!Directory.Exists(ChannelData))
             {
-                Directory.CreateDirectory(channelData);
-                Console.WriteLine("ChannelData Directory Created");
+                Directory.CreateDirectory(ChannelData);
+                Console.WriteLine($"ChannelData ({ChannelData}) Directory Created");
             }
-            else Console.WriteLine("Found ChannelData Directory. Continuing...");
+            else Console.WriteLine($"Found ChannelData ({ChannelData}) Directory. Continuing...");
 
-            string channelContent = Path.Combine(channelData, "ChannelContent");
-            if (!Directory.Exists(channelContent))
+            ChannelContent = Path.Combine(ChannelData, "ChannelContent");
+            if (!Directory.Exists(ChannelContent))
             {
-                Directory.CreateDirectory(channelContent);
-                Console.WriteLine("ChannelContent Directory Created");
+                Directory.CreateDirectory(ChannelContent);
+                Console.WriteLine($"ChannelContent ({ChannelContent}) Directory Created");
             }
-            else Console.WriteLine("Found ChannelContent Directory. Continuing...");
+            else Console.WriteLine($"Found ChannelContent ({ChannelContent}) Directory. Continuing...");
 
-            string channelIcon = Path.Combine(channelData, "ChannelIcon");
-            if (!Directory.Exists(channelIcon))
+            ChannelIcon = Path.Combine(ChannelData, "ChannelIcon");
+            if (!Directory.Exists(ChannelIcon))
             {
-                Directory.CreateDirectory(channelIcon);
-                Console.WriteLine("ChannelIcon Directory Created");
+                Directory.CreateDirectory(ChannelIcon);
+                Console.WriteLine($"ChannelIcon ({ChannelIcon}) Directory Created");
             }
-            else Console.WriteLine("Found ChannelIcon Directory. Continuing...");
+            else Console.WriteLine($"Found ChannelIcon ({ChannelIcon}) Directory. Continuing...");
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Data Directory Setup Complete");
         }
         
-        public static 
+        public static void StoreFile(MediaType mediaType, Stream file, ChannelContentMeta meta = null)
+        {
+            if (mediaType == MediaType.ChannelContent)
+            {
+
+            }
+            else if (mediaType == MediaType.Avatar)
+            {
+
+            }
+            else
+            {
+
+            }
+        }
     }
 }

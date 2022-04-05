@@ -94,12 +94,7 @@ namespace NovaAPI
 
             //app.UseHttpsRedirection();
 
-            if (!Directory.Exists(GlobalUtils.RootMedia)) Directory.CreateDirectory(GlobalUtils.RootMedia);
-            if (!Directory.Exists(GlobalUtils.RootDebug)) Directory.CreateDirectory(GlobalUtils.RootDebug);
-            if (!Directory.Exists(GlobalUtils.ChannelMedia)) Directory.CreateDirectory(GlobalUtils.ChannelMedia);
-            if (!Directory.Exists(GlobalUtils.DefaultAvatarMedia)) Directory.CreateDirectory(GlobalUtils.DefaultAvatarMedia);
-            if (!Directory.Exists(GlobalUtils.AvatarMedia)) Directory.CreateDirectory(GlobalUtils.AvatarMedia);
-            if (!Directory.Exists(GlobalUtils.ChannelAvatarMedia)) Directory.CreateDirectory(GlobalUtils.ChannelAvatarMedia);
+            StorageUtil.InitStorage("", Configuration);
 
             app.UseRouting();
 
