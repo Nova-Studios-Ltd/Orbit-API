@@ -1,6 +1,8 @@
 using MySql.Data.MySqlClient;
 using NovaAPI.Controllers;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 
 namespace NovaAPI.Util
@@ -27,6 +29,24 @@ namespace NovaAPI.Util
                 removeAttachment.Parameters.AddWithValue("@uuid", file);
                 removeAttachment.ExecuteNonQuery();
                 if (File.Exists(Path.Combine(ChannelMedia, channel_uuid, file))) File.Delete(Path.Combine(ChannelMedia, channel_uuid, file));
+            }
+        }
+        
+        public static string CreateMD5(string input)
+        {
+            // Use input string to calculate MD5 hash
+            using (MD5 md5 = MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                // Convert the byte array to hexadecimal string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString();
             }
         }
     }

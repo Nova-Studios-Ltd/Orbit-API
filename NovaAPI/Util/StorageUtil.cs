@@ -1,11 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using NovaAPI.Controllers;
-using NovaAPI.Structs;
+using NovaAPI.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MimeTypes;
+using MySql.Data.MySqlClient;
+using NovaAPI.Interfaces;
 
 namespace NovaAPI.Util
 {
@@ -69,20 +72,154 @@ namespace NovaAPI.Util
             Console.WriteLine("Data Directory Setup Complete");
         }
         
-        public static void StoreFile(MediaType mediaType, Stream file, ChannelContentMeta meta = null)
+        public static string StoreFile(MediaType mediaType, Stream file, IMeta meta)
         {
             if (mediaType == MediaType.ChannelContent)
             {
-
+                ChannelContentMeta filemeta = (ChannelContentMeta) meta;
+                string path = Path.Combine(ChannelContent, filemeta.Channel_UUID);
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                    Console.WriteLine($"Created Directory ({path}) For Channnel {filemeta.Channel_UUID}");
+                }
+                
+                // Save file to disk
+                string filename = GlobalUtils.CreateMD5(filemeta.Filename + DateTime.Now);
+                FileStream fs = File.Create(Path.Combine(path, filename));
+                file.CopyTo(fs);
+                fs.Close();
+                
+                // Store file meta data
+                using MySqlConnection conn = Context.GetChannels();
+                conn.Open();
+                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @filename, @mime, @size, @width, @height)", conn);
+                cmd.Parameters.AddWithValue("@uuid", filename);
+                cmd.Parameters.AddWithValue("@filename", filemeta.Filename);
+                cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(filemeta.Filename)));
+                cmd.Parameters.AddWithValue("@size", filemeta.Filesize);
+                cmd.Parameters.AddWithValue("@width", filemeta.Width);
+                cmd.Parameters.AddWithValue("@height", filemeta.Height);
+                if (cmd.ExecuteNonQuery() == 0) return "E";
+                return filename;
             }
             else if (mediaType == MediaType.Avatar)
             {
+                AvatarMeta filemeta = (AvatarMeta) meta;
+                string filename = GlobalUtils.CreateMD5(filemeta.Filename + DateTime.Now);
+                FileStream fs = File.Create(Path.Combine(UserData, filename));
+                file.CopyTo(fs);
+                fs.Close();
 
+                MySqlConnection conn = Context.GetUsers();
+                conn.Open();
+                MySqlCommand setAvatar = new($"UPDATE Users SET Avatar=@avatar WHERE (UUID=@uuid)", conn);
+                setAvatar.Parameters.AddWithValue("@uuid", filemeta.User_UUID);
+                setAvatar.Parameters.AddWithValue("@avatar", filename);
+                if (setAvatar.ExecuteNonQuery() == 0) return "E";
+                conn.Close();
+                return "";
             }
             else
             {
+                IconMeta filemeta = (IconMeta) meta;
+                string filename = GlobalUtils.CreateMD5(filemeta.Filename + DateTime.Now);
+                FileStream fs = File.Create(Path.Combine(ChannelIcon, filename));
+                file.CopyTo(fs);
+                fs.Close();
 
+                MySqlConnection conn = Context.GetChannels();
+                conn.Open();
+                MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid)",
+                    conn);
+                setAvatar.Parameters.AddWithValue("@channel_uuid", filemeta.Channel_UUID);
+                setAvatar.Parameters.AddWithValue("@avatar", filename);
+                if (setAvatar.ExecuteNonQuery() == 0) return "E";
+                conn.Close();
+                return "";
             }
+        }
+
+        public static MediaFile RetreiveFile(MediaType mediaType, string resource_id, string location_id = "")
+        {
+            if (mediaType == MediaType.ChannelContent)
+            {
+                string path = Path.Combine(ChannelContent, location_id, resource_id);
+                FileStream fs = File.OpenRead(path);
+                Diamension dim = RetreiveDiamension(resource_id);
+                return new MediaFile(fs,
+                    new ChannelContentMeta(dim.Width, dim.Height, RetreiveMimeType(resource_id), RetreiveFilename(resource_id), location_id,
+                        fs.Length));
+            }
+            else if (mediaType == MediaType.ChannelIcon)
+            {
+                string path = Path.Combine(ChannelIcon, resource_id);
+                FileStream fs = File.OpenRead(path);
+                return new MediaFile(fs, new IconMeta(resource_id, fs.Length, location_id));
+            }
+            else
+            {
+                string name = RetreiveUserAvatar(resource_id);
+                string path = Path.Combine(UserData, name);
+                FileStream fs = File.OpenRead(path);
+                return new MediaFile(fs, new AvatarMeta(name, fs.Length, resource_id));
+            }
+        }
+        
+        public static string RetreiveMimeType(string content_id)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["MimeType"].ToString();
+            }
+            return "";
+        }
+
+        public static Diamension RetreiveDiamension(string content_id)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT ContentWidth,ContentHeight FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return new Diamension(int.Parse(reader["ContentWidth"].ToString()), int.Parse(reader["ContentHeight"].ToString()));
+            }
+            return new Diamension(0, 0);
+        }
+
+        public static string RetreiveFilename(string content_id)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT Filename FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["Filename"].ToString();
+            }
+            return "";
+        }
+
+        public static string RetreiveUserAvatar(string user_uuid)
+        {
+            MySqlConnection conn = Context.GetUsers();
+            MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            using MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["Avatar"].ToString();
+            }
+
+            return "";
         }
     }
 }
