@@ -9,16 +9,17 @@ using System.Threading.Tasks;
 using MimeTypes;
 using MySql.Data.MySqlClient;
 using NovaAPI.Interfaces;
+using System.Reflection;
 
 namespace NovaAPI.Util
 {
     public static class StorageUtil
     {
-        public static string NC3Storage = "";
-        public static string UserData = "";
-        public static string ChannelData = "";
-        public static string ChannelContent = "";
-        public static string ChannelIcon = "";
+        private static string NC3Storage = "";
+        private static string UserData = "";
+        private static string ChannelData = "";
+        private static string ChannelContent = "";
+        private static string ChannelIcon = "";
 
         private static NovaChatDatabaseContext Context;
 
@@ -27,49 +28,64 @@ namespace NovaAPI.Util
         {
             Context = new NovaChatDatabaseContext(config);
 
+            if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
             NC3Storage = Path.Combine(directory, "NC3Storage");
-            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.ForegroundColor = ConsoleColor.Green;
             if (!Directory.Exists(NC3Storage))
             {
                 Directory.CreateDirectory(NC3Storage);
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"Storage ({NC3Storage}) Directory Created");
             }
             else Console.WriteLine($"Found Storage ({NC3Storage}) Directory. Continuing...");
+
+            Console.ForegroundColor = ConsoleColor.Green;
 
             UserData = Path.Combine(NC3Storage, "UserData");
             if (!Directory.Exists(UserData))
             {
                 Directory.CreateDirectory(UserData);
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"UserData ({UserData}) Directory Created");
             }
             else Console.WriteLine($"Found UserData ({UserData}) Directory. Continuing...");
+
+            Console.ForegroundColor = ConsoleColor.Green;
 
             ChannelData = Path.Combine(NC3Storage, "ChannelData");
             if (!Directory.Exists(ChannelData))
             {
                 Directory.CreateDirectory(ChannelData);
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"ChannelData ({ChannelData}) Directory Created");
             }
             else Console.WriteLine($"Found ChannelData ({ChannelData}) Directory. Continuing...");
+
+            Console.ForegroundColor = ConsoleColor.Green;
 
             ChannelContent = Path.Combine(ChannelData, "ChannelContent");
             if (!Directory.Exists(ChannelContent))
             {
                 Directory.CreateDirectory(ChannelContent);
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"ChannelContent ({ChannelContent}) Directory Created");
             }
             else Console.WriteLine($"Found ChannelContent ({ChannelContent}) Directory. Continuing...");
+
+            Console.ForegroundColor = ConsoleColor.Green;
 
             ChannelIcon = Path.Combine(ChannelData, "ChannelIcon");
             if (!Directory.Exists(ChannelIcon))
             {
                 Directory.CreateDirectory(ChannelIcon);
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"ChannelIcon ({ChannelIcon}) Directory Created");
             }
             else Console.WriteLine($"Found ChannelIcon ({ChannelIcon}) Directory. Continuing...");
 
-            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Data Directory Setup Complete");
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
         
         public static string StoreFile(MediaType mediaType, Stream file, IMeta meta)
@@ -211,6 +227,7 @@ namespace NovaAPI.Util
         public static string RetreiveUserAvatar(string user_uuid)
         {
             MySqlConnection conn = Context.GetUsers();
+            conn.Open();
             MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             using MySqlDataReader reader = cmd.ExecuteReader();

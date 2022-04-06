@@ -16,6 +16,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MimeTypes;
 using System.Diagnostics;
+using static NovaAPI.Util.StorageUtil;
+using NovaAPI.DataTypes;
 
 namespace NovaAPI.Controllers
 {
@@ -34,181 +36,67 @@ namespace NovaAPI.Controllers
         [HttpGet("/User/{user_uuid}/Avatar")]
         public ActionResult GetAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    string basePath = GlobalUtils.AvatarMedia;
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
-                    string path = Path.Combine(basePath, (string)reader["Avatar"]);
-                    if (!System.IO.File.Exists(path)) return StatusCode(404);
-                    MemoryStream ms = new();
-                    size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    return File(ms.ToArray(), "image/png");
-                }
-            }
-            return StatusCode(404);
+            MediaFile file = RetreiveFile(MediaType.Avatar, user_uuid);
+            MemoryStream ms = new();
+            size = size == -1 ? int.MaxValue : size;
+            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
+            return File(ms.ToArray(), "image/png");
         }
 
         [HttpHead("/User/{user_uuid}/Avatar")]
         public ActionResult HeadAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", user_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    string basePath = GlobalUtils.AvatarMedia;
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
-                    string path = Path.Combine(basePath, (string)reader["Avatar"]);
-                    if (!System.IO.File.Exists(path)) return StatusCode(404);
-                    MemoryStream ms = new();
-                    size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    return File(ms.ToArray(), "image/png");
-                }
-            }
-            return StatusCode(500);
+            MediaFile file = RetreiveFile(MediaType.Avatar, user_uuid);
+            MemoryStream ms = new();
+            size = size == -1 ? int.MaxValue : size;
+            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
+            Response.ContentLength = ms.Length;
+            Response.ContentType = file.Meta.MimeType;
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return StatusCode(200);
         }
 
         [HttpPost("/User/{user_uuid}/Avatar")]
         [TokenAuthorization]
         public ActionResult SetAvatar(string user_uuid, IFormFile file)
         {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand getAvatar = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
-                getAvatar.Parameters.AddWithValue("@uuid", user_uuid);
-                getAvatar.Parameters.AddWithValue("@token", this.GetToken());
-                using MySqlDataReader reader = getAvatar.ExecuteReader();
-                while (reader.Read())
-                {
-                    string basePath = GlobalUtils.AvatarMedia;
-                    if (((string)reader["Avatar"]).Contains("default")) basePath = GlobalUtils.DefaultAvatarMedia;
-                    string oldAvatar = Path.Combine(basePath, (string)reader["Avatar"]);
-                    if (!((string)reader["Avatar"]).Contains("default") && System.IO.File.Exists(oldAvatar))
-                        System.IO.File.Delete(oldAvatar);
-                    string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
-                    string newAvatarPath = Path.Combine(basePath, newAvatar);
-                    FileStream fs = System.IO.File.OpenWrite(newAvatarPath);
-                    file.CopyTo(fs);
-                    fs.Close();
-                    conn.Close();
-                    conn.Open();
-                    MySqlCommand setAvatar = new($"UPDATE Users SET Avatar=@avatar WHERE (UUID=@uuid)", conn);
-                    setAvatar.Parameters.AddWithValue("@uuid", user_uuid);
-                    setAvatar.Parameters.AddWithValue("@avatar", newAvatar);
-                    setAvatar.ExecuteNonQuery();
-                    return StatusCode(200);
-                }
-            }
-            return StatusCode(404);
+            string filename = StoreFile(MediaType.Avatar, file.OpenReadStream(), new AvatarMeta(file.FileName, file.Length, user_uuid));
+            return (filename == "")? StatusCode(200) : StatusCode(404);
         }
 
         // Channel (Group) related 
         [HttpGet("/Channel/{channel_uuid}/Icon")]
         public ActionResult GetChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
-            using (MySqlConnection conn = Context.GetChannels())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", channel_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    if (reader["ChannelIcon"] == null) return StatusCode(404);
-                    if (reader["ChannelIcon"].ToString() == "") return StatusCode(204);
-                    string basePath = "Media/channelIcons";
-                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
-                    string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
-                    if (!System.IO.File.Exists(path)) return StatusCode(404);
-                    MemoryStream ms = new();
-                    size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    return File(ms.ToArray(), "image/png");
-                }
-            }
-            return StatusCode(500);
+            MediaFile file = RetreiveFile(MediaType.ChannelIcon, channel_uuid);
+            MemoryStream ms = new();
+            size = size == -1 ? int.MaxValue : size;
+            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
+            return File(ms.ToArray(), "image/png");
         }
 
         [HttpHead("/Channel/{channel_uuid}/Icon")]
         public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (Table_ID=@uuid)", conn);
-                cmd.Parameters.AddWithValue("@uuid", channel_uuid);
-                using MySqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    if (reader["ChanneIcon"] == "") return StatusCode(204);
-                    if (reader["ChannelIcon"] == null) return StatusCode(404);
-                    string basePath = "Media/channelIcons";
-                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
-                    string path = Path.Combine(basePath, (string)reader["ChannelIcon"]);
-                    if (!System.IO.File.Exists(path)) return StatusCode(404);
-                    MemoryStream ms = new();
-                    size = size == -1 ? int.MaxValue : size;
-                    ResizeImage(Image.FromFile(path), size, size, keepAspect).Save(ms, ImageFormat.Png);
-                    Response.ContentLength = ms.Length;
-                    Response.ContentType = "image/png";
-                    Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                    return StatusCode(200);
-                }
-            }
-            return StatusCode(500);
+            MediaFile file = RetreiveFile(MediaType.ChannelIcon, channel_uuid);
+            MemoryStream ms = new();
+            size = size == -1 ? int.MaxValue : size;
+            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
+            Response.ContentLength = ms.Length;
+            Response.ContentType = file.Meta.MimeType;
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return StatusCode(200);
         }
 
         [HttpPost("/Channel/{channel_uuid}/Icon")]
         [TokenAuthorization]
         public ActionResult SetChannelAvatar(string channel_uuid, IFormFile file) {
-            using (MySqlConnection conn = Context.GetChannels())
-            {
-                conn.Open();
-                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
-                getAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                getAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                using MySqlDataReader reader = getAvatar.ExecuteReader();
-                while (reader.Read())
-                {
-                    string basePath = "Media/channelIcons";
-                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
-                    string oldAvatar = Path.Combine(basePath, (string)reader["ChannelIcon"]);
-                    if (!Regex.IsMatch((string)reader["ChannelIcon"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
-                        System.IO.File.Delete(oldAvatar);
-                    string newAvatar = CreateMD5(file.FileName + DateTime.Now.ToString());
-                    string newAvatarPath = Path.Combine("Media/channelIcons", newAvatar);
-                    FileStream fs = System.IO.File.OpenWrite(newAvatarPath);
-                    file.CopyTo(fs);
-                    fs.Close();
-                    conn.Close();
-                    conn.Open();
-                    MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
-                    setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                    setAvatar.Parameters.AddWithValue("@avatar", newAvatar);
-                    setAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                    setAvatar.ExecuteNonQuery();
-                    return StatusCode(200);
-                }
-            }
-            return StatusCode(404);
+            StoreFile(MediaType.ChannelIcon, file.OpenReadStream(), new IconMeta(file.FileName, file.Length, channel_uuid));
+            return StatusCode(200);
         }
 
         [HttpPost("/Channel/{channel_uuid}/ClearIcon")]
+        [Obsolete("No longer used")]
         public ActionResult ClearChannelAvatar(string channel_uuid) {
             using (MySqlConnection conn = Context.GetChannels())
             {
@@ -242,9 +130,9 @@ namespace NovaAPI.Controllers
         {
             string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
-            FileStream fs = System.IO.File.OpenRead(path);
+            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, content_id);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return File(fs, RetreiveMimeType(content_id));
+            return File(file.File, file.Meta.MimeType);
         }
 
         [HttpHead("Channel/{channel_uuid}/{content_id}")]
@@ -252,9 +140,9 @@ namespace NovaAPI.Controllers
         {
             string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
-            FileStream fs = System.IO.File.OpenRead(path);
-            Response.ContentLength = fs.Length;
-            Response.ContentType = RetreiveMimeType(content_id);
+            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, content_id);
+            Response.ContentLength = file.Meta.Filesize;
+            Response.ContentType = file.Meta.MimeType;
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return StatusCode(200);
         }
@@ -268,26 +156,10 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             string c = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid);
             if (!Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) return StatusCode(404);
-            Console.WriteLine($"Filename {file.FileName}");
-            Console.WriteLine($"Filesize {file.Length}");
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413);
-            string filename = Guid.NewGuid().ToString("N");
-            string fileLoc = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, filename);
 
-            using MySqlConnection conn = Context.GetChannels();
-            conn.Open();
-            using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @filename, @mime, @size, @width, @height)", conn);
-            cmd.Parameters.AddWithValue("@uuid", filename);
-            cmd.Parameters.AddWithValue("@filename", file.FileName);
-            cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)));
-            cmd.Parameters.AddWithValue("@size", file.Length);
-            cmd.Parameters.AddWithValue("@width", width);
-            cmd.Parameters.AddWithValue("@height", height);
-            if (cmd.ExecuteNonQuery() == 0) return StatusCode(500);
-
-            FileStream fs = System.IO.File.OpenWrite(fileLoc);
-            file.CopyTo(fs);
-            fs.Close();
+            string filename = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
+            if (filename == "") return StatusCode(500);
             return filename;
         }
         
