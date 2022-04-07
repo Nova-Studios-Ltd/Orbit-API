@@ -244,7 +244,7 @@ namespace NovaAPI.Controllers
 
         [HttpPost("/Register")]
         [Obsolete("Please use /Auth/Register instead")]
-        public ActionResult<object> RegisterUser(CreateUserInfo info)
+        public ActionResult<User> RegisterUser(CreateUserInfo info)
         {
             string UUID = Guid.NewGuid().ToString("N");
             string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8));
