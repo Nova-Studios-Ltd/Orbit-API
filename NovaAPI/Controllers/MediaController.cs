@@ -69,6 +69,7 @@ namespace NovaAPI.Controllers
         public ActionResult GetChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             MediaFile file = RetreiveFile(MediaType.ChannelIcon, channel_uuid);
+            if (file == null) return StatusCode(404);
             MemoryStream ms = new();
             size = size == -1 ? int.MaxValue : size;
             ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
@@ -79,6 +80,7 @@ namespace NovaAPI.Controllers
         public ActionResult HeadChannelAvatar(string channel_uuid, int size = -1, bool keepAspect = false)
         {
             MediaFile file = RetreiveFile(MediaType.ChannelIcon, channel_uuid);
+            if (file == null) return StatusCode(404);
             MemoryStream ms = new();
             size = size == -1 ? int.MaxValue : size;
             ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
@@ -128,9 +130,9 @@ namespace NovaAPI.Controllers
         [HttpGet("/Channel/{channel_uuid}/{content_id}")]
         public ActionResult GetContent(string channel_uuid, string content_id)
         {
-            string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
+            string path = Path.Combine(ChannelContent, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
-            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, content_id);
+            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, channel_uuid);
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return File(file.File, file.Meta.MimeType);
         }
@@ -138,9 +140,9 @@ namespace NovaAPI.Controllers
         [HttpHead("Channel/{channel_uuid}/{content_id}")]
         public ActionResult HeadContent(string channel_uuid, string content_id)
         {
-            string path = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid, content_id);
+            string path = Path.Combine(ChannelContent, channel_uuid, content_id);
             if (!System.IO.File.Exists(path)) return StatusCode(404);
-            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, content_id);
+            MediaFile file = RetreiveFile(MediaType.ChannelContent, content_id, channel_uuid);
             Response.ContentLength = file.Meta.Filesize;
             Response.ContentType = file.Meta.MimeType;
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -154,8 +156,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            string c = Path.Combine(GlobalUtils.ChannelMedia, channel_uuid);
-            if (!Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) return StatusCode(404);
+            if (!Directory.Exists(Path.Combine(ChannelContent, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413);
 
             string filename = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));

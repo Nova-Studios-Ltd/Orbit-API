@@ -10,16 +10,17 @@ using MimeTypes;
 using MySql.Data.MySqlClient;
 using NovaAPI.Interfaces;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace NovaAPI.Util
 {
     public static class StorageUtil
     {
-        private static string NC3Storage = "";
-        private static string UserData = "";
-        private static string ChannelData = "";
-        private static string ChannelContent = "";
-        private static string ChannelIcon = "";
+        public static string NC3Storage = "";
+        public static string UserData = "";
+        public static string ChannelData = "";
+        public static string ChannelContent = "";
+        public static string ChannelIcon = "";
 
         private static NovaChatDatabaseContext Context;
 
@@ -169,7 +170,8 @@ namespace NovaAPI.Util
             }
             else if (mediaType == MediaType.ChannelIcon)
             {
-                string path = Path.Combine(ChannelIcon, resource_id);
+                string path = Path.Combine(ChannelIcon, RetreiveChannelIcon(resource_id));
+                if (!File.Exists(path)) return null;
                 FileStream fs = File.OpenRead(path);
                 return new MediaFile(fs, new IconMeta(resource_id, fs.Length, location_id));
             }
@@ -236,6 +238,20 @@ namespace NovaAPI.Util
                 return reader["Avatar"].ToString();
             }
 
+            return "";
+        }
+
+        public static string RetreiveChannelIcon(string channel_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT ChannelIcon FROM Channels WHERE (Table_ID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", channel_uuid);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["ChannelIcon"].ToString();
+            }
             return "";
         }
     }
