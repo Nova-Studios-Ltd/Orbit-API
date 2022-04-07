@@ -109,6 +109,10 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@uuid", key_user_uuid);
                 cmd.Parameters.AddWithValue("@key", key);
                 cmd.ExecuteNonQuery();
+                
+                using MySqlCommand updateTime = new($"UPDATE `{user_uuid}_keystore` SET PubKey=@time WHERE (UUID=`Timestamp`)", conn);
+                updateTime.Parameters.AddWithValue("@time", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                updateTime.ExecuteNonQuery();
             }
             catch { }
         }

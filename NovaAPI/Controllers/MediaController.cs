@@ -96,37 +96,7 @@ namespace NovaAPI.Controllers
             StoreFile(MediaType.ChannelIcon, file.OpenReadStream(), new IconMeta(file.FileName, file.Length, channel_uuid));
             return StatusCode(200);
         }
-
-        [HttpPost("/Channel/{channel_uuid}/ClearIcon")]
-        [Obsolete("No longer used")]
-        public ActionResult ClearChannelAvatar(string channel_uuid) {
-            using (MySqlConnection conn = Context.GetChannels())
-            {
-                conn.Open();
-                MySqlCommand getAvatar = new($"SELECT ChannelIcon FROM Channels WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
-                getAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                getAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                using MySqlDataReader reader = getAvatar.ExecuteReader();
-                while (reader.Read())
-                {
-                    string basePath = "Media/channelIcons";
-                    if (((string)reader["ChannelIcon"]).Contains("default")) basePath = "Media/defaultAvatars";
-                    string oldAvatar = Path.Combine(basePath, (string)reader["ChannelIcon"]);
-                    if (!Regex.IsMatch((string)reader["ChannelIcon"], "defaultAvatar*") && System.IO.File.Exists(oldAvatar))
-                        System.IO.File.Delete(oldAvatar);
-                    conn.Close();
-                    conn.Open();
-                    MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid) AND (Owner_UUID=@owner_uuid)", conn);
-                    setAvatar.Parameters.AddWithValue("@channel_uuid", channel_uuid);
-                    setAvatar.Parameters.AddWithValue("@avatar", "");
-                    setAvatar.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
-                    setAvatar.ExecuteNonQuery();
-                    return StatusCode(200);
-                }
-            }
-            return StatusCode(404);
-        }
-
+        
         [HttpGet("/Channel/{channel_uuid}/{content_id}")]
         public ActionResult GetContent(string channel_uuid, string content_id)
         {

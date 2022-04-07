@@ -102,8 +102,7 @@ namespace NovaAPI.Controllers
 
                 cmd.Dispose();
             }
-
-            Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
+            
             Event.ChannelCreatedEvent(table_id);
             return table_id;
         }
@@ -190,7 +189,6 @@ namespace NovaAPI.Controllers
 
                 cmd.Dispose();
             }
-            Directory.CreateDirectory(Path.Combine(GlobalUtils.ChannelMedia, table_id));
             // Refresh keystores
             foreach (string r in recipients)
             {

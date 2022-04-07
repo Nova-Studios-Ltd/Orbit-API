@@ -1,13 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 using NovaAPI.Models;
 using NovaAPI.Util;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace NovaAPI.Controllers
 {
@@ -59,7 +54,7 @@ namespace NovaAPI.Controllers
         public ActionResult RegisterUser(CreateUserInfo info)
         {
             string UUID = Guid.NewGuid().ToString("N");
-            string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8));
+            string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now, EncryptionUtils.GetSalt(8));
             using (MySqlConnection conn = Context.GetUsers())
             {
                 conn.Open();
@@ -100,6 +95,9 @@ namespace NovaAPI.Controllers
 
                 using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", conn);
                 createKeystore.ExecuteNonQuery();
+                using MySqlCommand addTimestamp = new($"INSERT INTO `{UUID}_keystore` (UUID, Pubkey) VALUES (`Timestamp`, @value)", conn);
+                addTimestamp.Parameters.AddWithValue("@value", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                addTimestamp.ExecuteNonQuery();
 
                 using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", conn);
                 createFriends.ExecuteNonQuery();
