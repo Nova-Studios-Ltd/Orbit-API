@@ -2,15 +2,11 @@
 using NovaAPI.Controllers;
 using NovaAPI.DataTypes;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using MimeTypes;
 using MySql.Data.MySqlClient;
 using NovaAPI.Interfaces;
 using System.Reflection;
-using System.Diagnostics;
 
 namespace NovaAPI.Util
 {

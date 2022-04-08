@@ -4,18 +4,13 @@ using MySql.Data.MySqlClient;
 using NovaAPI.Attri;
 using NovaAPI.Util;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using MimeTypes;
-using System.Diagnostics;
 using static NovaAPI.Util.StorageUtil;
 using NovaAPI.DataTypes;
 
@@ -25,8 +20,7 @@ namespace NovaAPI.Controllers
     public class MediaController : ControllerBase
     {
         readonly NovaChatDatabaseContext Context;
-
-
+        
         public MediaController(NovaChatDatabaseContext context)
         {
             Context = context;
@@ -139,7 +133,7 @@ namespace NovaAPI.Controllers
             // Use input string to calculate MD5 hash
             using (MD5 md5 = MD5.Create())
             {
-                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 // Convert the byte array to hexadecimal string
