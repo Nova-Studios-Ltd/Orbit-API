@@ -22,6 +22,10 @@ namespace NovaAPI.Controllers
         {
             MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", Context.GetUserConn());
             cmd.Parameters.AddWithValue("@email", info.Email);
+            
+            MySqlConnection conn = Context.GetUsers();
+            conn.Open();
+
             MySqlDataReader reader = cmd.ExecuteReader();
             string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
             while (reader.Read())
