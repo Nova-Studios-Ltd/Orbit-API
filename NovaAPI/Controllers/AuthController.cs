@@ -27,9 +27,10 @@ namespace NovaAPI.Controllers
             cmd.Parameters.AddWithValue("@email", info.Email);
             
             MySqlDataReader reader = cmd.ExecuteReader();
-            string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
+            
             while (reader.Read())
             {
+                string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
                 if (reader["Password"].ToString() == saltedPassword)
                 {
                     reader.Close();
