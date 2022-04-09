@@ -26,6 +26,7 @@ namespace NovaAPI.Util
             Context = new NovaChatDatabaseContext(config);
 
             if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            if (directory == null) throw new ArgumentException("directory is null");
 
             NC3Storage = Path.Combine(directory, "NC3Storage");
             Console.ForegroundColor = ConsoleColor.Green;

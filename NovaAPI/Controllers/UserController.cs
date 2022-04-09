@@ -208,92 +208,14 @@ namespace NovaAPI.Controllers
         [Obsolete("Please use /Auth/Login instead")]
         public ActionResult<ReturnLoginUserInfo> LoginUser(LoginUserInfo info)
         {
-            try
-            {
-                using (MySqlConnection conn = Context.GetUsers())
-                {
-                    conn.Open();
-                    MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
-                    cmd.Parameters.AddWithValue("@email", info.Email);
-                    using MySqlDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        if (reader["Password"].ToString() == EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]))
-                            return new ReturnLoginUserInfo
-                            {
-                                UUID = reader["UUID"].ToString(),
-                                Token = reader["Token"].ToString(),
-                                PublicKey = reader["PubKey"].ToString(),
-                                Key = new AESMemoryEncryptData
-                                {
-                                    Content = reader["PrivKey"].ToString(),
-                                    IV = reader["IV"].ToString()
-                                }
-                            };
-                        else
-                            return StatusCode(403);
-                    }
-                }
-                return StatusCode(404);
-            }
-            catch
-            {
-                return StatusCode(500);
-            }
+            return StatusCode(410, "Please use /Auth/Login");
         }
 
         [HttpPost("/Register")]
         [Obsolete("Please use /Auth/Register instead")]
         public ActionResult<User> RegisterUser(CreateUserInfo info)
         {
-            string UUID = Guid.NewGuid().ToString("N");
-            string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8));
-            using (MySqlConnection conn = Context.GetUsers())
-            {
-                conn.Open();
-                using MySqlCommand dis = new($"SELECT `GetRandomDiscriminator`(@user) AS `GetRandomDiscriminator`", conn);
-                dis.Parameters.AddWithValue("@user", info.Username);
-                MySqlDataReader reader = dis.ExecuteReader();
-                string disc = null;
-                while (reader.Read()) disc = reader["GetRandomDiscriminator"].ToString();
-                reader.Close();
-
-                using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
-                checkForEmail.Parameters.AddWithValue("@email", info.Email);
-                MySqlDataReader read = checkForEmail.ExecuteReader();
-                if (read.HasRows) return StatusCode(409);
-
-                conn.Close();
-                conn.Open();
-                
-                // Get Salt - Sometimes things are better with a bit of salt
-                byte[] salt = EncryptionUtils.GetSalt(64);
-
-                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Salt, Email, Token, Avatar, PubKey, PrivKey, IV) VALUES (@uuid, @user, @disc, @pass, @salt, @email, @tok, @avatar, @pubKey, @privKey, @iv)", conn);
-                cmd.Parameters.AddWithValue("@uuid", UUID);
-                cmd.Parameters.AddWithValue("@user", info.Username);
-                cmd.Parameters.AddWithValue("@disc", disc);
-                cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(info.Password, salt));
-                cmd.Parameters.AddWithValue("@salt", salt);
-                cmd.Parameters.AddWithValue("@email", info.Email);
-                cmd.Parameters.AddWithValue("@tok", token);
-                cmd.Parameters.AddWithValue("@avatar", "");
-                cmd.Parameters.AddWithValue("@pubKey", info.Key.Pub);
-                cmd.Parameters.AddWithValue("@privKey", info.Key.Priv);
-                cmd.Parameters.AddWithValue("@iv", info.Key.PrivIV);
-                cmd.ExecuteNonQuery();
-
-                using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
-                createTable.ExecuteNonQuery();
-
-                using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", conn);
-                createKeystore.ExecuteNonQuery();
-
-                using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", conn);
-                createFriends.ExecuteNonQuery();
-            }
-            HttpContext.Request.Headers.Add("Authorization", token);
-            return RetUser(UUID);
+            return StatusCode(410, "Please use /Auth/Register");
         }
         
         
@@ -389,67 +311,31 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<Dictionary<string, string>> GetKeystore(string user_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
-            conn.Open();
-            using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}_keystore`", conn);
-            MySqlDataReader reader = cmd.ExecuteReader();
-            Dictionary<string, string> uuidKey = new();
-            while (reader.Read())
-            {
-                uuidKey.Add(reader["UUID"].ToString(), reader["PubKey"].ToString());
-            }
-            if (uuidKey.Count == 0) return StatusCode(404);
-            return uuidKey;
+            Response.Redirect($"/User/@me/Keystore");
+            return StatusCode(302);
         }
-
-        [HttpGet("@me/Keystore")]
-        [TokenAuthorization]
-        public ActionResult<Dictionary<string, string>> GetKeystore() => GetKeystore(Context.GetUserUUID(this.GetToken()));
-
 
         [HttpGet("{user_uuid}/Keystore/{key_user_uuid}")]
         [Obsolete("Please use User/@me/Keystore/{key_user_uuid}")]
         [TokenAuthorization]
         public ActionResult<string> GetKey(string user_uuid, string key_user_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
-            conn.Open();
-            using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}_keystore`", conn);
-            MySqlDataReader reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                if (reader["UUID"].ToString() == key_user_uuid)
-                    return reader["PubKey"].ToString();
-            }
-            return StatusCode(404);
+            Response.Redirect($"/User/@me/{key_user_uuid}");
+            return StatusCode(302);
         }
-
-        [HttpGet("@me/Keystore/{key_user_uuid}")]
-        [TokenAuthorization]
-        public ActionResult<string> GetKey(string key_user_uuid) => GetKey(Context.GetUserUUID(this.GetToken()), key_user_uuid);
 
 
         [HttpPost("{user_uuid}/Keystore/{key_user_uuid}")]
+        [Obsolete("Please user User/@me/Keystore/{key_user_uuid}")]
         [TokenAuthorization]
         public ActionResult SetKey(string user_uuid, string key_user_uuid, [FromBody] string key)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
-            conn.Open();
-            using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
-            cmd.Parameters.AddWithValue("@uuid", key_user_uuid);
-            cmd.Parameters.AddWithValue("@key", key);
-            if (cmd.ExecuteNonQuery() == 0) return StatusCode(409);
-            return StatusCode(200);
+            Response.Redirect($"/User/@me/{key_user_uuid}");
+            Response.Body.Write(Encoding.UTF8.GetBytes(key));
+            return StatusCode(302);
         }
 
-        [HttpPost("@me/Keystore/{key_user_uuid}")]
-        [TokenAuthorization]
-        public ActionResult SetKey(string key_user_uuid, [FromBody] string key) => SetKey(Context.GetUserUUID(this.GetToken()), key_user_uuid, key);
 
-        
         // TODO Remove Channels
         [HttpGet("Channels")]
         [HttpGet("@me/Channels")]
