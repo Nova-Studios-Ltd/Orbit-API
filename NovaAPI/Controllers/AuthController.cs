@@ -20,12 +20,12 @@ namespace NovaAPI.Controllers
         [HttpPost("Login")]
         public ActionResult<ReturnLoginUserInfo> AuthUser(LoginUserInfo info)
         {
-            MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", Context.GetUserConn());
-            cmd.Parameters.AddWithValue("@email", info.Email);
-            
             MySqlConnection conn = Context.GetUsers();
             conn.Open();
 
+            MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
+            cmd.Parameters.AddWithValue("@email", info.Email);
+            
             MySqlDataReader reader = cmd.ExecuteReader();
             string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
             while (reader.Read())
