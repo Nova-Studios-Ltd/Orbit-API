@@ -33,7 +33,6 @@ namespace NovaAPI.Controllers
                 string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
                 if (reader["Password"].ToString() == saltedPassword)
                 {
-                    reader.Close();
                     return new ReturnLoginUserInfo
                     {
                         UUID = reader["UUID"].ToString(),
