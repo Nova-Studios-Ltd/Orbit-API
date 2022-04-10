@@ -22,8 +22,9 @@ namespace NovaAPI.Controllers
         
         [HttpGet("/User/@me/Keystore")]
         [TokenAuthorization]
-        public ActionResult<Dictionary<string, string>> GetKeystore(string user_uuid)
+        public ActionResult<Dictionary<string, string>> GetKeystore()
         {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
@@ -39,9 +40,10 @@ namespace NovaAPI.Controllers
         }
         
         [HttpGet("/User/@me/Keystore/{Key_user_uuid}")]
-        //[TokenAuthorization]
-        public ActionResult<string> GetKey(string user_uuid, string key_user_uuid)
+        [TokenAuthorization]
+        public ActionResult<string> GetKey(string key_user_uuid)
         {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
@@ -57,8 +59,9 @@ namespace NovaAPI.Controllers
         
         [HttpPost("/User/@me/Keystore/{key_user_uuid}")]
         [TokenAuthorization]
-        public ActionResult SetKey(string user_uuid, string key_user_uuid, [FromBody] string key)
+        public ActionResult SetKey(string key_user_uuid, [FromBody] string key)
         {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
