@@ -43,8 +43,8 @@ namespace NovaAPI.Controllers
             }
             else
             {
-                file.File.CopyTo(ms);
-                return File(ms.ToArray(), mimeType);
+                img.Save(ms, ImageFormat.Gif);
+                return File(ms.ToArray(), "image/gif");
             }
         }
 
