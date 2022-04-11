@@ -325,7 +325,7 @@ namespace NovaAPI.Controllers
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
                     channel.IsGroup = (bool)reader["IsGroup"];
                     channel.ChannelName = (string)reader["GroupName"];
-                    channel.ChannelIcon = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}/Icon?size=64";
+                    channel.ChannelIcon = $"https://api.novastudios.tk/Channel/{channel_uuid}/Icon?size=64";
                         
                 }
                 reader.Close();
@@ -341,7 +341,7 @@ namespace NovaAPI.Controllers
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
-                        channel.ChannelIcon = $"https://api.novastudios.tk/Media/Avatar/{member}?size=64";
+                        channel.ChannelIcon = $"https://api.novastudios.tk/User/{member}/Avatar?size=64";
                     }
                 }
             }
