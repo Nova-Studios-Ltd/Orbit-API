@@ -93,12 +93,7 @@ namespace NovaAPI
             });
 
             //app.UseHttpsRedirection();
-            #if  DEBUG
-            StorageUtil.InitStorage("", Configuration);
-            #endif
-            #if !DEBUG
             StorageUtil.InitStorage("/var/www/asp.net/", Configuration);
-            #endif
 
             app.UseRouting();
 
