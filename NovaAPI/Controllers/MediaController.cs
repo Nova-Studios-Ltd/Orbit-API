@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using MimeTypes;
@@ -33,8 +34,17 @@ namespace NovaAPI.Controllers
             MediaFile file = RetreiveFile(MediaType.Avatar, user_uuid);
             MemoryStream ms = new();
             size = size == -1 ? int.MaxValue : size;
-            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
-            return File(ms.ToArray(), "image/png");
+            Image img = Image.FromStream(file.File);
+            string mimeType = RetreiveMimeType(img);
+            if (mimeType != "image/gif")
+            {
+                ResizeImage(img, size, size, keepAspect).Save(ms, ImageFormat.Png);
+                return File(ms.ToArray(), "image/png");
+            }
+            else
+            {
+                return File(file.File, mimeType);
+            }
         }
 
         [HttpHead("/User/{user_uuid}/Avatar")]
@@ -43,7 +53,8 @@ namespace NovaAPI.Controllers
             MediaFile file = RetreiveFile(MediaType.Avatar, user_uuid);
             MemoryStream ms = new();
             size = size == -1 ? int.MaxValue : size;
-            ResizeImage(Image.FromStream(file.File), size, size, keepAspect).Save(ms, ImageFormat.Png);
+            Image img = Image.FromStream(file.File);
+            ResizeImage(img, size, size, keepAspect).Save(ms, ImageFormat.Png);
             Response.ContentLength = ms.Length;
             Response.ContentType = file.Meta.MimeType;
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -173,18 +184,11 @@ namespace NovaAPI.Controllers
 
         }
 
-        private string RetreiveMimeType(string content_id)
+        private string RetreiveMimeType(Image img)
         {
-            using MySqlConnection conn = Context.GetChannels();
-            conn.Open();
-            using MySqlCommand cmd = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
-            cmd.Parameters.AddWithValue("@uuid", content_id);
-            MySqlDataReader reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                return reader["MimeType"].ToString();
-            }
-            return "";
+            ImageFormat format = img.RawFormat;
+            ImageCodecInfo codec = ImageCodecInfo.GetImageDecoders().First(c => c.FormatID == format.Guid);
+            return codec.MimeType;
         }
     }
 }
