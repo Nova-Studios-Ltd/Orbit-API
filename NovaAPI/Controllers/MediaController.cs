@@ -43,7 +43,8 @@ namespace NovaAPI.Controllers
             }
             else
             {
-                return File(file.File, mimeType);
+                file.File.CopyTo(ms);
+                return File(ms.ToArray(), mimeType);
             }
         }
 
