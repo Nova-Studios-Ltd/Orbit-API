@@ -1,17 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
-using MySql.Data.MySqlClient;
-using Newtonsoft.Json;
-using NovaAPI.Attri;
-using NovaAPI.Models;
-using NovaAPI.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
+using NovaAPI.Attri;
+using NovaAPI.Models;
 
 namespace NovaAPI.Controllers
 {
@@ -291,6 +288,7 @@ namespace NovaAPI.Controllers
                 if (Context.GetUserUUID(token) != user_uuid && !string.IsNullOrWhiteSpace(token))
                 {
                     socket.SocketFinished.TrySetResult(null);
+                    Console.WriteLine($"Unable to auth user with uuid {user_uuid}");
                     socket.Socket.Abort();
                 }
 
