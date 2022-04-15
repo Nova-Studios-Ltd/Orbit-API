@@ -79,7 +79,7 @@ namespace NovaAPI.Controllers
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
                             Edited = (bool)reader["Edited"],
-                            Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["Author_UUID"].ToString())}?size=64"
+                            Avatar = $"https://api.novastudios.tk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
                         });
                     }
                 }
