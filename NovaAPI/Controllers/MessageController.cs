@@ -117,7 +117,7 @@ namespace NovaAPI.Controllers
                             {
                                 Attachments.Add(new Attachment
                                 {
-                                    ContentUrl = $"https://api.novastudios.tk/Media/Channel/{channel_uuid}/{content_id}",
+                                    ContentUrl = $"https://api.novastudios.tk/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
                                     ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
@@ -139,7 +139,7 @@ namespace NovaAPI.Controllers
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
                             Edited = (bool)reader["Edited"],
-                            Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["Author_UUID"].ToString())}?size=64"
+                            Avatar = $"https://api.novastudios.tk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
                         };
                     }
                 }
