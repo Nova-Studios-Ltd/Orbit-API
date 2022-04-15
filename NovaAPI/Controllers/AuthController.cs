@@ -20,10 +20,10 @@ namespace NovaAPI.Controllers
         [HttpPost("Login")]
         public ActionResult<ReturnLoginUserInfo> AuthUser(LoginUserInfo info)
         {
-            MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = Context.GetUsers();
             conn.Open();
 
-            MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
+            using MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
             cmd.Parameters.AddWithValue("@email", info.Email);
             
             MySqlDataReader reader = cmd.ExecuteReader();

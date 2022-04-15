@@ -68,9 +68,9 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<User> GetSelf()
         {
-            MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = Context.GetUsers();
             conn.Open();
-            MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid)", conn);
+            using MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
             using MySqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -85,7 +85,7 @@ namespace NovaAPI.Controllers
                     Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["UUID"].ToString())}?size=64"
                 };
             }
-
+            
             return StatusCode(404, "Unable to find yourself");
         }
         
