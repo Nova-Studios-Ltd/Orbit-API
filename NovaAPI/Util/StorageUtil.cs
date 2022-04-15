@@ -125,9 +125,9 @@ namespace NovaAPI.Util
                 file.CopyTo(fs);
                 fs.Close();
 
-                MySqlConnection conn = Context.GetUsers();
+                using MySqlConnection conn = Context.GetUsers();
                 conn.Open();
-                MySqlCommand setAvatar = new($"UPDATE Users SET Avatar=@avatar WHERE (UUID=@uuid)", conn);
+                using MySqlCommand setAvatar = new($"UPDATE Users SET Avatar=@avatar WHERE (UUID=@uuid)", conn);
                 setAvatar.Parameters.AddWithValue("@uuid", filemeta.User_UUID);
                 setAvatar.Parameters.AddWithValue("@avatar", filename);
                 if (setAvatar.ExecuteNonQuery() == 0) return "E";
@@ -142,9 +142,9 @@ namespace NovaAPI.Util
                 file.CopyTo(fs);
                 fs.Close();
 
-                MySqlConnection conn = Context.GetChannels();
+                using MySqlConnection conn = Context.GetChannels();
                 conn.Open();
-                MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid)",
+                using MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid)",
                     conn);
                 setAvatar.Parameters.AddWithValue("@channel_uuid", filemeta.Channel_UUID);
                 setAvatar.Parameters.AddWithValue("@avatar", filename);
@@ -225,9 +225,9 @@ namespace NovaAPI.Util
 
         public static string RetreiveUserAvatar(string user_uuid)
         {
-            MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = Context.GetUsers();
             conn.Open();
-            MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
+            using MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             using MySqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
