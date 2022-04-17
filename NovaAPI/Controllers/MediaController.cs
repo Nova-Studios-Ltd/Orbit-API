@@ -132,7 +132,6 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            if (!Directory.Exists(Path.Combine(ChannelContent, channel_uuid))) return StatusCode(404);
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413);
 
             string filename = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
