@@ -192,6 +192,7 @@ namespace NovaAPI.Util
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 string path = Path.Combine(ChannelContent, location_id, resource_id);
+                Console.WriteLine(path);
                 File.Delete(path);
             }
             else if (mediaType == MediaType.ChannelIcon)
