@@ -59,6 +59,7 @@ namespace NovaAPI.Controllers
                                 {
                                     ContentUrl = $"https://api.novastudios.tk/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
+                                    MimeType = metaReader["MimeType"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
                                     ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
                                     ContentHeight = int.Parse(metaReader["ContentHeight"].ToString())
@@ -119,6 +120,7 @@ namespace NovaAPI.Controllers
                                 {
                                     ContentUrl = $"https://api.novastudios.tk/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
+                                    MimeType = metaReader["MimeType"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
                                     ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
                                     ContentHeight = int.Parse(metaReader["ContentHeight"].ToString())
