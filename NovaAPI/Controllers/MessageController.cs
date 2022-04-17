@@ -226,6 +226,11 @@ namespace NovaAPI.Controllers
                     reader.Close();
                     if (attachmentUUIDs == null) attachmentUUIDs = new string[0];
 
+                    foreach (string attachment in attachmentUUIDs)
+                    {
+                        StorageUtil.DeleteFile(StorageUtil.MediaType.ChannelContent, attachment);   
+                    }
+
                     using MySqlCommand cmd = new($"DELETE FROM `{channel_uuid}` WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
                     cmd.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                     cmd.Parameters.AddWithValue("@message_uuid", message_id);
@@ -233,7 +238,6 @@ namespace NovaAPI.Controllers
                     if (cmd.ExecuteNonQuery() > 0)
                     {
                         Event.MessageDeleteEvent(channel_uuid, message_id);
-                        GlobalUtils.RemoveAttachmentContent(Context, channel_uuid, attachmentUUIDs);
                         return StatusCode(200);
                     }
                 }
