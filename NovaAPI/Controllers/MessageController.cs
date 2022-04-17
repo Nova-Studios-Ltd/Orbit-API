@@ -157,6 +157,7 @@ namespace NovaAPI.Controllers
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments");
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
