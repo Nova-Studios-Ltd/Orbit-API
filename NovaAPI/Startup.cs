@@ -38,7 +38,7 @@ namespace NovaAPI
             {
                 options.AddPolicy(name: "Origins", builder =>
                 {
-                    builder.WithOrigins("http://localhost");
+                    builder.WithOrigins("http://localhost:3000");
                     builder.WithMethods("DELETE", "GET", "POST", "PATCH", "PUT", "UPGRADE");
                 });
             });
