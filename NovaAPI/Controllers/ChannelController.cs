@@ -384,7 +384,7 @@ namespace NovaAPI.Controllers
                     channelCon.Close();
                     Event.ChannelDeleteEvent(channel_uuid, user_uuid);
 
-                    if (Directory.Exists(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid))) Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
+                    StorageUtil.RemoveChannelContent(channel_uuid);
 
                     return StatusCode(200, "Channel Removed");
                 }
@@ -435,7 +435,7 @@ namespace NovaAPI.Controllers
                     
                     Event.ChannelDeleteEvent(channel_uuid);
 
-                    Directory.Delete(Path.Combine(GlobalUtils.ChannelMedia, channel_uuid), true);
+                    StorageUtil.RemoveChannelContent(channel_uuid);
 
                     return StatusCode(200, "Group Removed");
                 }

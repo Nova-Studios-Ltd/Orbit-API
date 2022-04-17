@@ -266,7 +266,9 @@ namespace NovaAPI.Controllers
                     cmd.ExecuteNonQuery();
                 }
                 keystoreUser.Close();
-
+                
+                StorageUtil.DeleteFile(StorageUtil.MediaType.Avatar, user_uuid);
+                
                 using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`, `{user_uuid}_keystore`", conn);
                 removeUserAccess.ExecuteNonQuery();
             }
@@ -299,6 +301,7 @@ namespace NovaAPI.Controllers
                 }
                 keystoreUser.Close();
 
+                StorageUtil.DeleteFile(StorageUtil.MediaType.Avatar, user_uuid);
                 using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`, `{user_uuid}_keystore`", conn);
                 removeUserAccess.ExecuteNonQuery();
             }

@@ -66,6 +66,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult SetAvatar(string user_uuid, IFormFile file)
         {
+            DeleteFile(MediaType.Avatar, user_uuid);
             string filename = StoreFile(MediaType.Avatar, file.OpenReadStream(), new AvatarMeta(file.FileName, file.Length, user_uuid));
             return (filename == "")? StatusCode(200) : StatusCode(404);
         }
@@ -99,6 +100,7 @@ namespace NovaAPI.Controllers
         [HttpPost("/Channel/{channel_uuid}/Icon")]
         [TokenAuthorization]
         public ActionResult SetChannelAvatar(string channel_uuid, IFormFile file) {
+            DeleteFile(MediaType.ChannelIcon, channel_uuid);
             StoreFile(MediaType.ChannelIcon, file.OpenReadStream(), new IconMeta(file.FileName, file.Length, channel_uuid));
             return StatusCode(200);
         }

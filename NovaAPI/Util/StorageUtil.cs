@@ -180,6 +180,48 @@ namespace NovaAPI.Util
                 return new MediaFile(fs, new AvatarMeta(name, fs.Length, resource_id));
             }
         }
+
+        public static void DeleteFile(MediaType mediaType, string resource_id, string location_id = "")
+        {
+            if (mediaType == MediaType.ChannelContent)
+            {
+                using MySqlConnection conn = Context.GetChannels();
+                conn.Open();
+                using MySqlCommand cmd = new("DELETE FROM `ChannelMedia` WHERE (File_UUID=@file)", conn);
+                cmd.Parameters.AddWithValue("@file", resource_id);
+                cmd.ExecuteNonQuery();
+                conn.Close();
+                string path = Path.Combine(ChannelContent, location_id, resource_id);
+                File.Delete(path);
+            }
+            else if (mediaType == MediaType.ChannelIcon)
+            {
+                string path = Path.Combine(ChannelIcon, RetreiveChannelIcon(resource_id));
+                File.Delete(path);
+            }
+            else
+            {
+                string name = RetreiveUserAvatar(resource_id);
+                string path = Path.Combine(UserData, name);
+                File.Delete(path);
+            }
+        }
+
+        public static void RemoveChannelContent(string channel_uuid)
+        {
+            string[] files = Directory.GetFiles(Path.Combine(ChannelContent, channel_uuid));
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            foreach (string file in files)
+            {
+                using MySqlCommand cmd = new("DELETE FROM `ChannelMedia` WHERE (File_UUID=@file)", conn);
+                cmd.Parameters.AddWithValue("@file", new FileInfo(file).Name);
+                cmd.ExecuteNonQuery();
+                File.Delete(Path.Combine(ChannelContent, channel_uuid, file));
+            }
+            conn.Close();
+            Directory.Delete(Path.Combine(ChannelContent, channel_uuid));
+        }
         
         public static string RetreiveMimeType(string content_id)
         {
