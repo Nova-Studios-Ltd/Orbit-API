@@ -228,7 +228,7 @@ namespace NovaAPI.Controllers
 
                     foreach (string attachment in attachmentUUIDs)
                     {
-                        StorageUtil.DeleteFile(StorageUtil.MediaType.ChannelContent, attachment);   
+                        StorageUtil.DeleteFile(StorageUtil.MediaType.ChannelContent, attachment, channel_uuid);   
                     }
 
                     using MySqlCommand cmd = new($"DELETE FROM `{channel_uuid}` WHERE (Message_ID=@message_uuid) AND (Author_UUID=@user_uuid)", conn);
