@@ -9,8 +9,10 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using MimeTypes;
 using static NovaAPI.Util.StorageUtil;
 using NovaAPI.DataTypes;
@@ -139,6 +141,23 @@ namespace NovaAPI.Controllers
             string filename = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
             if (filename == "") return StatusCode(500);
             return filename;
+        }
+
+        [HttpGet("/Proxy")]
+        public async Task<ActionResult> ProxyUrl(string url)
+        {
+            WebRequest request = WebRequest.Create(url);
+            WebResponse rsp = await request.GetResponseAsync();
+            if (rsp.GetResponseStream() == null) return StatusCode(400);
+            for (int h = 0; h < rsp.Headers.Count; h++)
+            {
+                // Copy response headers
+                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+            }
+            // Add cors header
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            await rsp.GetResponseStream().CopyToAsync(Response.Body);
+            return StatusCode(200);
         }
         
         public static string CreateMD5(string input)
