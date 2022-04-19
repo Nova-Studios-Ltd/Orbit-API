@@ -160,6 +160,22 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
         
+        [HttpHead("/Proxy")]
+        public async Task<ActionResult> HeadProxyUrl(string url)
+        {
+            WebRequest request = WebRequest.Create(url);
+            WebResponse rsp = await request.GetResponseAsync();
+            if (rsp.GetResponseStream() == null) return StatusCode(400);
+            for (int h = 0; h < rsp.Headers.Count; h++)
+            {
+                // Copy response headers
+                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+            }
+            // Add cors header
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return StatusCode(200);
+        }
+        
         public static string CreateMD5(string input)
         {
             // Use input string to calculate MD5 hash
