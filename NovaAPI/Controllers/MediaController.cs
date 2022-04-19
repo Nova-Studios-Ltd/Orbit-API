@@ -155,7 +155,8 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
             }
             // Add cors header
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                Response.Headers.Add("Access-Control-Allow-Origin", "*");
             await rsp.GetResponseStream().CopyToAsync(Response.Body);
             return StatusCode(200);
         }
@@ -172,7 +173,8 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
             }
             // Add cors header
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return StatusCode(200);
         }
         
