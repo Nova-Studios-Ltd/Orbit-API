@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Text;
+using AspNetCoreRateLimit;
 using NovaAPI.Util;
 using NovaAPI.Attri;
 
@@ -34,11 +35,18 @@ namespace NovaAPI
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            // Configure rate limits
+            services.AddMemoryCache();
+            services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"));
+            //services.Configure<IpRateLimitPolicies>(Configuration.GetSection(""));
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+            services.AddInMemoryRateLimiting();
+            
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "Origins", builder =>
                 {
-                    builder.WithOrigins("http://localhost:3000", "https://live.orbit.novastudios.tk");
+                    builder.WithOrigins("http://localhost:3000", "https://live.orbit.novastudios.tk", "https://orbit.novastudios.tk");
                     builder.WithMethods("DELETE", "GET", "POST", "PATCH", "PUT", "UPGRADE");
                 });
             });
@@ -88,6 +96,8 @@ namespace NovaAPI
             //    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ExampleAPI v1"));
             //}
 
+            app.UseIpRateLimiting();
+            
             app.UseSwagger();
             app.UseSwaggerUI((c) => {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "NovaAPI v1");

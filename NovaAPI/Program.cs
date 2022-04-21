@@ -25,6 +25,7 @@ namespace NovaAPI
                     #if !DEBUG
                     webBuilder.UseKestrel();
                     #endif
+                    
                     webBuilder.UseStartup<Startup>();
                 });
     }

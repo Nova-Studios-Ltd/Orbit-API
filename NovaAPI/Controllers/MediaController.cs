@@ -117,7 +117,7 @@ namespace NovaAPI.Controllers
             return File(file.File, file.Meta.MimeType);
         }
 
-        [HttpHead("Channel/{channel_uuid}/{content_id}")]
+        [HttpHead("/Channel/{channel_uuid}/{content_id}")]
         public ActionResult HeadContent(string channel_uuid, string content_id)
         {
             string path = Path.Combine(ChannelContent, channel_uuid, content_id);
