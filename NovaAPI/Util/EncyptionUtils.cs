@@ -25,6 +25,12 @@ namespace NovaAPI.Util
             return algorithm.ComputeHash(hashSalt);
         }
 
+        private static byte[] Get256Hash(string inputString)
+        {
+            using HashAlgorithm algorithm = SHA256.Create();
+            return algorithm.ComputeHash(Encoding.UTF8.GetBytes(inputString));
+        }
+
         static RNGCryptoServiceProvider rngCsg = new RNGCryptoServiceProvider();
         public static byte[] GetSalt(int length) 
         {
@@ -37,6 +43,14 @@ namespace NovaAPI.Util
         {
             StringBuilder sb = new();
             foreach (byte b in GetHash(inputString))
+                sb.Append(b.ToString("X2"));
+            return sb.ToString();
+        }
+        
+        public static string Get256HashString(string inputString)
+        {
+            StringBuilder sb = new();
+            foreach (byte b in Get256Hash(inputString))
                 sb.Append(b.ToString("X2"));
             return sb.ToString();
         }
