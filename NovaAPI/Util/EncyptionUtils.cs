@@ -54,6 +54,11 @@ namespace NovaAPI.Util
                 sb.Append(b.ToString("X2"));
             return sb.ToString();
         }
+        
+        public static string Get256Base64HashString(string inputString)
+        {
+            return System.Convert.ToBase64String(Get256Hash(inputString));
+        }
 
         public static string GetSaltedHashString(string inputString, byte[] salt) 
         {
