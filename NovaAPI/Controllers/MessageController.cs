@@ -99,7 +99,7 @@ namespace NovaAPI.Controllers
             Dictionary<string, string> hashes = new Dictionary<string, string>();
             foreach (ChannelMessage message in messages)
             {
-                hashes.Add(message.Message_Id, EncryptionUtils.Get256HashString(message.EditedTimestamp.ToString()));
+                hashes.Add(message.Message_Id, EncryptionUtils.Get256Base64HashString(message.EditedTimestamp.ToString()));
             }
             return hashes;
         }
