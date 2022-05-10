@@ -92,14 +92,14 @@ namespace NovaAPI.Controllers
             return messages;
         }
 
-        [HttpGet("{channel_uuid}/Messages/Hashes")]
+        [HttpGet("{channel_uuid}/Messages/EditTimestamps")]
         public ActionResult<Dictionary<string, string>> GetMessageHashes(string channel_uuid, int limit = 30, int after = -1, int before = int.MaxValue)
         {
             ChannelMessage[] messages = GetMessages(channel_uuid, limit, after, before).Value.ToArray();
             Dictionary<string, string> hashes = new Dictionary<string, string>();
             foreach (ChannelMessage message in messages)
             {
-                hashes.Add(message.Message_Id, EncryptionUtils.Get256Base64HashString(message.EditedTimestamp.ToString()));
+                hashes.Add(message.Message_Id, message.EditedTimestamp.ToString());
             }
             return hashes;
         }
