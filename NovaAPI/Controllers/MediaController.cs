@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
-using NovaAPI.Attri;
-using NovaAPI.Util;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -13,9 +8,13 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MimeTypes;
-using static NovaAPI.Util.StorageUtil;
+using NovaAPI.Attri;
 using NovaAPI.DataTypes;
+using NovaAPI.Util;
+using static NovaAPI.Util.StorageUtil;
 
 namespace NovaAPI.Controllers
 {
@@ -116,7 +115,7 @@ namespace NovaAPI.Controllers
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return File(file.File, file.Meta.MimeType);
         }
-
+   
         [HttpHead("/Channel/{channel_uuid}/{content_id}")]
         public ActionResult HeadContent(string channel_uuid, string content_id)
         {
@@ -132,7 +131,7 @@ namespace NovaAPI.Controllers
         // Content Related
         [HttpPost("/Channel/{channel_uuid}")]
         [TokenAuthorization]
-        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, int width=0, int height=0)
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, int width=0, int height=0)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
@@ -176,6 +175,16 @@ namespace NovaAPI.Controllers
             if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
                 Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return StatusCode(200);
+        }
+
+        [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
+        [TokenAuthorization]
+        public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
+        {
+            TokenManager tm = new TokenManager();
+            string token = tm.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads);
+            if (token == "") return StatusCode(413, "Maximum of 10 files per message");
+            return token;
         }
         
         public static string CreateMD5(string input)
