@@ -2,6 +2,7 @@
 using NovaAPI.Controllers;
 using NovaAPI.DataTypes;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using MimeTypes;
 using MySql.Data.MySqlClient;
@@ -222,6 +223,11 @@ namespace NovaAPI.Util
             }
             conn.Close();
             Directory.Delete(Path.Combine(ChannelContent, channel_uuid));
+        }
+
+        public static void RemoveSelectChannelContent(string channel_uuid, List<string> contentIds)
+        {
+            
         }
         
         public static string RetreiveMimeType(string content_id)

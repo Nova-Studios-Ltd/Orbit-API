@@ -133,13 +133,19 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, int width=0, int height=0)
         {
+            if (!TokenManager.UseToken(contentToken))
+            {
+                TokenManager.InvalidateToken(contentToken);
+                return StatusCode(400, "The provided Content Token has expired");
+            }
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413);
+            if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, "File must be > 0MB and <= 20MB");
 
-            string filename = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
-            if (filename == "") return StatusCode(500);
-            return filename;
+            string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
+            if (contentID == "") return StatusCode(500);
+            TokenManager.AddID(contentToken, contentID);
+            return contentID;
         }
 
         [HttpGet("/Proxy")]
@@ -181,8 +187,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
         {
-            TokenManager tm = new TokenManager();
-            string token = tm.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads);
+            string token = TokenManager.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads);
             if (token == "") return StatusCode(413, "Maximum of 10 files per message");
             return token;
         }

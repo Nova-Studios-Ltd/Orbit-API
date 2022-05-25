@@ -166,12 +166,25 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("{channel_uuid}/Messages/")]
-        public ActionResult<string> SendMessage(string channel_uuid, SentMessage message)
+        public ActionResult<string> SendMessage(string channel_uuid, SentMessage message, string contentToken)
         {
+            if (!TokenManager.ValidToken(contentToken) && message.Attachments.Count > 0)
+            {
+                TokenManager.InvalidateToken(contentToken);
+                return StatusCode(400, "The provided Content Token has expired");
+            }
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments");
+            
+            // Check that attachments arent duplicated and match those of the provided contentToken
+            if (message.Attachments.Count != message.Attachments.Distinct().Count())
+            {
+                TokenManager.InvalidateToken(contentToken);
+                return StatusCode(409, "Attachments contains duplicate ids");
+            }
+            
             using (MySqlConnection conn = Context.GetChannels())
             {
                 conn.Open();
