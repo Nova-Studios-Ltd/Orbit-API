@@ -1,9 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
 using NovaAPI.Controllers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace NovaAPI.Util
 {
@@ -21,6 +17,16 @@ namespace NovaAPI.Util
                 if (!(bool)reader["Deleted"]) return true;
             }
             return false;
+        }
+
+        public static bool ChannelExsists(NovaChatDatabaseContext Context, string channel_uuid)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT * FROM Channels WHERE (Table_ID=@table)", conn);
+            cmd.Parameters.AddWithValue("@table", channel_uuid);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            return reader.HasRows;
         }
     }
 }

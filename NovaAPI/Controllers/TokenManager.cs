@@ -28,6 +28,7 @@ namespace NovaAPI.Controllers
         public static string GenerateToken(string user_uuid, int uses, string channel_uuid)
         {
             if (uses > 10) return "";
+            
             string token = EncryptionUtils.Get256HashString(user_uuid + DateTime.Now + uses);
             Tokens.Add(token, new Token(uses, channel_uuid));
             return token;

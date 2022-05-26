@@ -187,6 +187,8 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
         {
+            if (!ChannelUtils.ChannelExsists(Context, channel_uuid))
+                return StatusCode(404, $"Channel with uuid \"{channel_uuid}\" unknown");
             string token = TokenManager.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads, channel_uuid);
             if (token == "") return StatusCode(413, "Maximum of 10 files per message");
             return token;
