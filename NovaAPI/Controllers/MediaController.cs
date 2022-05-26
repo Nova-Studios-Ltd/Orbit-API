@@ -191,6 +191,14 @@ namespace NovaAPI.Controllers
             if (token == "") return StatusCode(413, "Maximum of 10 files per message");
             return token;
         }
+
+        [HttpDelete("/Channel/{channel_uuid}/InvalidateContentToken/{token}")]
+        [TokenAuthorization]
+        public ActionResult InvalidateToken(string channel_uuid, string token)
+        {
+            TokenManager.InvalidateToken(token);
+            return StatusCode(200);
+        }
         
         public static string CreateMD5(string input)
         {

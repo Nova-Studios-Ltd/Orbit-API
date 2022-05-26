@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Timers;
+using System.Linq;
+using System.Threading;
 using NovaAPI.DataTypes;
 using NovaAPI.Util;
-using Timer = System.Threading.Timer;
 
 namespace NovaAPI.Controllers
 {
@@ -11,24 +11,12 @@ namespace NovaAPI.Controllers
     {
         private static Dictionary<string, Token> Tokens = new Dictionary<string, Token>();
 
+        // Cleans up invalid tokens and associated files every 10m
         private static Timer cleanup = new Timer((state =>
         {
-            List<string> expiredTokens = new List<string>();
-            foreach (KeyValuePair<string, Token> token in Tokens)
-            {
-                if (token.Value.CleanUp)
-                {
-                    expiredTokens.Add(token.Key);
-                    continue;
-                }
-                else
-                {
-                    if ((DateTime.Now - token.Value.Created).TotalMinutes <= 10)
-                    {
-                        expiredTokens.Add(token.Key);
-                    }
-                }
-            }
+            string[] expiredTokens = Tokens.AsParallel()
+                .Where(x => x.Value.CleanUp || (DateTime.Now - x.Value.Created).TotalMinutes >= 10)
+                .Select(x => x.Key).ToArray();
 
             foreach (string token in expiredTokens)
             {
