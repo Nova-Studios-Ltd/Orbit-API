@@ -133,10 +133,10 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, int width=0, int height=0)
         {
-            if (!TokenManager.UseToken(contentToken))
+            if (!TokenManager.UseToken(contentToken, channel_uuid))
             {
                 TokenManager.InvalidateToken(contentToken);
-                return StatusCode(400, "The provided Content Token has expired");
+                return StatusCode(400, "The provided Content Token has expired or is for another channel. Please request a new one.");
             }
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
@@ -187,7 +187,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
         {
-            string token = TokenManager.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads);
+            string token = TokenManager.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads, channel_uuid);
             if (token == "") return StatusCode(413, "Maximum of 10 files per message");
             return token;
         }

@@ -9,6 +9,7 @@ namespace NovaAPI.DataTypes
         public List<string> ContentIds = new List<string>();
         public int Uses = 0;
         public DateTime Created;
+        public bool CleanUp = false;
 
         public Token(int uses, string channelUuid)
         {

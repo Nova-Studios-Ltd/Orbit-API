@@ -227,7 +227,16 @@ namespace NovaAPI.Util
 
         public static void RemoveSelectChannelContent(string channel_uuid, List<string> contentIds)
         {
-            
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            foreach (string file in contentIds)
+            {
+                using MySqlCommand cmd = new("DELETE FROM `ChannelMedia` WHERE (File_UUID=@file)", conn);
+                cmd.Parameters.AddWithValue("@file", new FileInfo(file).Name);
+                cmd.ExecuteNonQuery();
+                File.Delete(Path.Combine(ChannelContent, channel_uuid, file));
+            }
+            conn.Close();
         }
         
         public static string RetreiveMimeType(string content_id)
