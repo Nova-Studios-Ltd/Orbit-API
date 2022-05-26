@@ -68,7 +68,8 @@ namespace NovaAPI.Controllers
 
         public static void InvalidateToken(string token)
         {
-            Tokens[token].CleanUp = true;
+            if (Tokens.ContainsKey(token))
+                Tokens[token].CleanUp = true;
         }
     }
 }
