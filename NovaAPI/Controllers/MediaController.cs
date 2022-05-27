@@ -154,8 +154,8 @@ namespace NovaAPI.Controllers
         public async Task<ActionResult> ProxyUrl(string url)
         {
             WebRequest request = WebRequest.Create(url);
-            HttpWebResponse rsp = (HttpWebResponse)await request.GetResponseAsync();
-            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remove server returned: {rsp.StatusCode}");
+            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
+            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
             for (int h = 0; h < rsp.Headers.Count; h++)
             {
                 // Copy response headers
@@ -172,8 +172,8 @@ namespace NovaAPI.Controllers
         public async Task<ActionResult> HeadProxyUrl(string url)
         {
             WebRequest request = WebRequest.Create(url);
-            WebResponse rsp = await request.GetResponseAsync();
-            if (rsp.GetResponseStream() == null) return StatusCode(400);
+            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
+            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
             for (int h = 0; h < rsp.Headers.Count; h++)
             {
                 // Copy response headers
