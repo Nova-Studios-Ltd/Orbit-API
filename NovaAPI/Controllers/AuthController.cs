@@ -99,7 +99,8 @@ namespace NovaAPI.Controllers
 
                 using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", conn);
                 createKeystore.ExecuteNonQuery();
-                using MySqlCommand addTimestamp = new($"INSERT INTO `{UUID}_keystore` (UUID, Pubkey) VALUES (`Timestamp`, @value)", conn);
+                using MySqlCommand addTimestamp = new($"INSERT INTO `{UUID}_keystore` (UUID, Pubkey) VALUES (@field, @value)", conn);
+                addTimestamp.Parameters.AddWithValue("@field", "Timestamp");
                 addTimestamp.Parameters.AddWithValue("@value", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                 addTimestamp.ExecuteNonQuery();
 
