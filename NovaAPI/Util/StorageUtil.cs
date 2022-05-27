@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.Configuration;
-using NovaAPI.Controllers;
-using NovaAPI.DataTypes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using MimeTypes;
 using MySql.Data.MySqlClient;
+using NovaAPI.Controllers;
+using NovaAPI.DataTypes;
 using NovaAPI.Interfaces;
-using System.Reflection;
 
 namespace NovaAPI.Util
 {
@@ -195,18 +195,20 @@ namespace NovaAPI.Util
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 string path = Path.Combine(ChannelContent, location_id, resource_id);
-                Console.WriteLine(path);
+                if (!File.Exists(path)) return;
                 File.Delete(path);
             }
             else if (mediaType == MediaType.ChannelIcon)
             {
                 string path = Path.Combine(ChannelIcon, RetreiveChannelIcon(resource_id));
+                if (!File.Exists(path)) return;
                 File.Delete(path);
             }
             else
             {
                 string name = RetreiveUserAvatar(resource_id);
                 string path = Path.Combine(UserData, name);
+                if (!File.Exists(path)) return;
                 File.Delete(path);
             }
         }

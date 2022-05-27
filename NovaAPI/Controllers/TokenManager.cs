@@ -71,5 +71,11 @@ namespace NovaAPI.Controllers
             if (Tokens.ContainsKey(token))
                 Tokens[token].CleanUp = true;
         }
+
+        public static void ExpendToken(string token)
+        {
+            if (Tokens.ContainsKey(token))
+                Tokens.Remove(token);
+        }
     }
 }
