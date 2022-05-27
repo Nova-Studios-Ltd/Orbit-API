@@ -160,6 +160,7 @@ namespace NovaAPI.Util
             if (mediaType == MediaType.ChannelContent)
             {
                 string path = Path.Combine(ChannelContent, location_id, resource_id);
+                if (!File.Exists(path)) return null;
                 FileStream fs = File.OpenRead(path);
                 Diamension dim = RetreiveDiamension(resource_id);
                 return new MediaFile(fs,
@@ -177,6 +178,7 @@ namespace NovaAPI.Util
             {
                 string name = RetreiveUserAvatar(resource_id);
                 string path = Path.Combine(UserData, name);
+                if (!File.Exists(path)) return null;
                 FileStream fs = File.OpenRead(path);
                 return new MediaFile(fs, new AvatarMeta(name, fs.Length, resource_id));
             }

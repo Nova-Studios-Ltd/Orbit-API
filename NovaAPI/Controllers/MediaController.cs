@@ -33,6 +33,8 @@ namespace NovaAPI.Controllers
         public ActionResult GetAvatar(string user_uuid, int size = -1, bool keepAspect = false)
         {
             MediaFile file = RetreiveFile(MediaType.Avatar, user_uuid);
+            if (file == null)
+                return StatusCode(404, "Unable to find user avatar. Perhaps they only have default one set?");
             MemoryStream ms = new();
             size = size == -1 ? int.MaxValue : size;
             Image img = Image.FromStream(file.File);
@@ -152,8 +154,8 @@ namespace NovaAPI.Controllers
         public async Task<ActionResult> ProxyUrl(string url)
         {
             WebRequest request = WebRequest.Create(url);
-            WebResponse rsp = await request.GetResponseAsync();
-            if (rsp.GetResponseStream() == null) return StatusCode(400);
+            HttpWebResponse rsp = (HttpWebResponse)await request.GetResponseAsync();
+            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remove server returned: {rsp.StatusCode}");
             for (int h = 0; h < rsp.Headers.Count; h++)
             {
                 // Copy response headers
