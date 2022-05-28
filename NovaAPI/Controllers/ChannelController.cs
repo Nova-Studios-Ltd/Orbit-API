@@ -513,6 +513,7 @@ namespace NovaAPI.Controllers
             foreach (string channel in matchingChannels)
             {
                 Channel c = GetChannel(channel).Value;
+                if (c == null) continue;
                 if (!c.IsGroup)
                 {
                     if (c.Members.Contains(user_uuid1) && c.Members.Contains(user_uuid2))
