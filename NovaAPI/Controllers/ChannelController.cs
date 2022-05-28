@@ -355,7 +355,7 @@ namespace NovaAPI.Controllers
             // Handle Standard Channel
             if (!channel.IsGroup)
             {
-                // Remove Channel from User props
+                // Set channel to DeletedChannel in use props
                 SetUserDeletedChannel(channel_uuid, user_uuid, true);
 
                 if (channel.Members.Count <= 1)
@@ -371,6 +371,12 @@ namespace NovaAPI.Controllers
                     cmd.Parameters.AddWithValue("@table_id", channel_uuid);
                     if (cmd.ExecuteNonQuery() == 0) return NotFound();
                     channelCon.Close();
+
+                    foreach (string member in channel.Members)
+                    {
+                        RemoveChannelFromUser(channel_uuid, member);
+                    }
+                    
                     Event.ChannelDeleteEvent(channel_uuid, user_uuid);
 
                     StorageUtil.RemoveChannelContent(channel_uuid);
@@ -513,6 +519,8 @@ namespace NovaAPI.Controllers
                     {
                         SetChannelDeleteStatus(c.Table_Id, user_uuid1, false);
                         SetChannelDeleteStatus(c.Table_Id, user_uuid2, false);
+                        SetUserDeletedChannel(c.Table_Id, user_uuid1, false);
+                        SetUserDeletedChannel(c.Table_Id, user_uuid2, false);
                         return true;
                     }
                 }
@@ -557,7 +565,7 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection channelCon = Context.GetChannels();
             channelCon.Open();
-            using MySqlCommand updateAccess = new($"UPDATE `access_{channel_uuid}` SET DELETED=@status WHERE (User_UUID=@uuid)", channelCon);
+            using MySqlCommand updateAccess = new($"UPDATE `access_{channel_uuid}` SET (DELETED=@status) WHERE (User_UUID=@uuid)", channelCon);
             updateAccess.Parameters.AddWithValue("@status", status);
             updateAccess.Parameters.AddWithValue("@uuid", user_uuid);
             if (updateAccess.ExecuteNonQuery() == 0) return;
@@ -568,13 +576,23 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection userConn = Context.GetUsers();
             userConn.Open();
-            using MySqlCommand removeFromUser = new($"UPDATE `{user_uuid}` SET (Property=@prop3) WHERE (Property=@prop1) OR (Property=@prop2) AND (Value=@channel)", userConn);
-            removeFromUser.Parameters.AddWithValue("@prop1", "DeletedChannelAccess");
-            removeFromUser.Parameters.AddWithValue("@prop2", "ActiveChannelAccess");
-            removeFromUser.Parameters.AddWithValue("@prop3", (status) ? "DeletedChannelAccess" : "ActiveChannelAccess");
+            using MySqlCommand updateChannel = new($"UPDATE `{user_uuid}` SET (Property=@prop3) WHERE (Property=@prop1) OR (Property=@prop2) AND (Value=@channel)", userConn);
+            updateChannel.Parameters.AddWithValue("@prop1", "DeletedChannelAccess");
+            updateChannel.Parameters.AddWithValue("@prop2", "ActiveChannelAccess");
+            updateChannel.Parameters.AddWithValue("@prop3", (status) ? "DeletedChannelAccess" : "ActiveChannelAccess");
+            updateChannel.Parameters.AddWithValue("@channel", channel_uuid);
+            updateChannel.ExecuteNonQuery();
+            
+            userConn.Close();
+        }
+
+        public void RemoveChannelFromUser(string channel_uuid, string user_uuid)
+        {
+            using MySqlConnection userConn = Context.GetUsers();
+            userConn.Open();
+            using MySqlCommand removeFromUser = new($"DELETE `{user_uuid}` WHERE (Value=@channel)", userConn);
             removeFromUser.Parameters.AddWithValue("@channel", channel_uuid);
             removeFromUser.ExecuteNonQuery();
-            
             userConn.Close();
         }
         
