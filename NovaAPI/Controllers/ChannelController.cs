@@ -561,7 +561,7 @@ namespace NovaAPI.Controllers
             return channels;
         }
 
-        public void SetChannelDeleteStatus(string channel_uuid, string user_uuid, bool status)
+        private void SetChannelDeleteStatus(string channel_uuid, string user_uuid, bool status)
         {
             using MySqlConnection channelCon = Context.GetChannels();
             channelCon.Open();
@@ -572,7 +572,7 @@ namespace NovaAPI.Controllers
             channelCon.Close();
         }
 
-        public void SetUserDeletedChannel(string channel_uuid, string user_uuid, bool status)
+        private void SetUserDeletedChannel(string channel_uuid, string user_uuid, bool status)
         {
             using MySqlConnection userConn = Context.GetUsers();
             userConn.Open();
@@ -586,7 +586,7 @@ namespace NovaAPI.Controllers
             userConn.Close();
         }
 
-        public void RemoveChannelFromUser(string channel_uuid, string user_uuid)
+        private void RemoveChannelFromUser(string channel_uuid, string user_uuid)
         {
             using MySqlConnection userConn = Context.GetUsers();
             userConn.Open();
