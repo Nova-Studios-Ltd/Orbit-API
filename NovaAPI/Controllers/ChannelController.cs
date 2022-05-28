@@ -307,6 +307,7 @@ namespace NovaAPI.Controllers
         public ActionResult<Channel> GetChannel(string channel_uuid) 
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
+            Console.WriteLine(ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid, true));
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid, true)) return StatusCode(403);
             Channel channel = new();
             using (MySqlConnection conn = Context.GetChannels())
