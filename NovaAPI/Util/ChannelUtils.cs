@@ -5,7 +5,7 @@ namespace NovaAPI.Util
 {
     public static class ChannelUtils
     {
-        public static bool CheckUserChannelAccess(NovaChatDatabaseContext Context, string user_uuid, string channel_uuid)
+        public static bool CheckUserChannelAccess(NovaChatDatabaseContext Context, string user_uuid, string channel_uuid, bool includeDeleted = false)
         {
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
@@ -14,7 +14,7 @@ namespace NovaAPI.Util
             MySqlDataReader reader = cmd.ExecuteReader();
             while(reader.Read())
             {
-                if (!(bool)reader["Deleted"]) return true;
+                if (!(bool)reader["Deleted"] || includeDeleted) return true;
             }
             return false;
         }
