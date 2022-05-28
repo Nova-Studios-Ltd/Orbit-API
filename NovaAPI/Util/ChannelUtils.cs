@@ -9,7 +9,7 @@ namespace NovaAPI.Util
         {
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
-            using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}` WHERE (User_UUID=@uuid)", conn);
+            using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}` WHERE User_UUID=@uuid", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             MySqlDataReader reader = cmd.ExecuteReader();
             while(reader.Read())
