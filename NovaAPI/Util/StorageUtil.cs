@@ -214,6 +214,7 @@ namespace NovaAPI.Util
 
         public static void RemoveChannelContent(string channel_uuid)
         {
+            if (!Directory.Exists(Path.Combine(ChannelContent, channel_uuid))) return;
             string[] files = Directory.GetFiles(Path.Combine(ChannelContent, channel_uuid));
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();

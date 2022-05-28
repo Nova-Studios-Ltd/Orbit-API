@@ -521,6 +521,7 @@ namespace NovaAPI.Controllers
                         SetChannelDeleteStatus(c.Table_Id, user_uuid2, false);
                         SetUserDeletedChannel(c.Table_Id, user_uuid1, false);
                         SetUserDeletedChannel(c.Table_Id, user_uuid2, false);
+                        Event.ChannelCreatedEvent(c.Table_Id);
                         return true;
                     }
                 }
