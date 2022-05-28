@@ -513,7 +513,6 @@ namespace NovaAPI.Controllers
             foreach (string channel in matchingChannels)
             {
                 Channel c = GetChannel(channel).Value;
-                Console.WriteLine(channel);
                 if (c == null) continue;
                 if (!c.IsGroup)
                 {
@@ -568,7 +567,7 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection channelCon = Context.GetChannels();
             channelCon.Open();
-            using MySqlCommand updateAccess = new($"UPDATE `access_{channel_uuid}` SET (DELETED=@status) WHERE (User_UUID=@uuid)", channelCon);
+            using MySqlCommand updateAccess = new($"UPDATE `access_{channel_uuid}` SET DELETED=@status WHERE (User_UUID=@uuid)", channelCon);
             updateAccess.Parameters.AddWithValue("@status", status);
             updateAccess.Parameters.AddWithValue("@uuid", user_uuid);
             if (updateAccess.ExecuteNonQuery() == 0) return;
