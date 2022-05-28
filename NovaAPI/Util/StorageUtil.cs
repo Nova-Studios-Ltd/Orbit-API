@@ -25,7 +25,6 @@ namespace NovaAPI.Util
         public static void InitStorage(string directory, IConfigurationRoot config)
         {
             Context = new NovaChatDatabaseContext(config);
-            
             if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (directory == null) throw new ArgumentException("directory is null");
 

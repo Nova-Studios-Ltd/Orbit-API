@@ -576,10 +576,8 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection userConn = Context.GetUsers();
             userConn.Open();
-            using MySqlCommand updateChannel = new($"UPDATE `{user_uuid}` SET (Property=@prop3) WHERE (Property=@prop1) OR (Property=@prop2) AND (Value=@channel)", userConn);
-            updateChannel.Parameters.AddWithValue("@prop1", "DeletedChannelAccess");
-            updateChannel.Parameters.AddWithValue("@prop2", "ActiveChannelAccess");
-            updateChannel.Parameters.AddWithValue("@prop3", (status) ? "DeletedChannelAccess" : "ActiveChannelAccess");
+            using MySqlCommand updateChannel = new($"UPDATE `{user_uuid}` SET (Property=@prop) WHERE (Value=@channel)", userConn);
+            updateChannel.Parameters.AddWithValue("@prop", (status) ? "DeletedChannelAccess" : "ActiveChannelAccess");
             updateChannel.Parameters.AddWithValue("@channel", channel_uuid);
             updateChannel.ExecuteNonQuery();
             
