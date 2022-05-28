@@ -513,6 +513,7 @@ namespace NovaAPI.Controllers
             foreach (string channel in matchingChannels)
             {
                 Channel c = GetChannel(channel).Value;
+                Console.WriteLine(channel);
                 if (c == null) continue;
                 if (!c.IsGroup)
                 {
