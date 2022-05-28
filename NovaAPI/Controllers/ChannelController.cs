@@ -588,6 +588,7 @@ namespace NovaAPI.Controllers
         {
             using MySqlConnection userConn = Context.GetUsers();
             userConn.Open();
+            Console.WriteLine($"DELETE `{user_uuid}` WHERE Value=@channel");
             using MySqlCommand removeFromUser = new($"DELETE `{user_uuid}` WHERE Value=@channel", userConn);
             removeFromUser.Parameters.AddWithValue("@channel", channel_uuid);
             removeFromUser.ExecuteNonQuery();
