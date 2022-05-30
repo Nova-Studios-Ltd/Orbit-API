@@ -168,7 +168,7 @@ namespace NovaAPI.Controllers
         [HttpPost("{channel_uuid}/Messages/")]
         public ActionResult<string> SendMessage(string channel_uuid, SentMessage message, string contentToken)
         {
-            if (!TokenManager.ValidToken(contentToken, channel_uuid) && message.Attachments.Count > 0)
+            if (contentToken != "empty" && !TokenManager.ValidToken(contentToken, channel_uuid) && message.Attachments.Count > 0)
             {
                 TokenManager.InvalidateToken(contentToken);
                 return StatusCode(400, "The provided Content Token has expired");

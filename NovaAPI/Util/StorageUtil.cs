@@ -25,7 +25,6 @@ namespace NovaAPI.Util
         public static void InitStorage(string directory, IConfigurationRoot config)
         {
             Context = new NovaChatDatabaseContext(config);
-            
             if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (directory == null) throw new ArgumentException("directory is null");
 
@@ -215,6 +214,7 @@ namespace NovaAPI.Util
 
         public static void RemoveChannelContent(string channel_uuid)
         {
+            if (!Directory.Exists(Path.Combine(ChannelContent, channel_uuid))) return;
             string[] files = Directory.GetFiles(Path.Combine(ChannelContent, channel_uuid));
             using MySqlConnection conn = Context.GetChannels();
             conn.Open();
