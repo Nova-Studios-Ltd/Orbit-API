@@ -1,20 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
-using NovaAPI;
-using NovaAPI.Models;
 using NovaAPI.Attri;
-using Microsoft.Extensions.Primitives;
+using NovaAPI.Models;
 using NovaAPI.Util;
-using System.IO;
 
 namespace NovaAPI.Controllers
 {
@@ -51,7 +42,7 @@ namespace NovaAPI.Controllers
                         Username = reader["Username"].ToString(),
                         Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                         CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
-                        Avatar = $"https://api.novastudios.tk/Media/Avatar/{(reader["UUID"].ToString())}?size=64"
+                        Avatar = $"https://api.novastudios.tk/User/{(reader["UUID"].ToString())}/Avatar?size=64"
                     };
                 }
             }
