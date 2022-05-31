@@ -228,14 +228,16 @@ namespace NovaAPI.Controllers
                 // Read from websocket, may use this for more later, but for now its just for pinging
                 Task.Run(async () =>
                 {
-                    while (socket.Socket.State == WebSocketState.Open)
+                    while (true)
                     {
                         byte[] dataBuffer = new byte[1024];
+                        Console.WriteLine($"Awaiting data for {user_uuid}");
                         await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
                         string data = Encoding.UTF8.GetString(buffer).Trim();
                         if (data == "ping")
                             await socket.Socket.SendAsync(Encoding.UTF8.GetBytes("pong"), WebSocketMessageType.Text, true,
                                 CancellationToken.None);
+                        if (socket.Socket.State == WebSocketState.Closed) return;
                     }
                 });
 
