@@ -5,6 +5,7 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using NovaAPI.Attri;
@@ -16,7 +17,6 @@ namespace NovaAPI.Controllers
     public class EventManager
     {
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 30);
-        //private static readonly Dictionary<string, UserSocket> Clients = new();
         private static readonly Dictionary<string, List<UserSocket>> Clients = new();
         private readonly NovaChatDatabaseContext Context;
 
@@ -215,7 +215,7 @@ namespace NovaAPI.Controllers
             else
             {
                 byte[] buffer = new byte[1024];
-                WebSocketReceiveResult result = await socket.Socket.ReceiveAsync(buffer, CancellationToken.None);
+                await socket.Socket.ReceiveAsync(buffer, CancellationToken.None);
 
                 string token = Encoding.UTF8.GetString(buffer).Trim();
                 if (Context.GetUserUUID(token) != user_uuid && !string.IsNullOrWhiteSpace(token))
@@ -224,6 +224,20 @@ namespace NovaAPI.Controllers
                     Console.WriteLine($"Unable to auth user with uuid {user_uuid}");
                     socket.Socket.Abort();
                 }
+                
+                // Read from websocket, may use this for more later, but for now its just for pinging
+                Task.Run(async () =>
+                {
+                    while (socket.Socket.State == WebSocketState.Open)
+                    {
+                        byte[] dataBuffer = new byte[1024];
+                        await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
+                        string data = Encoding.UTF8.GetString(buffer).Trim();
+                        if (data == "ping")
+                            await socket.Socket.SendAsync(Encoding.UTF8.GetBytes("pong"), WebSocketMessageType.Text, true,
+                                CancellationToken.None);
+                    }
+                });
 
                 Clients.Add(user_uuid, new List<UserSocket>());
                 Clients[user_uuid].Add(socket);
