@@ -235,8 +235,12 @@ namespace NovaAPI.Controllers
                         string data = Encoding.UTF8.GetString(dataBuffer).Trim();
                         Console.WriteLine(data);
                         if (data == "ping")
-                            await socket.Socket.SendAsync(Encoding.UTF8.GetBytes("pong"), WebSocketMessageType.Text, true,
-                                CancellationToken.None);
+                        {
+                            var msg = Encoding.UTF8.GetBytes("pong");
+                            await socket.Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length),
+                                WebSocketMessageType.Text, true, CancellationToken.None);
+                        }
+
                         if (socket.Socket.State == WebSocketState.Closed) return;
                     }
                 });
