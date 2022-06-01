@@ -226,7 +226,7 @@ namespace NovaAPI.Controllers
                 }
                 
                 // Read from websocket, may use this for more later, but for now its just for pinging
-                Task.Run(async () =>
+                /*Task.Run(async () =>
                 {
                     while (true)
                     {
@@ -243,7 +243,7 @@ namespace NovaAPI.Controllers
 
                         if (socket.Socket.State == WebSocketState.Closed) return;
                     }
-                });
+                });*/
 
                 Clients.Add(user_uuid, new List<UserSocket>());
                 Clients[user_uuid].Add(socket);
