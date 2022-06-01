@@ -230,7 +230,7 @@ namespace NovaAPI.Controllers
                 {
                     while (true)
                     {
-                        byte[] dataBuffer = new byte[1024];
+                        byte[] dataBuffer = new byte[4];
                         await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
                         string data = Encoding.UTF8.GetString(dataBuffer).Trim();
                         Console.WriteLine(data);
