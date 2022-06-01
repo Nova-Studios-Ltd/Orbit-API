@@ -231,10 +231,8 @@ namespace NovaAPI.Controllers
                     while (true)
                     {
                         byte[] dataBuffer = new byte[1024];
-                        Console.WriteLine($"Awaiting data for {user_uuid}");
                         await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
-                        string data = Encoding.UTF8.GetString(buffer).Trim();
-                        Console.WriteLine(data);
+                        string data = Encoding.UTF8.GetString(dataBuffer).Trim();
                         if (data == "ping")
                             await socket.Socket.SendAsync(Encoding.UTF8.GetBytes("pong"), WebSocketMessageType.Text, true,
                                 CancellationToken.None);
