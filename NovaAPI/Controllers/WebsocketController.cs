@@ -38,6 +38,10 @@ namespace NovaAPI.Controllers
             }
         }
 
+        [HttpGet("Ping")]
+        public ActionResult TestLatency() => StatusCode(200);
+        
+        
         /*[HttpGet("/TestReconnect/{setAttempts}")]
         [TokenAuthorization]
         public ActionResult TestReconnect(int setAttempts)

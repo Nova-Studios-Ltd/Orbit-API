@@ -224,26 +224,6 @@ namespace NovaAPI.Controllers
                     Console.WriteLine($"Unable to auth user with uuid {user_uuid}");
                     socket.Socket.Abort();
                 }
-                
-                // Read from websocket, may use this for more later, but for now its just for pinging
-                /*Task.Run(async () =>
-                {
-                    while (true)
-                    {
-                        byte[] dataBuffer = new byte[4];
-                        await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
-                        string data = Encoding.UTF8.GetString(dataBuffer).Trim();
-                        //Console.WriteLine(data);
-                        if (data == "ping")
-                        {
-                            var msg = Encoding.UTF8.GetBytes("pong");
-                            await socket.Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length),
-                                WebSocketMessageType.Text, true, CancellationToken.None);
-                        }
-
-                        if (socket.Socket.State == WebSocketState.Closed) return;
-                    }
-                });*/
 
                 Clients.Add(user_uuid, new List<UserSocket>());
                 Clients[user_uuid].Add(socket);
