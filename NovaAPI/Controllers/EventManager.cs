@@ -233,7 +233,7 @@ namespace NovaAPI.Controllers
                         byte[] dataBuffer = new byte[4];
                         await socket.Socket.ReceiveAsync(dataBuffer, CancellationToken.None);
                         string data = Encoding.UTF8.GetString(dataBuffer).Trim();
-                        Console.WriteLine(data);
+                        //Console.WriteLine(data);
                         if (data == "ping")
                         {
                             var msg = Encoding.UTF8.GetBytes("pong");
