@@ -24,19 +24,18 @@ namespace NovaAPI.Controllers
 
 
         [HttpGet("{user_uuid}/Friends")]
-        public ActionResult<List<string>> GetFriends(string user_uuid, string state = "Accepted")
+        public ActionResult<Dictionary<string, string>> GetFriends(string user_uuid)
         {
             CheckTable(user_uuid);
             using MySqlConnection conn = Context.GetUsers();
             conn.Open();
 
-            using MySqlCommand getFriends = new($"SELECT UUID FROM `{user_uuid}_friends` WHERE State=@state", conn);
-            getFriends.Parameters.AddWithValue("@state", state);
+            using MySqlCommand getFriends = new($"SELECT * FROM `{user_uuid}_friends`", conn);
             MySqlDataReader reader = getFriends.ExecuteReader();
-            List<string> friends = new();
+            Dictionary<string, string> friends = new();
             while (reader.Read())
             {
-                friends.Add(reader["UUID"].ToString());
+                friends.Add(reader["UUID"].ToString(), reader["State"].ToString());
             }
             return friends;
         }
