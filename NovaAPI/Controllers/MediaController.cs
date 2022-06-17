@@ -69,6 +69,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult SetAvatar(string user_uuid, IFormFile file)
         {
+            if (!file.ContentType.Contains("image/")) return StatusCode(400);
             DeleteFile(MediaType.Avatar, user_uuid);
             string filename = StoreFile(MediaType.Avatar, file.OpenReadStream(), new AvatarMeta(file.FileName, file.Length, user_uuid));
             return (filename == "")? StatusCode(200) : StatusCode(404);
