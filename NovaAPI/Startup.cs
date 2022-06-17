@@ -17,6 +17,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Text;
 using AspNetCoreRateLimit;
+using MySql.Data.MySqlClient;
 using NovaAPI.Util;
 using NovaAPI.Attri;
 
@@ -42,6 +43,32 @@ namespace NovaAPI
             //services.Configure<IpRateLimitPolicies>(Configuration.GetSection(""));
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
             services.AddInMemoryRateLimiting();
+            
+            // Load MySql config
+            IConfigurationSection config = Configuration.GetSection("SQLServerConfig");
+            MySqlServerData.Server = config.GetSection("Server").Value;
+            MySqlServerData.Port = config.GetSection("Port").Value;
+            MySqlServerData.User = config.GetSection("User").Value;
+            MySqlServerData.Password = config.GetSection("Password").Value;
+            MySqlServerData.UserDatabaseName = config.GetSection("UserDatabaseName").Value;
+            MySqlServerData.ChannelsDatabaseName = config.GetSection("ChannelsDatabaseName").Value;
+            MySqlServerData.MasterDatabaseName = config.GetSection("MasterDatabaseName").Value;
+            
+            // Setup databases
+            using MySqlConnection conn = new(MySqlServerData.CreateSQLString());
+            conn.Open();
+            
+            // Create User Database
+            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.UserDatabaseName}`", conn).ExecuteNonQuery();
+            // Create Channels Database
+            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.ChannelsDatabaseName}`", conn).ExecuteNonQuery();
+            // Create Master Database
+            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.MasterDatabaseName}`", conn).ExecuteNonQuery();
+            
+            // Create Master Database Tables
+            
+            
+            conn.Close();
             
             services.AddCors(options =>
             {

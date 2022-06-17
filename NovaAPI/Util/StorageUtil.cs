@@ -24,6 +24,7 @@ namespace NovaAPI.Util
         public enum MediaType { Avatar, ChannelIcon, ChannelContent }
         public static void InitStorage(string directory, IConfigurationRoot config)
         {
+            return;
             Context = new NovaChatDatabaseContext(config);
             if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (directory == null) throw new ArgumentException("directory is null");
