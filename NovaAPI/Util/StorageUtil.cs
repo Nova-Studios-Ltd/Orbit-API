@@ -24,7 +24,6 @@ namespace NovaAPI.Util
         public enum MediaType { Avatar, ChannelIcon, ChannelContent }
         public static void InitStorage(string directory, IConfigurationRoot config)
         {
-            return;
             Context = new NovaChatDatabaseContext(config);
             if (directory == "") directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (directory == null) throw new ArgumentException("directory is null");
@@ -108,10 +107,11 @@ namespace NovaAPI.Util
                 // Store file meta data
                 using MySqlConnection conn = Context.GetChannels();
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @filename, @mime, @size, @width, @height)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, User_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @user_uuid @filename, @mime, @size, @width, @height)", conn);
                 cmd.Parameters.AddWithValue("@uuid", filename);
+                cmd.Parameters.AddWithValue("@user_uuid", filemeta.User_UUID);
                 cmd.Parameters.AddWithValue("@filename", filemeta.Filename);
-                cmd.Parameters.AddWithValue("@mime", MimeTypeMap.GetMimeType(Path.GetExtension(filemeta.Filename)));
+                cmd.Parameters.AddWithValue("@mime", filemeta.MimeType);
                 cmd.Parameters.AddWithValue("@size", filemeta.Filesize);
                 cmd.Parameters.AddWithValue("@width", filemeta.Width);
                 cmd.Parameters.AddWithValue("@height", filemeta.Height);
@@ -165,7 +165,7 @@ namespace NovaAPI.Util
                 Diamension dim = RetreiveDiamension(resource_id);
                 return new MediaFile(fs,
                     new ChannelContentMeta(dim.Width, dim.Height, RetreiveMimeType(resource_id), RetreiveFilename(resource_id), location_id,
-                        fs.Length));
+                        RetreiveContentAuthor(resource_id), fs.Length));
             }
             else if (mediaType == MediaType.ChannelIcon)
             {
@@ -254,6 +254,20 @@ namespace NovaAPI.Util
             while (reader.Read())
             {
                 return reader["MimeType"].ToString();
+            }
+            return "";
+        }
+        
+        public static string RetreiveContentAuthor(string content_id)
+        {
+            using MySqlConnection conn = Context.GetChannels();
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT User_UUID FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["User_UUID"].ToString();
             }
             return "";
         }

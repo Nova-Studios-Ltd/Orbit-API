@@ -2,13 +2,13 @@ namespace NovaAPI.Util
 {
     public static class MySqlServerData
     {
+        public static bool AutoConfig { get; set; }
         // General Server Information
         public static string Server { get; set; }
         public static string Port { get; set; }
         public static string User { get; set; }
         public static string Password { get; set; }
-        public static string SslMode { get; set; }
-        
+
         // Database Names
         public static string UserDatabaseName { get; set; }
         public static string ChannelsDatabaseName { get; set; }
@@ -16,7 +16,7 @@ namespace NovaAPI.Util
 
         
         // Table creation strings
-        public static string UserTableString = @"CREATE TABLE `Users` (
+        public static string UserTableString = @"CREATE TABLE IF NOT EXISTS `Users` (
             `UUID` char(255) NOT NULL,
         `Username` char(255) NOT NULL,
         `Discriminator` int NOT NULL,
@@ -33,7 +33,7 @@ namespace NovaAPI.Util
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
             ";
 
-        public static string ChannelTableString = @"CREATE TABLE `Channels` (
+        public static string ChannelTableString = @"CREATE TABLE IF NOT EXISTS `Channels` (
           `Table_ID` char(255) NOT NULL,
           `Owner_UUID` char(255) NOT NULL,
           `ChannelIcon` char(255) NOT NULL,
@@ -44,8 +44,9 @@ namespace NovaAPI.Util
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         ";
 
-        public static string ChannelMediaTableString = @"CREATE TABLE `ChannelMedia` (
+        public static string ChannelMediaTableString = @"CREATE TABLE IF NOT EXISTS `ChannelMedia` (
           `File_UUID` char(255) NOT NULL,
+          `User_UUID` char(255) NOT NULL,
           `Filename` char(255) NOT NULL,
           `MimeType` char(255) NOT NULL,
           `Size` int NOT NULL,

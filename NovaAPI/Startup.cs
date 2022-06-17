@@ -46,40 +46,47 @@ namespace NovaAPI
             
             // Load MySql config
             IConfigurationSection config = Configuration.GetSection("SQLServerConfig");
+            MySqlServerData.AutoConfig = (bool)config.GetSection("Server").Get(typeof(Boolean));
             MySqlServerData.Server = config.GetSection("Server").Value;
             MySqlServerData.Port = config.GetSection("Port").Value;
             MySqlServerData.User = config.GetSection("User").Value;
             MySqlServerData.Password = config.GetSection("Password").Value;
-            MySqlServerData.SslMode = config.GetSection("SslMode").Value;
             MySqlServerData.UserDatabaseName = config.GetSection("UserDatabaseName").Value;
             MySqlServerData.ChannelsDatabaseName = config.GetSection("ChannelDatabaseName").Value;
             MySqlServerData.MasterDatabaseName = config.GetSection("MasterDatabaseName").Value;
-            
-            // Setup databases
-            using MySqlConnection conn = new(MySqlServerData.CreateSQLString());
-            conn.Open();
-            
-            // Create User Database
-            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.UserDatabaseName}`", conn).ExecuteNonQuery();
-            // Create Channels Database
-            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.ChannelsDatabaseName}`", conn).ExecuteNonQuery();
-            // Create Master Database
-            new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.MasterDatabaseName}`", conn).ExecuteNonQuery();
-            
-            conn.Close();
-            
-            // Create Master Database Tables
-            using MySqlConnection masterCon = new MySqlConnection(MySqlServerData.CreateSQLString(MySqlServerData.MasterDatabaseName));
-            masterCon.Open();
-            
-            // Create Users Table
-            new MySqlCommand(MySqlServerData.UserTableString, conn).ExecuteNonQuery();
-            // Create Channels Table
-            new MySqlCommand(MySqlServerData.ChannelsDatabaseName, conn).ExecuteNonQuery();
-            // Create ChannelMedia Table
-            new MySqlCommand(MySqlServerData.ChannelMediaTableString, conn).ExecuteNonQuery();
-            
-            masterCon.Close();
+
+            if (MySqlServerData.AutoConfig)
+            {
+                // Setup databases
+                using MySqlConnection conn = new(MySqlServerData.CreateSQLString());
+                conn.Open();
+
+                // Create User Database
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.UserDatabaseName}`", conn)
+                    .ExecuteNonQuery();
+                // Create Channels Database
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.ChannelsDatabaseName}`", conn)
+                    .ExecuteNonQuery();
+                // Create Master Database
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.MasterDatabaseName}`", conn)
+                    .ExecuteNonQuery();
+
+                conn.Close();
+
+                // Create Master Database Tables
+                using MySqlConnection masterCon =
+                    new MySqlConnection(MySqlServerData.CreateSQLString(MySqlServerData.MasterDatabaseName));
+                masterCon.Open();
+
+                // Create Users Table
+                new MySqlCommand(MySqlServerData.UserTableString, masterCon).ExecuteNonQuery();
+                // Create Channels Table
+                new MySqlCommand(MySqlServerData.ChannelTableString, masterCon).ExecuteNonQuery();
+                // Create ChannelMedia Table
+                new MySqlCommand(MySqlServerData.ChannelMediaTableString, masterCon).ExecuteNonQuery();
+
+                masterCon.Close();
+            }
 
             services.AddCors(options =>
             {

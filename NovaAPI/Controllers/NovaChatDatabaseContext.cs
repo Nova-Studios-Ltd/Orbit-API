@@ -22,11 +22,7 @@ namespace NovaAPI.Controllers
             MainDatabase = "server=10.0.0.250;port=3306;database=NovaChatUsers;user=nova;password=17201311;";
             ChannelsDatabase = "server=10.0.0.250;port=3306;database=NovaChatChannels;user=nova;password=17201311;";
 #endif
-            
-            Console.WriteLine("Test");
-            Console.WriteLine(config.GetSection("SQLServerConfig").GetSection("Server").Value);
-            
-        }
+            }
 
         public MySqlConnection GetUsers()
         {

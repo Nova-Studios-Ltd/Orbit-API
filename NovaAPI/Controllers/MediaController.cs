@@ -134,7 +134,7 @@ namespace NovaAPI.Controllers
         // Content Related
         [HttpPost("/Channel/{channel_uuid}")]
         [TokenAuthorization]
-        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, int width=0, int height=0)
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, string fileType, int width=0, int height=0)
         {
             if (!TokenManager.UseToken(contentToken, channel_uuid))
             {
@@ -145,7 +145,7 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, "File must be > 0MB and <= 20MB");
 
-            string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(Path.GetExtension(file.FileName)), file.FileName, channel_uuid, file.Length));
+            string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(fileType), file.FileName, channel_uuid, Context.GetUserUUID(this.GetToken()), file.Length));
             if (contentID == "") return StatusCode(500);
             TokenManager.AddID(contentToken, contentID);
             return contentID;
