@@ -46,7 +46,7 @@ namespace NovaAPI
             
             // Load MySql config
             IConfigurationSection config = Configuration.GetSection("SQLServerConfig");
-            MySqlServerData.AutoConfig = (bool)config.GetSection("Server").Get(typeof(Boolean));
+            MySqlServerData.AutoConfig = bool.Parse(config.GetSection("AutoConfig").Value);
             MySqlServerData.Server = config.GetSection("Server").Value;
             MySqlServerData.Port = config.GetSection("Port").Value;
             MySqlServerData.User = config.GetSection("User").Value;
