@@ -7,6 +7,7 @@ namespace NovaAPI.Util
         public static string Port { get; set; }
         public static string User { get; set; }
         public static string Password { get; set; }
+        public static string SslMode { get; set; }
         
         // Database Names
         public static string UserDatabaseName { get; set; }
@@ -54,9 +55,12 @@ namespace NovaAPI.Util
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
         
         
-        public static string CreateSQLString()
+        public static string CreateSQLString(string database = "")
         {
-            return $"server={Server};port={Port};user={User};password={Password};";
+            if (database == "")
+                return $"server={Server};port={Port};user={User};password={Password};";
+            else
+                return $"server={Server};port={Port};user={User};password={Password};database={database};";
         }
     }
 }
