@@ -7,7 +7,7 @@ namespace NovaAPI.Util
     {
         public static bool CheckUserChannelAccess(string user_uuid, string channel_uuid, bool includeDeleted = false)
         {
-            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}` WHERE (User_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
