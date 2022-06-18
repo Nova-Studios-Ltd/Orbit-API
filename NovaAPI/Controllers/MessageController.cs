@@ -32,9 +32,9 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/")]
         public ActionResult<IEnumerable<ChannelMessage>> GetMessages(string channel_uuid, int limit = 30, int after = -1, int before = int.MaxValue)
         {
-            if (!ChannelUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
+            if (!ChannelUtils.CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403, "Access Denied");
             List<ChannelMessage> messages = new();
-            using (MySqlConnection conn = Context.GetChannels())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 // Testing stuff
                 conn.Open();
@@ -43,7 +43,7 @@ namespace NovaAPI.Controllers
                     MySqlCommand cmd = new($"SELECT * FROM `{channel_uuid}` WHERE Message_ID>{after} AND Message_ID<{before} ORDER BY Message_ID DESC LIMIT {limit}", conn);
                     cmd.Parameters.AddWithValue("@before", before);
                     using MySqlDataReader reader = cmd.ExecuteReader();
-                    using MySqlConnection meta = Context.GetChannels();
+                    using MySqlConnection meta = MySqlServer.CreateSQLConnection(Database.Master);
                     meta.Open();
                     while (reader.Read())
                     {
@@ -107,8 +107,8 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/{message_id}")]
         public ActionResult<ChannelMessage> GetMessage(string channel_uuid, string message_id)
         {
-            if (!ChannelUtils.CheckUserChannelAccess(Context, Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
-            using (MySqlConnection conn = Context.GetChannels())
+            if (!ChannelUtils.CheckUserChannelAccess(Context.GetUserUUID(GetToken()), channel_uuid)) return StatusCode(403);
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 conn.Open();
                 try
@@ -116,7 +116,7 @@ namespace NovaAPI.Controllers
                     MySqlCommand cmd = new($"SELECT * FROM `{channel_uuid}` WHERE (Message_ID=@uuid)", conn);
                     cmd.Parameters.AddWithValue("@uuid", message_id);
                     using MySqlDataReader reader = cmd.ExecuteReader();
-                    using MySqlConnection meta = Context.GetChannels();
+                    using MySqlConnection meta = MySqlServer.CreateSQLConnection(Database.Master);
                     meta.Open();
                     while (reader.Read())
                     {
@@ -175,7 +175,7 @@ namespace NovaAPI.Controllers
             }
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
-            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
             if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments");
             
             // Check that attachments arent duplicated and match those of the provided contentToken
@@ -185,7 +185,7 @@ namespace NovaAPI.Controllers
                 return StatusCode(409, "Attachments contains duplicate ids");
             }
             
-            using (MySqlConnection conn = Context.GetChannels())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"INSERT INTO `{channel_uuid}` (Author_UUID, Content, Attachments, IV, EncryptedKeys) VALUES (@author, @content, @attachments, @iv, @keys)", conn);
@@ -210,8 +210,8 @@ namespace NovaAPI.Controllers
         public ActionResult EditMessage(string channel_uuid, string message_id, SentMessage message)
         {
             string user_uuid = Context.GetUserUUID(GetToken());
-            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-            using (MySqlConnection conn = Context.GetChannels())
+            if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"UPDATE `{channel_uuid}` SET Content=@content,EditedDate=@date,Edited=@edited WHERE (Author_UUID=@author) AND (Message_ID=@message_uuid)", conn);
@@ -235,8 +235,8 @@ namespace NovaAPI.Controllers
             try
             {
                 string user_uuid = Context.GetUserUUID(GetToken());
-                if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
-                using (MySqlConnection conn = Context.GetChannels())
+                if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+                using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
                 {
                     conn.Open();
 

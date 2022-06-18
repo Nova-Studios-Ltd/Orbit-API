@@ -10,6 +10,7 @@ using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using NovaAPI.Attri;
 using NovaAPI.Models;
+using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
@@ -98,7 +99,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.MessageSent)]
         public void MessageSentEvent(string channel_uuid, string message_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();
@@ -112,7 +113,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.MessageDelete)]
         public void MessageDeleteEvent(string channel_uuid, string message_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();
@@ -126,7 +127,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.MessageEdit)]
         public void MessageEditEvent(string channel_uuid, string message_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();
@@ -141,7 +142,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.ChannelCreated)]
         public void ChannelCreatedEvent(string channel_uuid)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();
@@ -155,7 +156,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.ChannelDeleted)]
         public void ChannelDeleteEvent(string channel_uuid)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();
@@ -175,7 +176,7 @@ namespace NovaAPI.Controllers
         [WebsocketEvent(EventType.GroupNewMember)]
         public async void GroupNewMember(string channel_uuid, string user_uuid)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand removeUsers = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = removeUsers.ExecuteReader();

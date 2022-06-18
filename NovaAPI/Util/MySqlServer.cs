@@ -1,6 +1,14 @@
+using MySql.Data.MySqlClient;
+
 namespace NovaAPI.Util
 {
-    public static class MySqlServerData
+    public enum Database
+    {
+        Channel,
+        User,
+        Master
+    }
+    public static class MySqlServer
     {
         public static bool AutoConfig { get; set; }
         // General Server Information
@@ -55,13 +63,24 @@ namespace NovaAPI.Util
           PRIMARY KEY (`File_UUID`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
         
-        
         public static string CreateSQLString(string database = "")
         {
             if (database == "")
                 return $"server={Server};port={Port};user={User};password={Password};";
             else
                 return $"server={Server};port={Port};user={User};password={Password};database={database};";
+        }
+
+        public static MySqlConnection CreateSQLConnection(Database database)
+        {
+            if (database == Database.Channel)
+                return new MySqlConnection(CreateSQLString(ChannelsDatabaseName));
+            else if (database == Database.Master)
+                return new MySqlConnection(CreateSQLString(MasterDatabaseName));
+            else if (database == Database.User)
+                return new MySqlConnection(CreateSQLString(UserDatabaseName));
+            else
+                return new MySqlConnection(CreateSQLString());
         }
     }
 }

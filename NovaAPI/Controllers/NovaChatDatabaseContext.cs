@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
@@ -24,7 +25,7 @@ namespace NovaAPI.Controllers
 #endif
             }
 
-        public MySqlConnection GetUsers()
+        /*public MySqlConnection GetUsers()
         {
             return new MySqlConnection(MainDatabase);
         }
@@ -38,11 +39,11 @@ namespace NovaAPI.Controllers
         public MySqlConnection GetChannels()
         {
             return new MySqlConnection(ChannelsDatabase);
-        }
+        }*/
 
         public string GetUserUUID(string token)
         {
-            using (MySqlConnection conn = GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 MySqlCommand cmd = new("SELECT UUID FROM Users WHERE (Token=@token)", conn);
@@ -57,7 +58,7 @@ namespace NovaAPI.Controllers
         }
         public string GetUserUsername(string user_uuid)
         {
-            using (MySqlConnection conn = GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 MySqlCommand cmd = new("SELECT Username FROM Users WHERE (UUID=@uuid)", conn);
@@ -72,7 +73,7 @@ namespace NovaAPI.Controllers
         }
         public bool UserExsists(string user_uuid)
         {
-            using (MySqlConnection conn = GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 MySqlCommand cmd = new("SELECT UUID FROM Users WHERE (UUID=@uuid)", conn);
@@ -87,7 +88,7 @@ namespace NovaAPI.Controllers
         }
         public string GetUserPubKey(string user_uuid)
         {
-            using MySqlConnection conn = GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT PubKey FROM Users WHERE UUID=@uuid", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
@@ -103,7 +104,7 @@ namespace NovaAPI.Controllers
         {
             try
             {
-                using MySqlConnection conn = GetUsers();
+                using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
                 using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
                 cmd.Parameters.AddWithValue("@uuid", key_user_uuid);

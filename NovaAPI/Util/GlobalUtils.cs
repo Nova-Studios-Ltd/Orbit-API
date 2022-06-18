@@ -21,7 +21,7 @@ namespace NovaAPI.Util
 
         public static void RemoveAttachmentContent(NovaChatDatabaseContext context, string channel_uuid, string[] content_uuids)
         {
-            using MySqlConnection conn = context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             foreach (string file in content_uuids)
             {

@@ -5,9 +5,9 @@ namespace NovaAPI.Util
 {
     public static class ChannelUtils
     {
-        public static bool CheckUserChannelAccess(NovaChatDatabaseContext Context, string user_uuid, string channel_uuid, bool includeDeleted = false)
+        public static bool CheckUserChannelAccess(string user_uuid, string channel_uuid, bool includeDeleted = false)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}` WHERE (User_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
@@ -20,9 +20,9 @@ namespace NovaAPI.Util
             return false;
         }
 
-        public static bool ChannelExsists(NovaChatDatabaseContext Context, string channel_uuid)
+        public static bool ChannelExsists(string channel_uuid)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM Channels WHERE (Table_ID=@table)", conn);
             cmd.Parameters.AddWithValue("@table", channel_uuid);
