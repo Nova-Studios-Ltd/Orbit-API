@@ -62,6 +62,20 @@ namespace NovaAPI.Util
           `ContentHeight` int NOT NULL DEFAULT '0',
           PRIMARY KEY (`File_UUID`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+
+        public static string DiscrimnatorGen = @"DELIMITER $$
+            CREATE DEFINER=`nova`@`%` FUNCTION `GetRandomDiscriminator`(`username` CHAR(255)) RETURNS int
+                NO SQL
+                DETERMINISTIC
+            BEGIN
+                DECLARE newDis INT DEFAULT 1;
+                WHILE newDis = 1 OR EXISTS(SELECT * FROM Users WHERE (Discriminator=newDis) AND (Username=username)) DO
+                    SET newDis = FLOOR(RAND() * 9999);
+                END WHILE;
+                RETURN newDis;
+            END$$
+            DELIMITER ;
+            ";
         
         public static string CreateSQLString(string database = "")
         {
