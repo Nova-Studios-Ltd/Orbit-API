@@ -170,7 +170,7 @@ namespace NovaAPI.Controllers
                 removeUser.Parameters.AddWithValue("@token", this.GetToken());
                 if (removeUser.ExecuteNonQuery() == 0) return StatusCode(404);
 
-                using MySqlConnection keystoreUser = MySqlServer.CreateSQLConnection(Database.Master);
+                using MySqlConnection keystoreUser = MySqlServer.CreateSQLConnection(Database.User);
                 keystoreUser.Open();
                 using MySqlCommand keystore = new($"SELECT * FROM `{user_uuid}_keystore`", keystoreUser);
                 MySqlDataReader reader = keystore.ExecuteReader();
@@ -195,7 +195,7 @@ namespace NovaAPI.Controllers
         public ActionResult<List<string>> GetUserChannels()
         {
             List<string> channels = new();
-            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User))
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"SELECT * FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=@prop)", conn);
