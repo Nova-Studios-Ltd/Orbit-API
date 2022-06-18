@@ -94,17 +94,19 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@iv", info.Key.PrivIV);
                 cmd.ExecuteNonQuery();
 
-                using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", conn);
+                using MySqlConnection users = MySqlServer.CreateSQLConnection(Database.User);
+                
+                using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", users);
                 createTable.ExecuteNonQuery();
 
-                using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createKeystore = new($"CREATE TABLE `{UUID}_keystore` (UUID CHAR(255) NOT NULL , PubKey VARCHAR(1000) NOT NULL , PRIMARY KEY (`UUID`)) ENGINE = InnoDB;", users);
                 createKeystore.ExecuteNonQuery();
-                using MySqlCommand addTimestamp = new($"INSERT INTO `{UUID}_keystore` (UUID, Pubkey) VALUES (@field, @value)", conn);
+                using MySqlCommand addTimestamp = new($"INSERT INTO `{UUID}_keystore` (UUID, Pubkey) VALUES (@field, @value)", users);
                 addTimestamp.Parameters.AddWithValue("@field", "Timestamp");
                 addTimestamp.Parameters.AddWithValue("@value", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                 addTimestamp.ExecuteNonQuery();
 
-                using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", conn);
+                using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", users);
                 createFriends.ExecuteNonQuery();
             }
             return StatusCode(200, "User created");
