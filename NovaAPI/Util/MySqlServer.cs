@@ -64,7 +64,7 @@ namespace NovaAPI.Util
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
         public static string DiscrimnatorGen = @"
-            CREATE FUNCTION `GetRandomDiscriminator`(`username` CHAR(255)) RETURNS int
+            CREATE FUNCTION IF NOT EXISTS `GetRandomDiscriminator`(`username` CHAR(255)) RETURNS int
                 NO SQL
                 DETERMINISTIC
             BEGIN
