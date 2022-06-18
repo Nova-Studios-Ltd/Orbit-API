@@ -42,7 +42,7 @@ namespace NovaAPI.Controllers
                         Username = reader["Username"].ToString(),
                         Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                         CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
-                        Avatar = $"https://api.novastudios.tk/User/{(reader["UUID"].ToString())}/Avatar?size=64"
+                        Avatar = $"https://api.novastudios.tk/User/{(reader["UUID"].ToString())}/Avatar?size=128"
                     };
                 }
             }
