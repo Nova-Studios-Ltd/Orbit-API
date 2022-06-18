@@ -95,6 +95,7 @@ namespace NovaAPI.Controllers
                 cmd.ExecuteNonQuery();
 
                 using MySqlConnection users = MySqlServer.CreateSQLConnection(Database.User);
+                users.Open();
                 
                 using MySqlCommand createTable = new($"CREATE TABLE `{UUID}` (Id INT NOT NULL AUTO_INCREMENT, Property CHAR(255) NOT NULL, Value VARCHAR(1000) NOT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB;", users);
                 createTable.ExecuteNonQuery();
@@ -108,6 +109,8 @@ namespace NovaAPI.Controllers
 
                 using MySqlCommand createFriends = new($"CREATE TABLE `{UUID}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", users);
                 createFriends.ExecuteNonQuery();
+                
+                users.Close();
             }
             return StatusCode(200, "User created");
         }
