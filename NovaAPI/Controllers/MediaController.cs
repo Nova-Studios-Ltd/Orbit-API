@@ -142,7 +142,7 @@ namespace NovaAPI.Controllers
                 return StatusCode(400, "The provided Content Token has expired or is for another channel. Please request a new one.");
             }
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!ChannelUtils.CheckUserChannelAccess(Context, user_uuid, channel_uuid)) return StatusCode(403);
+            if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, "File must be > 0MB and <= 20MB");
 
             string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(fileType), file.FileName, channel_uuid, Context.GetUserUUID(this.GetToken()), file.Length));
@@ -190,7 +190,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
         {
-            if (!ChannelUtils.ChannelExsists(Context, channel_uuid))
+            if (!ChannelUtils.ChannelExsists(channel_uuid))
                 return StatusCode(404, $"Channel with uuid \"{channel_uuid}\" unknown");
             string token = TokenManager.GenerateToken(Context.GetUserUUID(this.GetToken()), uploads, channel_uuid);
             if (token == "") return StatusCode(413, "Maximum of 10 files per message");

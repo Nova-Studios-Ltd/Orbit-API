@@ -20,7 +20,7 @@ namespace NovaAPI.Controllers
         [HttpPost("Login")]
         public ActionResult<ReturnLoginUserInfo> AuthUser(LoginUserInfo info)
         {
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
 
             using MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
@@ -59,7 +59,7 @@ namespace NovaAPI.Controllers
         {
             string UUID = Guid.NewGuid().ToString("N");
             string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now, EncryptionUtils.GetSalt(8));
-            using (MySqlConnection conn = Context.GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 using MySqlCommand dis = new($"SELECT `GetRandomDiscriminator`(@user) AS `GetRandomDiscriminator`", conn);

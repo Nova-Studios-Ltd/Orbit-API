@@ -27,7 +27,7 @@ namespace NovaAPI.Controllers
         public ActionResult<Dictionary<string, string>> GetFriends(string user_uuid)
         {
             CheckTable(user_uuid);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
             using MySqlCommand getFriends = new($"SELECT * FROM `{user_uuid}_friends`", conn);
@@ -45,7 +45,7 @@ namespace NovaAPI.Controllers
         {
             CheckTable(user_uuid);
             CheckTable(request_uuid);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
             using MySqlCommand setRequest = new($"INSERT INTO `{request_uuid}_friends` (UUID, State) VALUES (@uuid, @state)", conn);
@@ -65,7 +65,7 @@ namespace NovaAPI.Controllers
         public ActionResult AcceptRequest(string user_uuid, string request_uuid)
         {
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();        
 
             using MySqlCommand setRequest = new($"UPDATE `{request_uuid}_friends` SET State=@state WHERE UUID=@uuid", conn);
@@ -85,7 +85,7 @@ namespace NovaAPI.Controllers
         public ActionResult DeclineRequest(string user_uuid, string request_uuid)
         {
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
             using MySqlCommand setRequest = new($"DELETE FROM `{request_uuid}_friends` WHERE UUID=@uuid", conn);
@@ -103,7 +103,7 @@ namespace NovaAPI.Controllers
 
         private void CheckTable(string user_uuid)
         {
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
             using MySqlCommand createFriends = new($"CREATE TABLE IF NOT EXISTS `{user_uuid}_friends` (Id INT NOT NULL AUTO_INCREMENT, UUID CHAR(255) NOT NULL, State CHAR(255) NOT NULL, PRIMARY KEY (`Id`), UNIQUE (`UUID`)) ENGINE = InnoDB;", conn);

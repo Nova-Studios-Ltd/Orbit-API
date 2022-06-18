@@ -46,44 +46,44 @@ namespace NovaAPI
             
             // Load MySql config
             IConfigurationSection config = Configuration.GetSection("SQLServerConfig");
-            MySqlServerData.AutoConfig = bool.Parse(config.GetSection("AutoConfig").Value);
-            MySqlServerData.Server = config.GetSection("Server").Value;
-            MySqlServerData.Port = config.GetSection("Port").Value;
-            MySqlServerData.User = config.GetSection("User").Value;
-            MySqlServerData.Password = config.GetSection("Password").Value;
-            MySqlServerData.UserDatabaseName = config.GetSection("UserDatabaseName").Value;
-            MySqlServerData.ChannelsDatabaseName = config.GetSection("ChannelDatabaseName").Value;
-            MySqlServerData.MasterDatabaseName = config.GetSection("MasterDatabaseName").Value;
+            MySqlServer.AutoConfig = bool.Parse(config.GetSection("AutoConfig").Value);
+            MySqlServer.Server = config.GetSection("Server").Value;
+            MySqlServer.Port = config.GetSection("Port").Value;
+            MySqlServer.User = config.GetSection("User").Value;
+            MySqlServer.Password = config.GetSection("Password").Value;
+            MySqlServer.UserDatabaseName = config.GetSection("UserDatabaseName").Value;
+            MySqlServer.ChannelsDatabaseName = config.GetSection("ChannelDatabaseName").Value;
+            MySqlServer.MasterDatabaseName = config.GetSection("MasterDatabaseName").Value;
 
-            if (MySqlServerData.AutoConfig)
+            if (MySqlServer.AutoConfig)
             {
                 // Setup databases
-                using MySqlConnection conn = new(MySqlServerData.CreateSQLString());
+                using MySqlConnection conn = new(MySqlServer.CreateSQLString());
                 conn.Open();
 
                 // Create User Database
-                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.UserDatabaseName}`", conn)
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServer.UserDatabaseName}`", conn)
                     .ExecuteNonQuery();
                 // Create Channels Database
-                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.ChannelsDatabaseName}`", conn)
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServer.ChannelsDatabaseName}`", conn)
                     .ExecuteNonQuery();
                 // Create Master Database
-                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServerData.MasterDatabaseName}`", conn)
+                new MySqlCommand($"CREATE DATABASE IF NOT EXISTS `{MySqlServer.MasterDatabaseName}`", conn)
                     .ExecuteNonQuery();
 
                 conn.Close();
 
                 // Create Master Database Tables
                 using MySqlConnection masterCon =
-                    new MySqlConnection(MySqlServerData.CreateSQLString(MySqlServerData.MasterDatabaseName));
+                    new MySqlConnection(MySqlServer.CreateSQLString(MySqlServer.MasterDatabaseName));
                 masterCon.Open();
 
                 // Create Users Table
-                new MySqlCommand(MySqlServerData.UserTableString, masterCon).ExecuteNonQuery();
+                new MySqlCommand(MySqlServer.UserTableString, masterCon).ExecuteNonQuery();
                 // Create Channels Table
-                new MySqlCommand(MySqlServerData.ChannelTableString, masterCon).ExecuteNonQuery();
+                new MySqlCommand(MySqlServer.ChannelTableString, masterCon).ExecuteNonQuery();
                 // Create ChannelMedia Table
-                new MySqlCommand(MySqlServerData.ChannelMediaTableString, masterCon).ExecuteNonQuery();
+                new MySqlCommand(MySqlServer.ChannelMediaTableString, masterCon).ExecuteNonQuery();
 
                 masterCon.Close();
             }

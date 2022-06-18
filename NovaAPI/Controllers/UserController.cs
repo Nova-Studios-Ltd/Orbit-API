@@ -28,7 +28,7 @@ namespace NovaAPI.Controllers
         public ActionResult<User> RetUser(string user_uuid)
         {
             User user = null;
-            using (MySqlConnection conn = Context.GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid)", conn);
@@ -59,7 +59,7 @@ namespace NovaAPI.Controllers
         [TokenAuthorization]
         public ActionResult<User> GetSelf()
         {
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM Users WHERE (UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", Context.GetUserUUID(this.GetToken()));
@@ -87,7 +87,7 @@ namespace NovaAPI.Controllers
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (string.IsNullOrEmpty(username)) return StatusCode(400);
             if (!Context.UserExsists(user_uuid)) return StatusCode(404);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE (UUID=@uuid) AND (Token=@token)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
@@ -106,7 +106,7 @@ namespace NovaAPI.Controllers
             if (!Context.UserExsists(user_uuid)) return StatusCode(404);
             dynamic u = RetUser(user_uuid).Value;
             byte[] salt = EncryptionUtils.GetSalt(64);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken,PrivKey=@key,IV=@iv WHERE (UUID=@uuid) AND (Token=@token)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(update.Password, salt));
@@ -126,7 +126,7 @@ namespace NovaAPI.Controllers
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (string.IsNullOrEmpty(email)) return StatusCode(400);
             if (!Context.UserExsists(user_uuid)) return StatusCode(404);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"UPDATE Users SET Email=@email WHERE (UUID=@uuid) AND (Token=@token)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
@@ -141,7 +141,7 @@ namespace NovaAPI.Controllers
         {
             if (int.TryParse(discriminator, out int disc)) 
             {
-                using (MySqlConnection conn = Context.GetUsers()) 
+                using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master)) 
                 {
                     conn.Open();
                     using MySqlCommand getUser = new($"Select UUID FROM Users WHERE (Username=@username) AND (Discriminator=@disc)", conn);
@@ -162,7 +162,7 @@ namespace NovaAPI.Controllers
         public ActionResult DeleteUser()
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            using (MySqlConnection conn = Context.GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 using MySqlCommand removeUser = new($"DELETE FROM Users WHERE (UUID=@uuid) AND (Token=@token)", conn);
@@ -170,7 +170,7 @@ namespace NovaAPI.Controllers
                 removeUser.Parameters.AddWithValue("@token", this.GetToken());
                 if (removeUser.ExecuteNonQuery() == 0) return StatusCode(404);
 
-                using MySqlConnection keystoreUser = Context.GetUsers();
+                using MySqlConnection keystoreUser = MySqlServer.CreateSQLConnection(Database.Master);
                 keystoreUser.Open();
                 using MySqlCommand keystore = new($"SELECT * FROM `{user_uuid}_keystore`", keystoreUser);
                 MySqlDataReader reader = keystore.ExecuteReader();
@@ -195,7 +195,7 @@ namespace NovaAPI.Controllers
         public ActionResult<List<string>> GetUserChannels()
         {
             List<string> channels = new();
-            using (MySqlConnection conn = Context.GetUsers())
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 using MySqlCommand cmd = new($"SELECT * FROM `{Context.GetUserUUID(this.GetToken())}` WHERE (Property=@prop)", conn);

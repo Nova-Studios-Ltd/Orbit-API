@@ -26,7 +26,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}_keystore`", conn);
             MySqlDataReader reader = cmd.ExecuteReader();
@@ -45,7 +45,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM `{user_uuid}_keystore`", conn);
             MySqlDataReader reader = cmd.ExecuteReader();
@@ -63,7 +63,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             using MySqlCommand cmd = new($"INSERT INTO `{user_uuid}_keystore` (UUID, PubKey) VALUES (@uuid, @key)", conn);
             cmd.Parameters.AddWithValue("@uuid", key_user_uuid);

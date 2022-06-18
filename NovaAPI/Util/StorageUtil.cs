@@ -105,7 +105,7 @@ namespace NovaAPI.Util
                 fs.Close();
                 
                 // Store file meta data
-                using MySqlConnection conn = Context.GetChannels();
+                using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
                 using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, User_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @user_uuid, @filename, @mime, @size, @width, @height)", conn);
                 cmd.Parameters.AddWithValue("@uuid", filename);
@@ -125,8 +125,8 @@ namespace NovaAPI.Util
                 FileStream fs = File.Create(Path.Combine(UserData, filename));
                 file.CopyTo(fs);
                 fs.Close();
-
-                using MySqlConnection conn = Context.GetUsers();
+                
+                using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
                 using MySqlCommand setAvatar = new($"UPDATE Users SET Avatar=@avatar WHERE (UUID=@uuid)", conn);
                 setAvatar.Parameters.AddWithValue("@uuid", filemeta.User_UUID);
@@ -143,7 +143,7 @@ namespace NovaAPI.Util
                 file.CopyTo(fs);
                 fs.Close();
 
-                using MySqlConnection conn = Context.GetChannels();
+                using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
                 using MySqlCommand setAvatar = new($"UPDATE Channels SET ChannelIcon=@avatar WHERE (Table_ID=@channel_uuid)",
                     conn);
@@ -188,7 +188,7 @@ namespace NovaAPI.Util
         {
             if (mediaType == MediaType.ChannelContent)
             {
-                using MySqlConnection conn = Context.GetChannels();
+                using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
                 using MySqlCommand cmd = new("DELETE FROM `ChannelMedia` WHERE (File_UUID=@file)", conn);
                 cmd.Parameters.AddWithValue("@file", resource_id);
@@ -217,7 +217,7 @@ namespace NovaAPI.Util
         {
             if (!Directory.Exists(Path.Combine(ChannelContent, channel_uuid))) return;
             string[] files = Directory.GetFiles(Path.Combine(ChannelContent, channel_uuid));
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             foreach (string file in files)
             {
@@ -232,7 +232,7 @@ namespace NovaAPI.Util
 
         public static void RemoveSelectChannelContent(string channel_uuid, List<string> contentIds)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             foreach (string file in contentIds)
             {
@@ -246,7 +246,7 @@ namespace NovaAPI.Util
         
         public static string RetreiveMimeType(string content_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new("SELECT MimeType FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", content_id);
@@ -260,7 +260,7 @@ namespace NovaAPI.Util
         
         public static string RetreiveContentAuthor(string content_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new("SELECT User_UUID FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", content_id);
@@ -274,7 +274,7 @@ namespace NovaAPI.Util
 
         public static Diamension RetreiveDiamension(string content_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new("SELECT ContentWidth,ContentHeight FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", content_id);
@@ -288,7 +288,7 @@ namespace NovaAPI.Util
 
         public static string RetreiveFilename(string content_id)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new("SELECT Filename FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", content_id);
@@ -302,7 +302,7 @@ namespace NovaAPI.Util
 
         public static string RetreiveUserAvatar(string user_uuid)
         {
-            using MySqlConnection conn = Context.GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT Avatar FROM Users WHERE (UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
@@ -317,7 +317,7 @@ namespace NovaAPI.Util
 
         public static string RetreiveChannelIcon(string channel_uuid)
         {
-            using MySqlConnection conn = Context.GetChannels();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand cmd = new("SELECT ChannelIcon FROM Channels WHERE (Table_ID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", channel_uuid);

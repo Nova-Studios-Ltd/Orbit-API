@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NovaAPI.Util;
 
 namespace NovaAPI.Attri
 {
@@ -23,7 +24,7 @@ namespace NovaAPI.Attri
 
             string token = context.HttpContext.Request.Headers.First(x => x.Key == "Authorization").Value;
 
-            using MySqlConnection conn = ((NovaChatDatabaseContext)context.HttpContext.RequestServices.GetService(typeof(NovaChatDatabaseContext))).GetUsers();
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Token=@token)", conn);
             cmd.Parameters.AddWithValue("@token", token);
