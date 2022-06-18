@@ -85,7 +85,10 @@ namespace NovaAPI
                 // Create ChannelMedia Table
                 new MySqlCommand(MySqlServer.ChannelMediaTableString, masterCon).ExecuteNonQuery();
                 // Create GetDiscriminator Function
-                new MySqlCommand(MySqlServer.DiscrimnatorGen, masterCon).ExecuteNonQuery();
+                MySqlScript discrim = new MySqlScript(masterCon);
+                discrim.Query = MySqlServer.DiscrimnatorGen;
+                discrim.Delimiter = "$$";
+                discrim.Execute();
 
                 masterCon.Close();
             }

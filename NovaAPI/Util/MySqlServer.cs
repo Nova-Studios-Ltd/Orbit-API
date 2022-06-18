@@ -63,7 +63,7 @@ namespace NovaAPI.Util
           PRIMARY KEY (`File_UUID`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
-        public static string DiscrimnatorGen = @"DELIMITER $$
+        public static string DiscrimnatorGen = @"
             CREATE FUNCTION `GetRandomDiscriminator`(`username` CHAR(255)) RETURNS int
                 NO SQL
                 DETERMINISTIC
@@ -74,7 +74,6 @@ namespace NovaAPI.Util
                 END WHILE;
                 RETURN newDis;
             END$$
-            DELIMITER ;
             ";
         
         public static string CreateSQLString(string database = "")
