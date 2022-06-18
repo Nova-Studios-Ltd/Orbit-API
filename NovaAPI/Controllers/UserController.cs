@@ -176,16 +176,16 @@ namespace NovaAPI.Controllers
                 MySqlDataReader reader = keystore.ExecuteReader();
                 while (reader.Read())
                 {
-                    using MySqlCommand cmd = new($"DELETE FROM `{reader["UUID"].ToString()}_keystore` WHERE (UUID=@uuid)", conn);
+                    using MySqlCommand cmd = new($"DELETE FROM `{reader["UUID"].ToString()}_keystore` WHERE (UUID=@uuid)", keystoreUser);
                     cmd.Parameters.AddWithValue("@uuid", user_uuid);
                     Event.KeyAddedToKeystore(reader["UUID"].ToString(), user_uuid);
                     cmd.ExecuteNonQuery();
                 }
-                keystoreUser.Close();
 
                 StorageUtil.DeleteFile(StorageUtil.MediaType.Avatar, user_uuid);
-                using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`, `{user_uuid}_keystore`", conn);
+                using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`, `{user_uuid}_keystore`", keystoreUser);
                 removeUserAccess.ExecuteNonQuery();
+                keystoreUser.Close();
             }
             return StatusCode(200);
         }
