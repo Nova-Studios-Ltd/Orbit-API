@@ -14,7 +14,11 @@ using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
-    public enum EventType { MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore }
+    public enum EventType
+    {
+        MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore,
+        UsernameChanged, NewFriendRequest, FriendRequestAccepted
+    }
     public class EventManager
     {
         private static readonly Timer Heartbeat = new(CheckPulse, null, 0, 1000 * 30);
@@ -257,23 +261,15 @@ namespace NovaAPI.Controllers
             }
         }
 
-
-        // Random testing stuff
-        /*public async void SendReconnectEvent(string user_uuid, int attempts)
+        public async void UsernameChanged(string user_uuid)
         {
-            if (Clients.ContainsKey(user_uuid))
+            foreach (KeyValuePair<string, string> friend in FriendUtils.GetFriends(user_uuid, FriendUtils.FriendState.Accepted))
             {
-                var msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { EventType = 420, Attempts = attempts }));
-                if (Clients[user_uuid].Socket.State == WebSocketState.Open)
+                if (Clients.ContainsKey(friend.Key))
                 {
-                    await Clients[user_uuid].Socket.SendAsync(new ArraySegment<byte>(msg, 0, msg.Length), WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-                else
-                {
-                    Clients[user_uuid].SocketFinished.TrySetResult(null);
-                    Clients.Remove(user_uuid);
+                    SendEvent(friend.Key, new { EventType = EventType.UsernameChanged, User = user_uuid});
                 }
             }
-        }+*/
+        }
     }
 }

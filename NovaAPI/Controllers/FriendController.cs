@@ -22,22 +22,11 @@ namespace NovaAPI.Controllers
             Context = context;
         }
 
-
         [HttpGet("{user_uuid}/Friends")]
         public ActionResult<Dictionary<string, string>> GetFriends(string user_uuid)
         {
             CheckTable(user_uuid);
-            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
-            conn.Open();
-
-            using MySqlCommand getFriends = new($"SELECT * FROM `{user_uuid}_friends`", conn);
-            MySqlDataReader reader = getFriends.ExecuteReader();
-            Dictionary<string, string> friends = new();
-            while (reader.Read())
-            {
-                friends.Add(reader["UUID"].ToString(), reader["State"].ToString());
-            }
-            return friends;
+            return FriendUtils.GetFriends(user_uuid);
         }
 
         [HttpPost("{user_uuid}/Send/{request_uuid}")]
@@ -101,7 +90,7 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
-        private void CheckTable(string user_uuid)
+        private static void CheckTable(string user_uuid)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
