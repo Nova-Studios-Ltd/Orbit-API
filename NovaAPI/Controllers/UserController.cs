@@ -114,7 +114,7 @@ namespace NovaAPI.Controllers
             cmd.Parameters.AddWithValue("@salt", salt);
             cmd.Parameters.AddWithValue("@token", this.GetToken());
             cmd.Parameters.AddWithValue("@newToken", EncryptionUtils.GetSaltedHashString(user_uuid + u.Email + update.Password + u.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8)));
-            cmd.Parameters.AddWithValue("@privKey", update.Key.Content);
+            cmd.Parameters.AddWithValue("@key", update.Key.Content);
             cmd.Parameters.AddWithValue("@iv", update.Key.IV);
             cmd.ExecuteNonQuery();
             return StatusCode(200);
