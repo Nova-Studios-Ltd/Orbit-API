@@ -107,6 +107,7 @@ namespace NovaAPI.Controllers
             dynamic u = RetUser(user_uuid).Value;
             byte[] salt = EncryptionUtils.GetSalt(64);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
             using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken,PrivKey=@key,IV=@iv WHERE (UUID=@uuid) AND (Token=@token)", conn);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(update.Password, salt));
