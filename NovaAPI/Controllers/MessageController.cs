@@ -159,10 +159,10 @@ namespace NovaAPI.Controllers
                 }
                 catch
                 {
-                    return StatusCode(404);
+                    return StatusCode(500);
                 }
             }
-            return StatusCode(500);
+            return StatusCode(404);
         }
 
         [HttpPost("{channel_uuid}/Messages/")]
