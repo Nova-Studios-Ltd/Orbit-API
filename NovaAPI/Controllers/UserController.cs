@@ -191,6 +191,8 @@ namespace NovaAPI.Controllers
                 using MySqlCommand removeUserAccess = new($"DROP TABLE `{user_uuid}`, `{user_uuid}_keystore`", user);
                 removeUserAccess.ExecuteNonQuery();
                 user.Close();
+                
+                StorageUtil.RemoveUserContent(user_uuid);
             }
             return StatusCode(200);
         }

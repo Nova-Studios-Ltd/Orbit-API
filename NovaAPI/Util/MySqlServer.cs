@@ -54,6 +54,7 @@ namespace NovaAPI.Util
 
         public static string ChannelMediaTableString = @"CREATE TABLE IF NOT EXISTS `ChannelMedia` (
           `File_UUID` char(255) NOT NULL,
+          `Channel_UUID` char(255) NOT NULL,
           `User_UUID` char(255) NOT NULL,
           `Filename` char(255) NOT NULL,
           `MimeType` char(255) NOT NULL,

@@ -230,6 +230,33 @@ namespace NovaAPI.Util
             Directory.Delete(Path.Combine(ChannelContent, channel_uuid));
         }
 
+        public static void RemoveUserContent(string user_uuid)
+        {
+            using MySqlConnection dataRead = MySqlServer.CreateSQLConnection(Database.Master);
+            dataRead.Open();
+            
+            using MySqlConnection dataWrite = MySqlServer.CreateSQLConnection(Database.Master);
+            dataWrite.Open();
+
+            using MySqlCommand selectUserFiles = new("SELECT * FROM `ChannelMedia` WHERE (User_UUID=@user)", dataRead);
+            selectUserFiles.Parameters.AddWithValue("@user", user_uuid);
+            MySqlDataReader data = selectUserFiles.ExecuteReader();
+
+            while (data.Read())
+            {
+                string file_uuid = data["File_UUID"].ToString();
+                string channel_uuid = data["Channel_UUID"].ToString();
+
+                if (file_uuid == null || channel_uuid == null) return;
+
+                using MySqlCommand cmd = new("DELETE FROM `ChannelMedia` WHERE (File_UUID=@file)", dataWrite);
+                cmd.Parameters.AddWithValue("@file", file_uuid);
+                cmd.ExecuteNonQuery();
+                if (File.Exists(Path.Combine(ChannelContent, channel_uuid, file_uuid)))
+                    File.Delete(Path.Combine(ChannelContent, channel_uuid, file_uuid));
+            }
+        }
+
         public static void RemoveSelectChannelContent(string channel_uuid, List<string> contentIds)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
