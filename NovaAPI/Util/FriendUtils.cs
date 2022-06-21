@@ -16,6 +16,8 @@ public static class FriendUtils
         Request,
         [Description("Accepted")]
         Accepted,
+        [Description("Blocked")]
+        Blocked,
         Any
     }
     public static Dictionary<string, string> GetFriends(string user_uuid, FriendState state = FriendState.Any)

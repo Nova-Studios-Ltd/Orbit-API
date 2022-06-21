@@ -92,6 +92,11 @@ namespace NovaAPI
 
                 masterCon.Close();
             }
+            
+            IConfigurationSection genConfig = Configuration.GetSection("GeneralServerConfig");
+            
+            // Setup storage
+            StorageUtil.InitStorage(genConfig.GetSection("APIDataDirectory").Value, Configuration);
 
             services.AddCors(options =>
             {
@@ -155,7 +160,6 @@ namespace NovaAPI
             });
 
             //app.UseHttpsRedirection();
-            StorageUtil.InitStorage("/var/www/asp.net/", Configuration);
 
             app.UseRouting();
 

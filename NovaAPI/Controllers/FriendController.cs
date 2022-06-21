@@ -90,6 +90,19 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
+        [HttpPatch("{user_uuid}/Block/{request_uuid}")]
+        public ActionResult BlockRequest(string user_uuid, string request_uuid)
+        {
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
+            conn.Open();
+            
+            using MySqlCommand setBlocked = new($"INSERT INTO `{request_uuid}_friends` (State) VALUES (@state) WHERE UUID=@uuid", conn);
+            setBlocked.Parameters.AddWithValue("@uuid", user_uuid);
+            setBlocked.Parameters.AddWithValue("@state", "Blocked");
+            setBlocked.ExecuteNonQuery();
+            return StatusCode(200);
+        }
         private static void CheckTable(string user_uuid)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
