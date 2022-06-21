@@ -89,11 +89,21 @@ namespace NovaAPI.Controllers
             if (!Context.UserExsists(user_uuid)) return StatusCode(404);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
-            using MySqlCommand cmd = new($"UPDATE Users SET Username=@user WHERE (UUID=@uuid) AND (Token=@token)", conn);
+            
+            using MySqlCommand dis = new($"SELECT `GetRandomDiscriminator`(@user) AS `GetRandomDiscriminator`", conn);
+            dis.Parameters.AddWithValue("@user", username);
+            MySqlDataReader reader = dis.ExecuteReader();
+            string disc = null;
+            while (reader.Read()) disc = reader["GetRandomDiscriminator"].ToString();
+            reader.Close();
+            
+            using MySqlCommand cmd = new($"UPDATE Users SET Username=@user,Discriminator=@dis WHERE (UUID=@uuid) AND (Token=@token)", conn);
+            cmd.Parameters.AddWithValue("@dis", disc);
             cmd.Parameters.AddWithValue("@uuid", user_uuid);
             cmd.Parameters.AddWithValue("@user", username);
             cmd.Parameters.AddWithValue("@token", this.GetToken());
             cmd.ExecuteNonQuery();
+            Event.UsernameChanged(user_uuid);
             return StatusCode(200);
         }
 
