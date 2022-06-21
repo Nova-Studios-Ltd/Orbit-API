@@ -57,6 +57,7 @@ namespace NovaAPI.Controllers
         [HttpPost("Register")]
         public ActionResult RegisterUser(CreateUserInfo info)
         {
+            if (string.IsNullOrEmpty(info.Password) || string.IsNullOrEmpty(info.Email) || string.IsNullOrEmpty(info.Username)) return StatusCode(400, "Password/Email/User cannot be empty");
             string UUID = Guid.NewGuid().ToString("N");
             string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now, EncryptionUtils.GetSalt(8));
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
