@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
 using Newtonsoft.Json;
 using NovaAPI.Attri;
 using NovaAPI.Models;
@@ -269,6 +270,29 @@ namespace NovaAPI.Controllers
                 {
                     SendEvent(friend.Key, new { EventType = EventType.UsernameChanged, User = user_uuid});
                 }
+            }
+        }
+        
+        // Friends
+        public async void NewFriendRequest(string user_uuid, string friend_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                // Notify myself that request was succesful
+                SendEvent(user_uuid, new {EventType = EventType.NewFriendRequest, User = friend_uuid});
+                // Notify requested user that request was succesful
+                SendEvent(friend_uuid, new {EventType = EventType.NewFriendRequest, User = user_uuid});
+            }
+        }
+
+        public async void FriendRequestAccepts(string user_uuid, string friend_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                // Notify myself that the request was successful
+                SendEvent(user_uuid, new {EventType = EventType.FriendRequestAccepted, User = friend_uuid});
+                // Notify requested user that the request was successful
+                SendEvent(friend_uuid, new {EventType = EventType.FriendRequestAccepted, User = user_uuid});
             }
         }
     }
