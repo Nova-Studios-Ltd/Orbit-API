@@ -71,7 +71,6 @@ namespace NovaAPI.Controllers
                         messages.Add(new ChannelMessage
                         {
                             Message_Id = reader["Message_ID"].ToString(),
-                            Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
                             IV = reader["IV"].ToString(),
@@ -144,7 +143,6 @@ namespace NovaAPI.Controllers
                         return new ChannelMessage
                         {
                             Message_Id = reader["Message_ID"].ToString(),
-                            Author = Context.GetUserUsername(reader["Author_UUID"].ToString()),
                             Author_UUID = reader["Author_UUID"].ToString(),
                             Content = reader["Content"].ToString(),
                             IV = reader["IV"].ToString(),
