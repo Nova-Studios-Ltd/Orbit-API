@@ -107,8 +107,9 @@ namespace NovaAPI.Util
                 // Store file meta data
                 using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, User_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @user_uuid, @filename, @mime, @size, @width, @height)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Channel_UUID, User_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @channel, @user_uuid, @filename, @mime, @size, @width, @height)", conn);
                 cmd.Parameters.AddWithValue("@uuid", filename);
+                cmd.Parameters.AddWithValue("@channel", filemeta.Channel_UUID);
                 cmd.Parameters.AddWithValue("@user_uuid", filemeta.User_UUID);
                 cmd.Parameters.AddWithValue("@filename", filemeta.Filename);
                 cmd.Parameters.AddWithValue("@mime", filemeta.MimeType);
