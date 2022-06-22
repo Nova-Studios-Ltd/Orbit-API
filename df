@@ -1,0 +1,142 @@
+[33m774274a[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to HEAD
+[33m774274a[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: commit: Removed image limiting
+[33mdf1edc4[m HEAD@{2}: commit: Changed Avatar endpoint to only accept images
+[33mf810860[m HEAD@{3}: commit: Changed how data is returned from friends API
+[33mb88226c[m HEAD@{4}: commit: Debug chage
+[33m57167b7[m HEAD@{5}: commit: Added ping endpoint
+[33m0b321c5[m HEAD@{6}: commit: Removed ping system
+[33m3c0c346[m HEAD@{7}: commit: Removed Loggin againg
+[33me32100f[m HEAD@{8}: commit: Added back logging
+[33m710ed97[m HEAD@{9}: commit: Removed logging
+[33m3817df7[m HEAD@{10}: commit: Changed buffer length
+[33m254eca9[m HEAD@{11}: commit: Even more logging
+[33m7174cf4[m HEAD@{12}: commit: Attempted fix
+[33ma9c0da4[m HEAD@{13}: commit: Added log statement
+[33m4743559[m HEAD@{14}: commit: Fixed pinging
+[33ma37aa4d[m HEAD@{15}: commit: Added more logging
+[33m82ca08b[m HEAD@{16}: commit: Fixed data read
+[33m603ad0e[m HEAD@{17}: commit: Made Websocket responded to a ping
+[33ma2e6cde[m HEAD@{18}: merge origin/master: Fast-forward
+[33mdf1ea93[m HEAD@{19}: commit: Fix for blank tokens
+[33m93ed612[m HEAD@{20}: commit: Fixed MYSQL statement
+[33m0848767[m HEAD@{21}: commit: Added more logging
+[33me96b632[m HEAD@{22}: commit: Pushing a test
+[33m612d918[m HEAD@{23}: commit: Added log statement
+[33mccfdf1d[m HEAD@{24}: commit: Pushed patch for getting deleted user access
+[33m2dd6255[m HEAD@{25}: commit: Added fix for deleted users
+[33mb98d4a5[m HEAD@{26}: commit: Added null check
+[33mb7cfbcb[m HEAD@{27}: commit: Fixed duplicated channel creation
+[33m6072566[m HEAD@{28}: commit: FUCK ME. I mised the Delete keyword in the Query
+[33m7c3167e[m HEAD@{29}: commit: Changed mysql statement again
+[33m6199cbd[m HEAD@{30}: commit: Added log statement
+[33mce1078e[m HEAD@{31}: commit: Remove log statement
+[33m8ed4964[m HEAD@{32}: commit: Attempting to fix issues
+[33mb05c931[m HEAD@{33}: commit: Fixed SQL statement again
+[33m63f3a12[m HEAD@{34}: commit: Fixed another SQL statement
+[33mb8bcf37[m HEAD@{35}: commit: Attempt to fix it again
+[33m7a40739[m HEAD@{36}: commit: Attempt to fix SQL statement
+[33m8cb7816[m HEAD@{37}: commit: Fixed Swagger issue
+[33m42396d0[m HEAD@{38}: commit: Finished the new channel open system
+[33m6b0856a[m HEAD@{39}: merge origin/master: Fast-forward
+[33m1fef0b8[m HEAD@{40}: commit: Patch to fix register error
+[33mc579417[m HEAD@{41}: commit: Fixed error on failed content through proxy
+[33m7f91826[m HEAD@{42}: commit: Fixed 500's from Content Proxy and Avatar fetch
+[33m6afaf86[m HEAD@{43}: merge origin/master: Fast-forward
+[33m35a7dea[m HEAD@{44}: checkout: moving from POSTTokens to master
+[33mf800c4b[m[33m ([m[1;32mPOSTTokens[m[33m)[m HEAD@{45}: commit: Finished token code
+[33m236dea0[m HEAD@{46}: commit: Comtinued working ontoken
+[33mcee9384[m HEAD@{47}: checkout: moving from master to POSTTokens
+[33m35a7dea[m HEAD@{48}: commit: Changed timestamp format again
+[33m2887af8[m HEAD@{49}: commit: Changed timestamp to iso108
+[33m300e94b[m HEAD@{50}: commit: Changed to just use timestamps
+[33m3b62ccb[m HEAD@{51}: commit: Changing this again
+[33m2bd5bcd[m HEAD@{52}: commit: Change it back again
+[33md93231b[m HEAD@{53}: commit: Trying this again
+[33m7334858[m HEAD@{54}: commit: Changing it back
+[33mcaaf554[m HEAD@{55}: commit: Change hashes to base64
+[33m1afd5bc[m HEAD@{56}: commit: Added hashes endpoint to MessageController.cs
+[33m92ba502[m HEAD@{57}: commit: Added after field to message query
+[33m55abf58[m HEAD@{58}: commit: Fixed content issues
+[33mb51e4e8[m HEAD@{59}: commit: Began implementing rate limits
+[33m7155f19[m HEAD@{60}: commit: Fixed Issue
+[33mbe15b51[m HEAD@{61}: commit: Fixed minor issue
+[33m2487921[m HEAD@{62}: commit: Added head request
+[33m77f7dfa[m HEAD@{63}: merge origin/master: Merge made by the 'recursive' strategy.
+[33mdd28783[m HEAD@{64}: commit: Added media proxy
+[33mfd8fa55[m HEAD@{65}: commit: Removing old endpoints
+[33m9c8b8a4[m HEAD@{66}: commit: Fixed it
+[33mae7d9b3[m HEAD@{67}: commit: Fixed Channel content removal
+[33m43a83c8[m HEAD@{68}: commit: Attempting delete
+[33m39a6867[m HEAD@{69}: commit: System should now clean up old content
+[33m461bca8[m HEAD@{70}: commit: Added MimeType to content of message
+[33m044422b[m HEAD@{71}: commit: Fixed file uploading
+[33m0ebe766[m HEAD@{72}: commit: Fixing CORS
+[33md9b4117[m HEAD@{73}: commit: Fixed CORS
+[33mf92a276[m HEAD@{74}: commit: Added cors headers
+[33m378133f[m HEAD@{75}: commit: CORS crap
+[33md6e5596[m HEAD@{76}: commit: Content length check
+[33mc78fe47[m HEAD@{77}: commit: Fixed another pathing issue
+[33m675e347[m HEAD@{78}: commit: Attepmting to fix SQL issue
+[33m7ffdebd[m HEAD@{79}: commit: Attempt to fix MySql error
+[33m158305a[m HEAD@{80}: commit: Patched Avatar resolution
+[33mb9059b2[m HEAD@{81}: merge origin/master: Merge made by the 'recursive' strategy.
+[33m1f664d8[m HEAD@{82}: commit: Message GET endpoint now returns correct content url
+[33m181ec1c[m HEAD@{83}: commit: Fixed hacky gif
+[33m04702a9[m HEAD@{84}: commit: Fixed hacky gifs
+[33m45027e9[m HEAD@{85}: commit: Hacky gif get for avatars
+[33m8bf829d[m HEAD@{86}: commit: Changed storage directory
+[33mb7a9f16[m HEAD@{87}: commit: Fixed media endpoints in ChannelController.cs
+[33m2d05ad4[m HEAD@{88}: commit: Changed Working Directory
+[33m052aaf7[m HEAD@{89}: merge origin/master: Fast-forward
+[33me58c43f[m HEAD@{90}: commit: Finished moving UserController.cs Endpoints
+[33mcf8bd36[m HEAD@{91}: merge origin/master: Fast-forward
+[33m587be9b[m HEAD@{92}: commit: Removed cors header
+[33m9ecef7f[m HEAD@{93}: commit: Added header
+[33mcb4b3ea[m HEAD@{94}: commit: Fixed it
+[33me46676a[m HEAD@{95}: commit: Added cors
+[33m23a3537[m HEAD@{96}: merge origin/master: Fast-forward
+[33mb6af619[m HEAD@{97}: merge origin/master: Fast-forward
+[33m6f35bcc[m HEAD@{98}: commit: Fixed removing members from group
+[33m6b602b1[m HEAD@{99}: commit: Fixed it again
+[33m89b8dc6[m HEAD@{100}: commit: Fixed channle avatar endpoint
+[33me7c8325[m HEAD@{101}: commit: Added clear channel avatar
+[33me31ef54[m HEAD@{102}: checkout: moving from master to master
+[33me31ef54[m HEAD@{103}: pull --tags origin master: Fast-forward
+[33m789b6f1[m HEAD@{104}: merge origin/master: Fast-forward
+[33m43a3f0d[m HEAD@{105}: commit: Minor change to file upload
+[33m28068dc[m HEAD@{106}: commit: Added attachments to messages and other required endpoints
+[33m1bf3495[m HEAD@{107}: commit: Fixed event for channel deletion
+[33m646af90[m HEAD@{108}: commit: Minor Changes to event handling
+[33me9e5497[m HEAD@{109}: merge origin/master: Fast-forward
+[33m215e6b9[m HEAD@{110}: commit: Minor change to User endpoint
+[33md11365b[m HEAD@{111}: commit: Fixed GET channel endpoint
+[33m4ba553b[m HEAD@{112}: commit: Fixed SQL query
+[33m803f547[m HEAD@{113}: commit: Changed how channels handle being deleted
+[33m9379135[m HEAD@{114}: commit: Only owner/executing user can remove a user from a channel
+[33me167742[m HEAD@{115}: commit: Changed Channel delete behaviour
+[33mb1061ac[m HEAD@{116}: commit: Attempting to fix chat list (again)
+[33m606a12b[m HEAD@{117}: commit: Added check for already existing channels
+[33m8c9bc19[m HEAD@{118}: pull --tags origin master: Fast-forward
+[33ma7e4677[m HEAD@{119}: commit: Added password salting and better token generation
+[33mabec7bb[m HEAD@{120}: pull --tags origin master: Fast-forward
+[33m1c53c15[m HEAD@{121}: commit: Fixed message listing (again)
+[33m6969c8b[m HEAD@{122}: commit: Debug Change in Message Controller
+[33m737ccfc[m HEAD@{123}: commit: Fixed not adding author to group access table
+[33mcc9f85a[m HEAD@{124}: commit: Fixed SQL in group channel creation
+[33md2dfaef[m HEAD@{125}: commit: Fixed SQL error in GetUserUUIDFromUSername
+[33madcdd9c[m HEAD@{126}: commit: Added usernmae+discriminator to uuid endpoint for users
+[33m735fe54[m HEAD@{127}: commit: Added ability to change group name and turn channel into group channel
+[33mcfec36a[m HEAD@{128}: pull --tags origin master: Fast-forward
+[33m7faeac3[m HEAD@{129}: pull --tags origin master: Fast-forward
+[33m59d440c[m HEAD@{130}: commit: Fixed Channel Icon
+[33md82f576[m HEAD@{131}: commit: Added keepAspect to media avatar endpoints
+[33mdf78947[m HEAD@{132}: commit: Added Random Avatar Grabbing for Channels, Fixed Get/Set, Moved Avatar Array
+[33m8a8d26b[m HEAD@{133}: commit: Added Set/GetChannelAvatar
+[33ma722a9d[m HEAD@{134}: pull --tags origin master: Fast-forward
+[33me9f53a1[m HEAD@{135}: commit: Fixed SQL Database connection
+[33m82387fa[m HEAD@{136}: commit: Fixed Channel Icon
+[33mda813dc[m HEAD@{137}: commit: Fixed GET message endpoint sql issue
+[33me0728a1[m HEAD@{138}: commit: Fixed SendMessage ID
+[33me68bb3b[m HEAD@{139}: commit: Fixed GET Channel Endpoint
+[33m8dcd2bf[m HEAD@{140}: commit: Fixed ChannelController Get Error
+[33m59d245f[m HEAD@{141}: clone: from ssh://10.0.0.6/git/NovaChatAPI3.git

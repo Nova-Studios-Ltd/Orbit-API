@@ -34,6 +34,7 @@ namespace NovaAPI.Controllers
         {
             CheckTable(user_uuid);
             CheckTable(request_uuid);
+            if (FriendUtils.IsBlocked(user_uuid, request_uuid)) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
@@ -103,6 +104,21 @@ namespace NovaAPI.Controllers
             setBlocked.ExecuteNonQuery();
             return StatusCode(200);
         }
+
+        [HttpPatch("{user_uuid}/Unblock/{request_uuid}")]
+        public ActionResult UnBlockRequest(string user_uuid, string request_uuid)
+        {
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
+            conn.Open();
+            
+            using MySqlCommand setFriend = new($"DELETE FROM `{user_uuid}_friends` WHERE UUID=@uuid", conn);
+            setFriend.Parameters.AddWithValue("@uuid", request_uuid);
+            setFriend.ExecuteNonQuery();
+
+            return StatusCode(200);
+        }
+
         private static void CheckTable(string user_uuid)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);

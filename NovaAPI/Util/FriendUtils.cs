@@ -49,4 +49,11 @@ public static class FriendUtils
 
         return friends;
     }
+
+    public static bool IsBlocked(string user_uuid, string request_uuid)
+    {
+        Dictionary<string, string> blocked = GetFriends(user_uuid, FriendState.Blocked);
+        if (blocked.ContainsKey(request_uuid)) return true;
+        return false;
+    }
 }
