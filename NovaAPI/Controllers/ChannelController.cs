@@ -30,6 +30,8 @@ namespace NovaAPI.Controllers
             if (string.IsNullOrEmpty(recipient_uuid) || !Context.UserExsists(recipient_uuid)) return StatusCode(500);
             if (author == recipient_uuid) return StatusCode(500);
             if (UsersShareChannel(author, recipient_uuid)) return StatusCode(403, "Channel Already Created");
+            if (!FriendUtils.IsFriend(author, recipient_uuid))
+                return StatusCode(403, "Unable to create channel with non-friend users");
 
             string table_id = Guid.NewGuid().ToString("N");
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))

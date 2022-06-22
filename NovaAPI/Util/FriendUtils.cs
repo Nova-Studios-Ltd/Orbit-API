@@ -56,4 +56,11 @@ public static class FriendUtils
         if (blocked.ContainsKey(request_uuid)) return true;
         return false;
     }
+
+    public static bool IsFriend(string user_uuid, string request_uuid)
+    {
+        // Reduntantly checks the users friend state
+        return GetFriends(request_uuid, FriendState.Accepted).ContainsKey(user_uuid) &&
+               GetFriends(user_uuid, FriendState.Accepted).ContainsKey(request_uuid);
+    }
 }

@@ -26,6 +26,7 @@ namespace NovaAPI.Controllers
         public ActionResult<Dictionary<string, string>> GetFriends(string user_uuid)
         {
             CheckTable(user_uuid);
+            if (user_uuid != Context.GetUserUUID(this.GetToken())) return StatusCode(403);
             return FriendUtils.GetFriends(user_uuid);
         }
 
@@ -34,6 +35,7 @@ namespace NovaAPI.Controllers
         {
             CheckTable(user_uuid);
             CheckTable(request_uuid);
+            if (user_uuid != Context.GetUserUUID(this.GetToken())) return StatusCode(403);
             if (FriendUtils.IsBlocked(user_uuid, request_uuid)) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
@@ -54,7 +56,7 @@ namespace NovaAPI.Controllers
         [HttpPatch("{user_uuid}/Accept/{request_uuid}")]
         public ActionResult AcceptRequest(string user_uuid, string request_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();        
 
@@ -74,7 +76,7 @@ namespace NovaAPI.Controllers
         [HttpPatch("{user_uuid}/Decline/{request_uuid}")]
         public ActionResult DeclineRequest(string user_uuid, string request_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
@@ -94,21 +96,21 @@ namespace NovaAPI.Controllers
         [HttpPatch("{user_uuid}/Block/{request_uuid}")]
         public ActionResult BlockRequest(string user_uuid, string request_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             
-            using MySqlCommand setBlocked = new($"INSERT INTO `{request_uuid}_friends` (State) VALUES (@state) WHERE UUID=@uuid", conn);
+            using MySqlCommand setBlocked = new($"INSERT INTO `{request_uuid}_friends` (State, UUID) VALUES (@state, @uuid) ON DUPLICATE KEY UPDATE State=@state", conn);
             setBlocked.Parameters.AddWithValue("@uuid", user_uuid);
             setBlocked.Parameters.AddWithValue("@state", "Blocked");
             setBlocked.ExecuteNonQuery();
             return StatusCode(200);
         }
 
-        [HttpPatch("{user_uuid}/Unblock/{request_uuid}")]
+        [HttpPatch("{user_uuid}/Unblock/2{request_uuid}")]
         public ActionResult UnBlockRequest(string user_uuid, string request_uuid)
         {
-            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(401);
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             
