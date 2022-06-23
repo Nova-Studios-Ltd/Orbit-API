@@ -30,6 +30,21 @@ namespace NovaAPI.Controllers
             return FriendUtils.GetFriends(user_uuid);
         }
 
+        [HttpGet("{user_uuid}/Friends/{request_uuid}")]
+        public ActionResult<object> GetFriend(string user_uuid, string request_uuid)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
+            using MySqlCommand contains = new MySqlCommand($"SELECT * FROM `{user_uuid}_friends` WHERE UUID=@uuid", conn);
+            contains.Parameters.AddWithValue("@uuid", request_uuid);
+            MySqlDataReader reader = contains.ExecuteReader();
+            while (reader.Read())
+            {
+                return new {UUID = request_uuid, State = reader["State"]};
+            }
+
+            return StatusCode(404);
+        }
+
         [HttpPost("{user_uuid}/Send/{request_uuid}")]
         public ActionResult SendRequest(string user_uuid, string request_uuid)
         {
@@ -107,8 +122,22 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
-        [HttpPatch("{user_uuid}/Unblock/2{request_uuid}")]
+        [HttpPatch("{user_uuid}/Unblock/{request_uuid}")]
         public ActionResult UnBlockRequest(string user_uuid, string request_uuid)
+        {
+            if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
+            conn.Open();
+            
+            using MySqlCommand setFriend = new($"DELETE FROM `{user_uuid}_friends` WHERE UUID=@uuid", conn);
+            setFriend.Parameters.AddWithValue("@uuid", request_uuid);
+            setFriend.ExecuteNonQuery();
+
+            return StatusCode(200);
+        }
+
+        [HttpDelete("{user_uuid}/Remove/{request_uuid}")]
+        public ActionResult RemoveFriend(string user_uuid, string request_uuid)
         {
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);

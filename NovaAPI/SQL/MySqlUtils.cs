@@ -20,10 +20,4 @@ public static class MySqlUtils
         reader.Close();
         return false;
     }
-
-    /*public static void UpdateRow(this MySqlConnection sql, string table, List<SQLColumn> columns)
-    {
-        if (sql.State != ConnectionState.Open) return;
-        using MySqlCommand
-    }*/
 }
