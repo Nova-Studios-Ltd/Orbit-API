@@ -16,10 +16,12 @@ namespace NovaAPI.Controllers
     public class FriendController : ControllerBase
     {
         private readonly NovaChatDatabaseContext Context;
+        private readonly EventManager Event;
 
-        public FriendController(NovaChatDatabaseContext context)
+        public FriendController(NovaChatDatabaseContext context, EventManager em)
         {
             Context = context;
+            Event = em;
         }
 
         [HttpGet("{user_uuid}/Friends")]
@@ -65,6 +67,8 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@state", "Pending");
             setFriend.ExecuteNonQuery();
 
+            Event.NewFriendRequest(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
@@ -85,6 +89,8 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@state", "Accepted");
             setFriend.ExecuteNonQuery();
 
+            Event.FriendRequestAccepts(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
