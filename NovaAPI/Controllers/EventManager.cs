@@ -18,7 +18,7 @@ namespace NovaAPI.Controllers
     public enum EventType
     {
         MessageSent, MessageDelete, MessageEdit, ChannelCreated, ChannelDeleted, GroupNewMember, UserNewGroup, KeyAddedToKeystore, KeyRemoveFromKeystore, RefreshKeystore,
-        UsernameChanged, NewFriendRequest, FriendRequestAccepted
+        UsernameChanged, FriendRequesetAdded, FriendRequestUpdated, FriendRequestRemoved
     }
     public class EventManager
     {
@@ -274,25 +274,48 @@ namespace NovaAPI.Controllers
         }
         
         // Friends
-        public async void NewFriendRequest(string user_uuid, string friend_uuid)
+        public async void FriendRequestAdded(string user_uuid, string friend_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
             {
                 // Notify myself that request was succesful
-                SendEvent(user_uuid, new {EventType = EventType.NewFriendRequest, User = friend_uuid});
+                SendEvent(user_uuid, new {EventType = EventType.FriendRequesetAdded, User = friend_uuid});
+            }
+
+            if (Clients.ContainsKey(friend_uuid))
+            {
                 // Notify requested user that request was succesful
-                SendEvent(friend_uuid, new {EventType = EventType.NewFriendRequest, User = user_uuid});
+                SendEvent(friend_uuid, new {EventType = EventType.FriendRequesetAdded, User = user_uuid});
             }
         }
 
-        public async void FriendRequestAccepts(string user_uuid, string friend_uuid)
+        public async void FriendRequestUpdated(string user_uuid, string friend_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
             {
                 // Notify myself that the request was successful
-                SendEvent(user_uuid, new {EventType = EventType.FriendRequestAccepted, User = friend_uuid});
+                SendEvent(user_uuid, new {EventType = EventType.FriendRequestUpdated, User = friend_uuid});
+            }
+
+            if (Clients.ContainsKey(friend_uuid))
+            {
                 // Notify requested user that the request was successful
-                SendEvent(friend_uuid, new {EventType = EventType.FriendRequestAccepted, User = user_uuid});
+                SendEvent(friend_uuid, new {EventType = EventType.FriendRequestUpdated, User = user_uuid});
+            }
+        }
+
+        public async void FriendRequestRemoved(string user_uuid, string friend_uuid)
+        {
+            if (Clients.ContainsKey(user_uuid))
+            {
+                // Notify myself that the request was successful
+                SendEvent(user_uuid, new {EventType = EventType.FriendRequestRemoved, User = friend_uuid});
+            }
+
+            if (Clients.ContainsKey(friend_uuid))
+            {
+                // Notify requested user that the request was successful
+                SendEvent(friend_uuid, new {EventType = EventType.FriendRequestRemoved, User = user_uuid});
             }
         }
     }

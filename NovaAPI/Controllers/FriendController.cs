@@ -67,7 +67,7 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@state", "Pending");
             setFriend.ExecuteNonQuery();
 
-            Event.NewFriendRequest(user_uuid, request_uuid);
+            Event.FriendRequestAdded(user_uuid, request_uuid);
             
             return StatusCode(200);
         }
@@ -89,7 +89,7 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@state", "Accepted");
             setFriend.ExecuteNonQuery();
 
-            Event.FriendRequestAccepts(user_uuid, request_uuid);
+            Event.FriendRequestUpdated(user_uuid, request_uuid);
             
             return StatusCode(200);
         }
@@ -111,6 +111,8 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@state", "Pending");
             setFriend.ExecuteNonQuery();
 
+            Event.FriendRequestRemoved(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
@@ -125,6 +127,9 @@ namespace NovaAPI.Controllers
             setBlocked.Parameters.AddWithValue("@uuid", user_uuid);
             setBlocked.Parameters.AddWithValue("@state", "Blocked");
             setBlocked.ExecuteNonQuery();
+            
+            Event.FriendRequestUpdated(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
@@ -139,6 +144,8 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@uuid", request_uuid);
             setFriend.ExecuteNonQuery();
 
+            Event.FriendRequestUpdated(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
@@ -153,6 +160,8 @@ namespace NovaAPI.Controllers
             setFriend.Parameters.AddWithValue("@uuid", request_uuid);
             setFriend.ExecuteNonQuery();
 
+            Event.FriendRequestRemoved(user_uuid, request_uuid);
+            
             return StatusCode(200);
         }
 
