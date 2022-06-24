@@ -171,6 +171,7 @@ namespace NovaAPI.Controllers
                 TokenManager.InvalidateToken(contentToken);
                 return StatusCode(400, "The provided Content Token has expired");
             }
+            
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);

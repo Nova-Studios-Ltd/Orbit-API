@@ -36,6 +36,7 @@ namespace NovaAPI.Controllers
         public ActionResult<object> GetFriend(string user_uuid, string request_uuid)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
+            conn.Open();
             using MySqlCommand contains = new MySqlCommand($"SELECT * FROM `{user_uuid}_friends` WHERE UUID=@uuid", conn);
             contains.Parameters.AddWithValue("@uuid", request_uuid);
             MySqlDataReader reader = contains.ExecuteReader();
