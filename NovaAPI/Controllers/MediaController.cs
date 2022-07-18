@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -189,24 +190,14 @@ namespace NovaAPI.Controllers
         [HttpPost("/proxy")]
         public async Task<ActionResult> PostProxyURL(string url)
         {
-            WebRequest request = WebRequest.Create(url);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
-            ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
-            request.Method = "POST";
-            request.ContentType = Request.ContentType;
+            HttpClient client = new HttpClient();
             foreach (string key in Request.Headers.Keys)
             {
                 // Copy Request Headers
-                request.Headers.Add(key, Request.Headers[key]);
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-
-            Stream dataStream = request.GetRequestStream();
-            await Request.Body.CopyToAsync(dataStream);
-            dataStream.Close();
-
-            WebResponse resp = await request.GetResponseAsync();
-            
-            return StatusCode((int)(resp as HttpWebResponse).StatusCode);
+            HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
+            return StatusCode((int)resp.StatusCode);
         }
         
         [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
