@@ -190,7 +190,6 @@ namespace NovaAPI.Controllers
         [HttpPost("/proxy")]
         public async Task<ActionResult> PostProxyURL(string url)
         {
-            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;  
             HttpClient client = new HttpClient();
             foreach (string key in Request.Headers.Keys)
             {
