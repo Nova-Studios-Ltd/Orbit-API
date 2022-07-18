@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -186,6 +187,27 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return StatusCode(200);
         }
+        
+        [HttpPost("/Proxy")]
+        public async Task<ActionResult> PostProxyURL(string url)
+        {
+            Console.WriteLine(url);
+            HttpClientHandler handler = new HttpClientHandler()
+            {
+                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+                ServerCertificateCustomValidationCallback = ((message, certificate2, arg3, arg4) => true)
+            };
+            HttpClient client = new HttpClient(handler);
+            foreach (string key in Request.Headers.Keys)
+            {
+                if (key != "jwt") continue;
+                // Copy Request Headers
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
+            }
+            HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
+            return StatusCode((int)resp.StatusCode);
+        }
+        
 
         [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
         [TokenAuthorization]
