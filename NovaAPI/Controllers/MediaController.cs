@@ -205,8 +205,7 @@ namespace NovaAPI.Controllers
                 client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
             HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
-            Response.Body = await resp.Content.ReadAsStreamAsync();
-            return StatusCode((int)resp.StatusCode);
+            return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
         }
         
 
