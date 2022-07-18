@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -25,6 +26,12 @@ namespace NovaAPI.Controllers
     public class MediaController : ControllerBase
     {
         readonly NovaChatDatabaseContext Context;
+        
+        readonly HttpClientHandler handler = new HttpClientHandler()
+        {
+            SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+            ServerCertificateCustomValidationCallback = ((message, certificate2, arg3, arg4) => true)
+        };
         
         public MediaController(NovaChatDatabaseContext context)
         {
@@ -157,56 +164,44 @@ namespace NovaAPI.Controllers
         [HttpGet("/Proxy")]
         public async Task<ActionResult> ProxyUrl(string url)
         {
-            WebRequest request = WebRequest.Create(url);
+            HttpClient client = new HttpClient(handler);
             foreach (string key in Request.Headers.Keys)
             {
-                // Copy Request Headers
-                request.Headers.Add(key, (string) Request.Headers[key]);
+                if (key != "jwt") continue;
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
-            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
-            for (int h = 0; h < rsp.Headers.Count; h++)
+
+            HttpResponseMessage resp = await client.GetAsync(url);
+            foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
             {
-                // Copy response headers
-                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+                Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
-            // Add cors header
-            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            await rsp.GetResponseStream().CopyToAsync(Response.Body);
-            return StatusCode(200);
+            
+            return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
         }
         
         [HttpHead("/Proxy")]
         public async Task<ActionResult> HeadProxyUrl(string url)
         {
-            WebRequest request = WebRequest.Create(url);
+            HttpClient client = new HttpClient(handler);
             foreach (string key in Request.Headers.Keys)
             {
-                // Copy Request Headers
-                request.Headers.Add(key, (string) Request.Headers[key]);
+                if (key != "jwt") continue;
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
-            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
-            for (int h = 0; h < rsp.Headers.Count; h++)
+
+            HttpResponseMessage resp = await client.GetAsync(url);
+            foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
             {
-                // Copy response headers
-                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+                Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
-            // Add cors header
-            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return StatusCode(200);
+            
+            return StatusCode((int)resp.StatusCode);
         }
         
         [HttpPost("/Proxy")]
         public async Task<ActionResult> PostProxyURL(string url)
         {
-            HttpClientHandler handler = new HttpClientHandler()
-            {
-                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
-                ServerCertificateCustomValidationCallback = ((message, certificate2, arg3, arg4) => true)
-            };
             HttpClient client = new HttpClient(handler);
             string ct = "";
             foreach (string key in Request.Headers.Keys)
