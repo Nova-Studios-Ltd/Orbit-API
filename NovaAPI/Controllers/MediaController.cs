@@ -200,7 +200,7 @@ namespace NovaAPI.Controllers
             HttpClient client = new HttpClient(handler);
             foreach (string key in Request.Headers.Keys)
             {
-                if (key != "jwt") continue;
+                if (key != "jwt" || key != "Content-Type") continue;
                 // Copy Request Headers
                 client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
