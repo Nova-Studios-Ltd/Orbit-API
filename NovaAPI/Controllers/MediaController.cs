@@ -187,21 +187,6 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
-        [HttpPost("/proxy")]
-        public async Task<ActionResult> PostProxyURL(string url)
-        {
-            Console.WriteLine(url);
-            HttpClient client = new HttpClient();
-            foreach (string key in Request.Headers.Keys)
-            {
-                if (key == "Content-Type" || key == "Content-Length") continue;
-                // Copy Request Headers
-                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
-            }
-            HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
-            return StatusCode((int)resp.StatusCode);
-        }
-        
         [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
