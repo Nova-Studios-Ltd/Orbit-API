@@ -187,7 +187,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("/proxy")]
-        public ActionResult PostProxyURL(string url)
+        public async Task<ActionResult> PostProxyURL(string url)
         {
             WebRequest request = WebRequest.Create(url);
             request.Method = "POST";
@@ -199,7 +199,7 @@ namespace NovaAPI.Controllers
             }
 
             Stream dataStream = request.GetRequestStream();
-            Request.Body.CopyTo(dataStream);
+            Request.Body.CopyToAsync(dataStream);
             dataStream.Close();
 
             WebResponse resp = request.GetResponse();
