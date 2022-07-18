@@ -190,6 +190,8 @@ namespace NovaAPI.Controllers
         public async Task<ActionResult> PostProxyURL(string url)
         {
             WebRequest request = WebRequest.Create(url);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13;
+            ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
             request.Method = "POST";
             request.ContentType = Request.ContentType;
             foreach (string key in Request.Headers.Keys)
