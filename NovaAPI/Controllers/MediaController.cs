@@ -177,6 +177,7 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
             
+            Console.WriteLine(resp.StatusCode);
             return StatusCode((int)resp.StatusCode);
         }
         
