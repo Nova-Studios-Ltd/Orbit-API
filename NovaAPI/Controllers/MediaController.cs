@@ -190,6 +190,7 @@ namespace NovaAPI.Controllers
         [HttpPost("/proxy")]
         public async Task<ActionResult> PostProxyURL(string url)
         {
+            Console.WriteLine(url);
             HttpClient client = new HttpClient();
             foreach (string key in Request.Headers.Keys)
             {
