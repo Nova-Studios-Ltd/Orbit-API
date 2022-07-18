@@ -177,7 +177,6 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
             
-            await resp.Content.CopyToAsync(Response.Body);
             return StatusCode((int)resp.StatusCode);
         }
         
