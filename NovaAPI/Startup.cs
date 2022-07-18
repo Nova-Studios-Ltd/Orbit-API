@@ -104,7 +104,6 @@ namespace NovaAPI
                 {
                     builder.WithOrigins("http://localhost:3000", "https://live.orbit.novastudios.tk", "https://orbit.novastudios.tk");
                     builder.WithMethods("DELETE", "GET", "POST", "PATCH", "PUT", "UPGRADE");
-                    builder.WithHeaders("*");
                 });
             });
             services.AddControllers();
