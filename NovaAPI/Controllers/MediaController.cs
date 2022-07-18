@@ -174,7 +174,7 @@ namespace NovaAPI.Controllers
             HttpResponseMessage resp = await client.GetAsync(url);
             foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
             {
-                Console.WriteLine($"{header.Key}: {string.Join(" ", header.Value)}");
+                if (header.Key != "Content-Type" && header.Key != "Content-Length") continue;
                 Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
             
@@ -193,10 +193,11 @@ namespace NovaAPI.Controllers
             }
 
             HttpResponseMessage resp = await client.GetAsync(url);
-            /*foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
+            foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
             {
+                if (header.Key != "Content-Type" && header.Key != "Content-Length") continue;
                 Response.Headers.Add(header.Key, string.Join(" ", header.Value));
-            }*/
+            }
             
             return StatusCode((int)resp.StatusCode);
         }
