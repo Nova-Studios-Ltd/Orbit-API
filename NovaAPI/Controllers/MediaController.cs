@@ -186,6 +186,28 @@ namespace NovaAPI.Controllers
             return StatusCode(200);
         }
 
+        [HttpPost("/proxy")]
+        public ActionResult PostProxyURL(string url)
+        {
+            WebRequest request = WebRequest.Create(url);
+            request.Method = "POST";
+            request.ContentLength = Request.Body.Length;
+            request.ContentType = Request.ContentType;
+            foreach (string key in Request.Headers.Keys)
+            {
+                // Copy Request Headers
+                request.Headers.Add(key, Request.Headers[key]);
+            }
+
+            Stream dataStream = request.GetRequestStream();
+            Request.Body.CopyTo(dataStream);
+            dataStream.Close();
+
+            WebResponse resp = request.GetResponse();
+            
+            return StatusCode((int)(resp as HttpWebResponse).StatusCode);
+        }
+        
         [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
         [TokenAuthorization]
         public ActionResult<string> GenerateToken(string channel_uuid, int uploads)
