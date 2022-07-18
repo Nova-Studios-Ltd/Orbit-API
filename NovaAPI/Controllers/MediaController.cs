@@ -191,7 +191,6 @@ namespace NovaAPI.Controllers
         {
             WebRequest request = WebRequest.Create(url);
             request.Method = "POST";
-            request.ContentLength = Request.Body.Length;
             request.ContentType = Request.ContentType;
             foreach (string key in Request.Headers.Keys)
             {
