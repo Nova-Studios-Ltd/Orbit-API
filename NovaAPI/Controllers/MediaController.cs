@@ -199,10 +199,10 @@ namespace NovaAPI.Controllers
             }
 
             Stream dataStream = request.GetRequestStream();
-            Request.Body.CopyToAsync(dataStream);
+            await Request.Body.CopyToAsync(dataStream);
             dataStream.Close();
 
-            WebResponse resp = request.GetResponse();
+            WebResponse resp = await request.GetResponseAsync();
             
             return StatusCode((int)(resp as HttpWebResponse).StatusCode);
         }
