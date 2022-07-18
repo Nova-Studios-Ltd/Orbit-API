@@ -193,7 +193,7 @@ namespace NovaAPI.Controllers
             HttpClient client = new HttpClient();
             foreach (string key in Request.Headers.Keys)
             {
-                if (key == "Content-Type") continue;
+                if (key == "Content-Type" || key == "Content-Length") continue;
                 // Copy Request Headers
                 client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
