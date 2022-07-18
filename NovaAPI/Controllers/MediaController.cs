@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
@@ -191,20 +192,29 @@ namespace NovaAPI.Controllers
         [HttpPost("/Proxy")]
         public async Task<ActionResult> PostProxyURL(string url)
         {
-            Console.WriteLine(url);
             HttpClientHandler handler = new HttpClientHandler()
             {
                 SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
                 ServerCertificateCustomValidationCallback = ((message, certificate2, arg3, arg4) => true)
             };
             HttpClient client = new HttpClient(handler);
+            string ct = "";
             foreach (string key in Request.Headers.Keys)
             {
+                if (key == "Content-Type") ct = Request.Headers[key];
                 if (key != "jwt") continue;
                 // Copy Request Headers
                 client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-            HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ct));
+
+            MemoryStream ms = new MemoryStream();
+            await Request.Body.CopyToAsync(ms);
+            ByteArrayContent content = new ByteArrayContent(ms.ToArray());
+            content.Headers.ContentType = new MediaTypeHeaderValue(ct);
+            ms.Close();
+            await ms.DisposeAsync();
+            HttpResponseMessage resp = await client.PostAsync(url, content);
             return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
         }
         
