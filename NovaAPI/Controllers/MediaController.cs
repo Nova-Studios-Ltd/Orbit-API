@@ -191,6 +191,12 @@ namespace NovaAPI.Controllers
         public async Task<ActionResult> PostProxyURL(string url)
         {
             HttpClient client = new HttpClient();
+            foreach (string key in Request.Headers.Keys)
+            {
+                if (key == "Content-Type") continue;
+                // Copy Request Headers
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
+            }
             HttpResponseMessage resp = await client.PostAsync(url, new StreamContent(Request.Body));
             return StatusCode((int)resp.StatusCode);
         }
