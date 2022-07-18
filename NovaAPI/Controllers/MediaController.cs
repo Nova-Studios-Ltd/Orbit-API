@@ -177,7 +177,8 @@ namespace NovaAPI.Controllers
                 Response.Headers.Add(header.Key, string.Join(" ", header.Value));
             }
             
-            return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
+            await resp.Content.CopyToAsync(Response.Body);
+            return StatusCode((int)resp.StatusCode);
         }
         
         [HttpHead("/Proxy")]
