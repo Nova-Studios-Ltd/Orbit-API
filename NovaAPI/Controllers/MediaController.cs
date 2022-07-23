@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +26,12 @@ namespace NovaAPI.Controllers
     public class MediaController : ControllerBase
     {
         readonly NovaChatDatabaseContext Context;
+        
+        readonly HttpClientHandler handler = new HttpClientHandler()
+        {
+            SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+            ServerCertificateCustomValidationCallback = ((message, certificate2, arg3, arg4) => true)
+        };
         
         public MediaController(NovaChatDatabaseContext context)
         {
@@ -154,37 +164,68 @@ namespace NovaAPI.Controllers
         [HttpGet("/Proxy")]
         public async Task<ActionResult> ProxyUrl(string url)
         {
-            WebRequest request = WebRequest.Create(url);
-            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
-            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
-            for (int h = 0; h < rsp.Headers.Count; h++)
+            HttpClient client = new HttpClient(handler);
+            foreach (string key in Request.Headers.Keys)
             {
-                // Copy response headers
-                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+                if (key != "jwt") continue;
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-            // Add cors header
-            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            await rsp.GetResponseStream().CopyToAsync(Response.Body);
-            return StatusCode(200);
+
+            HttpResponseMessage resp = await client.GetAsync(url);
+            foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
+            {
+                if (header.Key != "Content-Type" && header.Key != "Content-Length") continue;
+                Response.Headers.Add(header.Key, string.Join(" ", header.Value));
+            }
+            
+            Console.WriteLine(resp.StatusCode);
+            return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
         }
         
         [HttpHead("/Proxy")]
         public async Task<ActionResult> HeadProxyUrl(string url)
         {
-            WebRequest request = WebRequest.Create(url);
-            HttpWebResponse rsp = (HttpWebResponse) await request.GetResponseSilent();
-            if (rsp.StatusCode != HttpStatusCode.OK) return StatusCode(400, $"Unable to proxy content. Remote server returned: {rsp.StatusCode}");
-            for (int h = 0; h < rsp.Headers.Count; h++)
+            HttpClient client = new HttpClient(handler);
+            foreach (string key in Request.Headers.Keys)
             {
-                // Copy response headers
-                Response.Headers.Add(rsp.Headers.Keys[h], rsp.Headers[h]);
+                if (key != "jwt") continue;
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
             }
-            // Add cors header
-            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            return StatusCode(200);
+
+            HttpResponseMessage resp = await client.GetAsync(url);
+            foreach (KeyValuePair<string, IEnumerable<string>> header in resp.Headers)
+            {
+                if (header.Key != "Content-Type" && header.Key != "Content-Length") continue;
+                Response.Headers.Add(header.Key, string.Join(" ", header.Value));
+            }
+            
+            return StatusCode((int)resp.StatusCode);
         }
+        
+        [HttpPost("/Proxy")]
+        public async Task<ActionResult> PostProxyURL(string url)
+        {
+            HttpClient client = new HttpClient(handler);
+            string ct = "";
+            foreach (string key in Request.Headers.Keys)
+            {
+                if (key == "Content-Type") ct = Request.Headers[key];
+                if (key != "jwt") continue;
+                // Copy Request Headers
+                client.DefaultRequestHeaders.Add(key, (string) Request.Headers[key]);
+            }
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ct));
+
+            MemoryStream ms = new MemoryStream();
+            await Request.Body.CopyToAsync(ms);
+            ByteArrayContent content = new ByteArrayContent(ms.ToArray());
+            content.Headers.ContentType = new MediaTypeHeaderValue(ct);
+            ms.Close();
+            await ms.DisposeAsync();
+            HttpResponseMessage resp = await client.PostAsync(url, content);
+            return StatusCode((int)resp.StatusCode, (await resp.Content.ReadAsStreamAsync()));
+        }
+        
 
         [HttpGet("/Channel/{channel_uuid}/RequestContentToken")]
         [TokenAuthorization]
