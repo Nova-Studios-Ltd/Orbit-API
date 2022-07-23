@@ -274,6 +274,7 @@ namespace NovaAPI.Controllers
         }
         
         // Friends
+        [WebsocketEvent(EventType.FriendRequesetAdded)]
         public async void FriendRequestAdded(string user_uuid, string friend_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
@@ -289,6 +290,7 @@ namespace NovaAPI.Controllers
             }
         }
 
+        [WebsocketEvent(EventType.FriendRequestUpdated)]
         public async void FriendRequestUpdated(string user_uuid, string friend_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
@@ -304,6 +306,7 @@ namespace NovaAPI.Controllers
             }
         }
 
+        [WebsocketEvent(EventType.FriendRequestRemoved)]
         public async void FriendRequestRemoved(string user_uuid, string friend_uuid)
         {
             if (Clients.ContainsKey(user_uuid))
