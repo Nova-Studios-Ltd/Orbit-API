@@ -29,5 +29,13 @@ namespace NovaAPI.Util
             MySqlDataReader reader = cmd.ExecuteReader();
             return reader.HasRows;
         }
+
+        /*public static string[] GetRecipents(string channel_uuid, string user_uuid, bool includedDeleted = false)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}`", conn);
+            MySqlDataReader reader = cmd.ExecuteReader();
+        }*/
     }
 }

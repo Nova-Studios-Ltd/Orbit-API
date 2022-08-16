@@ -175,6 +175,7 @@ namespace NovaAPI.Controllers
             string user_uuid = Context.GetUserUUID(GetToken());
             string id = "";
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
+            //if (!FriendUtils.IsFriend(user_uuid, ))
             if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments");
             
             // Check that attachments arent duplicated and match those of the provided contentToken

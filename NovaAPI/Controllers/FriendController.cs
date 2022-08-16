@@ -141,6 +141,8 @@ namespace NovaAPI.Controllers
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             
+            Console.WriteLine(request_uuid);
+            
             using MySqlCommand setFriend = new($"DELETE FROM `{user_uuid}_friends` WHERE UUID=@uuid", conn);
             setFriend.Parameters.AddWithValue("@uuid", request_uuid);
             setFriend.ExecuteNonQuery();
