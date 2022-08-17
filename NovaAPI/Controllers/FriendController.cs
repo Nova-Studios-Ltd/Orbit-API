@@ -124,11 +124,11 @@ namespace NovaAPI.Controllers
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             
-            using MySqlCommand setBlocked = new($"INSERT INTO `{request_uuid}_friends` (State, UUID) VALUES (@state, @uuid) ON DUPLICATE KEY UPDATE State=@state", conn);
-            setBlocked.Parameters.AddWithValue("@uuid", user_uuid);
+            using MySqlCommand setBlocked = new($"INSERT INTO `{user_uuid}_friends` (State, UUID) VALUES (@state, @uuid) ON DUPLICATE KEY UPDATE State=@state", conn);
+            setBlocked.Parameters.AddWithValue("@uuid", request_uuid);
             setBlocked.Parameters.AddWithValue("@state", "Blocked");
             setBlocked.ExecuteNonQuery();
-            
+
             Event.FriendRequestUpdated(user_uuid, request_uuid);
             
             return StatusCode(200);
