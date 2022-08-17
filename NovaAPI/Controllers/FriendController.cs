@@ -135,7 +135,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPatch("{user_uuid}/Unblock/{request_uuid}")]
-        public ActionResult UnBlockRequest(string user_uuid, string request_uuid)
+        public ActionResult<string> UnBlockRequest(string user_uuid, string request_uuid)
         {
             if (Context.GetUserUUID(this.GetToken()) != user_uuid) return StatusCode(403);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
@@ -148,8 +148,8 @@ namespace NovaAPI.Controllers
             setFriend.ExecuteNonQuery();
 
             Event.FriendRequestUpdated(user_uuid, request_uuid);
-            
-            return StatusCode(200);
+
+            return request_uuid;
         }
 
         [HttpDelete("{user_uuid}/Remove/{request_uuid}")]
