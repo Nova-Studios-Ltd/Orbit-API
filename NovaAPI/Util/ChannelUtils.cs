@@ -40,7 +40,7 @@ namespace NovaAPI.Util
             List<string> recips = new List<string>();
             while (reader.Read())
             {
-                string uuid = reader["UUID"].ToString();
+                string uuid = reader["User_UUID"].ToString();
                 if (uuid == user_uuid) continue;
                 recips.Add(uuid);
             }
