@@ -180,6 +180,7 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.IsGroup(channel_uuid))
             {
                 string recip = ChannelUtils.GetRecipents(channel_uuid, user_uuid, true)[0];
+                Console.WriteLine(recip);
                 if (!FriendUtils.IsFriend(user_uuid, recip))
                     return StatusCode(403, "Unable to send message to non-friend user");
                 if (FriendUtils.IsBlocked(user_uuid, recip))
