@@ -32,7 +32,7 @@ namespace NovaAPI.Controllers
             if (UsersShareChannel(author, recipient_uuid)) return StatusCode(403, "Channel Already Created");
             if (!FriendUtils.IsFriend(author, recipient_uuid))
                 return StatusCode(403, "Unable to create channel with non-friend users");
-            if (!FriendUtils.IsBlocked(author, recipient_uuid))
+            if (FriendUtils.IsBlocked(author, recipient_uuid))
                 return StatusCode(403, "Unable to create channel with blocked users");
 
             string table_id = Guid.NewGuid().ToString("N");

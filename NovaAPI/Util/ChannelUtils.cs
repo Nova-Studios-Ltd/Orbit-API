@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using System.Collections.Generic;
+using MySql.Data.MySqlClient;
 using NovaAPI.Controllers;
 
 namespace NovaAPI.Util
@@ -30,12 +31,36 @@ namespace NovaAPI.Util
             return reader.HasRows;
         }
 
-        /*public static string[] GetRecipents(string channel_uuid, string user_uuid, bool includedDeleted = false)
+        public static string[] GetRecipents(string channel_uuid, string user_uuid, bool includedDeleted = false)
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
             conn.Open();
             using MySqlCommand cmd = new($"SELECT * FROM `access_{channel_uuid}`", conn);
             MySqlDataReader reader = cmd.ExecuteReader();
-        }*/
+            List<string> recips = new List<string>();
+            while (reader.Read())
+            {
+                string uuid = reader["UUID"].ToString();
+                if (uuid == user_uuid) continue;
+                recips.Add(uuid);
+            }
+
+            return recips.ToArray();
+        }
+
+        public static bool IsGroup(string channel_uuid)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand cmd = new($"SELECT IsGroup FROM Channels WHERE (Table_ID=@table)", conn);
+            cmd.Parameters.AddWithValue("@table", channel_uuid);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if ((bool) reader["IsGroup"]) return true;
+            }
+
+            return false;
+        }
     }
 }
