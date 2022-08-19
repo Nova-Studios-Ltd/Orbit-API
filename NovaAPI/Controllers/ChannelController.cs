@@ -370,6 +370,9 @@ namespace NovaAPI.Controllers
                 // Set channel to DeletedChannel in use props
                 SetUserDeletedChannel(channel_uuid, user_uuid, true);
 
+                // Get Updated information about channel
+                channel = GetChannel(channel_uuid).Value;
+
                 if (channel.Members.Count <= 1)
                 {
                     // Remove Access Table and Chat History
