@@ -343,8 +343,8 @@ namespace NovaAPI.Controllers
                 while (reader.Read())
                 {
                     string member = (string)reader["User_UUID"];
-                    //if (!(bool)reader["DELETED"])
-                    channel.Members.Add(member);
+                    if (!(bool)reader["DELETED"])
+                        channel.Members.Add(member);
                     if (!channel.IsGroup)
                     {
                         if (member == user_uuid) continue;
@@ -373,8 +373,6 @@ namespace NovaAPI.Controllers
                 // Get Updated information about channel
                 channel = GetChannel(channel_uuid).Value;
 
-                Console.WriteLine(channel.Members.Count);
-                
                 if (channel.Members.Count <= 1)
                 {
                     // Remove Access Table and Chat History
