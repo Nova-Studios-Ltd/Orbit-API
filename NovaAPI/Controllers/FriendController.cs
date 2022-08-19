@@ -58,7 +58,7 @@ namespace NovaAPI.Controllers
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
 
-            using MySqlCommand setRequest = new($"INSERT IGNORE INTO `{request_uuid}_friends` (UUID, State) VALUES (@uuid, @state)", conn);
+            using MySqlCommand setRequest = new($"INSERT INTO `{request_uuid}_friends` (UUID, State) VALUES (@uuid, @state) ON DUPLICATE KEY UPDATE State=@state", conn);
             setRequest.Parameters.AddWithValue("@uuid", user_uuid);
             setRequest.Parameters.AddWithValue("@state", "Request");
             setRequest.ExecuteNonQuery();

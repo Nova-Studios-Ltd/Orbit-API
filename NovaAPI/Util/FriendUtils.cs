@@ -20,7 +20,7 @@ public static class FriendUtils
         Blocked,
         Any
     }
-    public static Dictionary<string, string> GetFriends(string user_uuid, FriendState state = FriendState.Any)
+    public static Dictionary<string, string> GetFriends(string user_uuid, FriendState state = FriendState.Any) 
     {
         using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
         conn.Open();
