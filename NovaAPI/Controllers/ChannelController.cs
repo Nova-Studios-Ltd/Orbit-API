@@ -143,7 +143,7 @@ namespace NovaAPI.Controllers
                 addAuthor.ExecuteNonQuery();
 
                 // Add table id to channels table
-                using MySqlConnection cTable = MySqlServer.CreateSQLConnection(Database.Master);
+                using MySqlConnection cTable = MySqlServer.CreateSQLConnection(Database.Channel);
                 cTable.Open();
                 using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`, `GroupName`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP, @gn)", cTable);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
@@ -154,7 +154,7 @@ namespace NovaAPI.Controllers
                 addChannel.ExecuteNonQuery();
             }
 
-            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
                 foreach (string recipient in recipients)
