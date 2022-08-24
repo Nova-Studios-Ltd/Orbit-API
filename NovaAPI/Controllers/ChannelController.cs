@@ -154,7 +154,7 @@ namespace NovaAPI.Controllers
                 addChannel.ExecuteNonQuery();
             }
 
-            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 conn.Open();
                 foreach (string recipient in recipients)
