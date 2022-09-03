@@ -164,7 +164,7 @@ namespace NovaAPI.Controllers
         }
 
         [HttpPost("{channel_uuid}/Messages/")]
-        public ActionResult<string> SendMessage(string channel_uuid, SentMessage message, string contentToken)
+        public ActionResult<string> SendMessage(string channel_uuid, SentMessage message, string contentToken) 
         {
             if (contentToken != "empty" && !TokenManager.ValidToken(contentToken, channel_uuid) && message.Attachments.Count > 0)
             {
@@ -284,6 +284,36 @@ namespace NovaAPI.Controllers
             }
         }
 
+        [HttpDelete("{channel_uuid}/Messages/{message_id}/Attachments/{attachment_uuid}")]
+        public ActionResult RemoveAttachment(string channel_uuid, string message_id, string attachment_uuid)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel);
+            conn.Open();
+            
+            List<string> attachmentUUIDs = null;
+            MySqlCommand getAUUID = new($"SELECT * FROM `{channel_uuid}` WHERE (Message_ID=@uuid)", conn);
+            getAUUID.Parameters.AddWithValue("@uuid", message_id);
+            using MySqlDataReader reader = getAUUID.ExecuteReader();
+            while (reader.Read())
+            {
+                attachmentUUIDs = JsonConvert.DeserializeObject<List<string>>(reader["Attachments"].ToString());
+            }
+            reader.Close();
+            if (attachmentUUIDs == null) attachmentUUIDs = new List<string>();
+
+            if (attachmentUUIDs.Contains(attachment_uuid))
+            {
+                attachmentUUIDs.Remove(attachment_uuid);
+                StorageUtil.DeleteFile(StorageUtil.MediaType.ChannelContent, attachment_uuid, channel_uuid);   
+                MySqlCommand updateMessageAttachments = new MySqlCommand($"UPDATE `{channel_uuid}` SET Attachments=@atts WHERE (Message_ID=@uuid)", conn);
+                updateMessageAttachments.Parameters.AddWithValue("@atts", JsonConvert.SerializeObject(attachmentUUIDs));
+                updateMessageAttachments.Parameters.AddWithValue("@uuid", message_id);
+                updateMessageAttachments.ExecuteNonQuery();
+            }
+
+            return StatusCode(200);
+        }
+        
         [HttpPost("TriggerMessageEvent")]
         public ActionResult MessageEvent(string channel_uuid, string message_id, int eventType)
         {

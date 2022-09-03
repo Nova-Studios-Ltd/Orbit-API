@@ -9,6 +9,13 @@ using NovaAPI.Util;
 
 namespace NovaAPI.Controllers
 {
+    public enum ChannelTypes
+    {
+        DMChannel,
+        GroupChannel,
+        PrivateChannel
+    }
+
     [Route("Channel")]
     [ApiController]
     [TokenAuthorization]
@@ -109,6 +116,57 @@ namespace NovaAPI.Controllers
             return table_id;
         }
 
+        // Create private "transfer" channel, used for sending content between devices, doesnt allow more than yoursefl in it
+        [HttpPost("CreatePrivate")]
+        public ActionResult<string> CreatePrivate()
+        {
+            string author = Context.GetUserUUID(this.GetToken());
+            string table_id = Guid.NewGuid().ToString("N");
+            
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
+            {
+                conn.Open();
+
+                // Create table to hold sent messages
+                using MySqlCommand createTable = new($"CREATE TABLE `{table_id}` (Message_ID BIGINT NOT NULL AUTO_INCREMENT, Author_UUID CHAR(255) NOT NULL, Content VARCHAR(4000) NOT NULL, Attachments JSON NOT NULL, IV VARCHAR(1000) NOT NULL, EncryptedKeys JSON NOT NULL, EditedDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, Edited BOOLEAN NOT NULL DEFAULT FALSE, CreationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (Message_ID)) ENGINE = InnoDB;", conn);
+                createTable.ExecuteNonQuery();
+
+                // Create table to hold the users attached to this channel
+                using MySqlCommand createAccessTable = new($"CREATE TABLE `access_{table_id}` (User_UUID CHAR(255) NOT NULL, DELETED BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE User_UUIDs (User_UUID)) ENGINE = InnoDB;", conn);
+                createAccessTable.ExecuteNonQuery();
+
+                // Add users to access table
+                using MySqlCommand addUserAccess = new($"INSERT INTO  `access_{table_id}` (User_UUID) VALUES (@author), (@recipient)", conn);
+                addUserAccess.Parameters.AddWithValue("@author", author);
+                addUserAccess.ExecuteNonQuery();
+
+                // Add table id to channels table
+                using MySqlConnection cTable = MySqlServer.CreateSQLConnection(Database.Master);
+                cTable.Open();
+                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelType`, `ChannelIcon`, `Timestamp`) VALUES (@table_id, @owner_uuid, @type, @icon, CURRENT_TIMESTAMP)", cTable);
+                addChannel.Parameters.AddWithValue("@table_id", table_id);
+                addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
+                addChannel.Parameters.AddWithValue("@type", ChannelTypes.PrivateChannel);
+                addChannel.Parameters.AddWithValue("@icon", "");
+                addChannel.ExecuteNonQuery();
+            }
+
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User))
+            {
+                conn.Open();
+
+                // Add channel to author
+                MySqlCommand cmd  = new($"INSERT INTO `{Context.GetUserUUID(this.GetToken())}` (Property, Value) VALUES (@property, @uuid)", conn);
+                cmd.Parameters.AddWithValue("@property", "ActiveChannelAccess");
+                cmd.Parameters.AddWithValue("@uuid", table_id);
+                cmd.ExecuteNonQuery();
+                cmd.Dispose();
+            }
+            
+            Event.ChannelCreatedEvent(table_id);
+            return table_id;
+        }
+        
         // Groups
         [HttpPost("CreateGroupChannel")]
         public ActionResult<string> CreateGroupChannel(string group_name, List<string> recipients) 
@@ -145,11 +203,11 @@ namespace NovaAPI.Controllers
                 // Add table id to channels table
                 using MySqlConnection cTable = MySqlServer.CreateSQLConnection(Database.Master);
                 cTable.Open();
-                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `IsGroup`, `Timestamp`, `GroupName`) VALUES (@table_id, @owner_uuid, @icon, @group, CURRENT_TIMESTAMP, @gn)", cTable);
+                using MySqlCommand addChannel = new($"INSERT INTO `Channels` (`Table_ID`, `Owner_UUID`, `ChannelIcon`, `ChannelType`, `Timestamp`, `GroupName`) VALUES (@table_id, @owner_uuid, @icon, @type, CURRENT_TIMESTAMP, @gn)", cTable);
                 addChannel.Parameters.AddWithValue("@table_id", table_id);
                 addChannel.Parameters.AddWithValue("@owner_uuid", Context.GetUserUUID(this.GetToken()));
                 addChannel.Parameters.AddWithValue("@icon", "");
-                addChannel.Parameters.AddWithValue("@group", true);
+                addChannel.Parameters.AddWithValue("@type", ChannelTypes.GroupChannel);
                 addChannel.Parameters.AddWithValue("@gn", group_name);
                 addChannel.ExecuteNonQuery();
             }
@@ -235,7 +293,7 @@ namespace NovaAPI.Controllers
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
                 conn.Open();
-                if (!c.IsGroup && c.Members.Count > 2) {
+                if (c.ChannelType == ChannelTypes.DMChannel && c.Members.Count > 2) {
                     using MySqlCommand updateType = new($"UPDATE Channels SET IsGroup=@isGroup WHERE (Table_ID=@channel_uuid)", conn);
                     updateType.Parameters.AddWithValue("@isGroup", true);
                     updateType.Parameters.AddWithValue("@channel_uuid", channel_uuid);
@@ -265,7 +323,7 @@ namespace NovaAPI.Controllers
             if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
             Channel c = GetChannel(channel_uuid).Value;
             if (c == null) return StatusCode(400);
-            if (!c.IsGroup) return StatusCode(405);
+            if (c.ChannelType != ChannelTypes.GroupChannel) return StatusCode(405);
             
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
@@ -329,7 +387,7 @@ namespace NovaAPI.Controllers
                 {
                     channel.Table_Id = channel_uuid;
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
-                    channel.IsGroup = (bool)reader["IsGroup"];
+                    channel.ChannelType = (ChannelTypes)reader["IsGroup"];
                     channel.ChannelName = (string)reader["GroupName"];
                     channel.ChannelIcon = $"https://api.novastudios.tk/Channel/{channel_uuid}/Icon?size=64";
                         
@@ -345,7 +403,7 @@ namespace NovaAPI.Controllers
                     string member = (string)reader["User_UUID"];
                     if (!(bool)reader["DELETED"])
                         channel.Members.Add(member);
-                    if (!channel.IsGroup)
+                    if (channel.ChannelType == ChannelTypes.DMChannel)
                     {
                         if (member == user_uuid) continue;
                         channel.ChannelName = Context.GetUserUsername(member);
@@ -365,7 +423,7 @@ namespace NovaAPI.Controllers
             Channel channel = GetChannel(channel_uuid).Value;
 
             // Handle Standard Channel
-            if (!channel.IsGroup)
+            if (channel.ChannelType == ChannelTypes.DMChannel)
             {
                 // Set channel to DeletedChannel in use props
                 SetUserDeletedChannel(channel_uuid, user_uuid, true);
@@ -480,7 +538,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
-            if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Archive group");
+            if (GetChannel(channel_uuid).Value.ChannelType == ChannelTypes.GroupChannel) return StatusCode(405, "Can not Archive group");
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             using MySqlCommand cmd = new($"UPDATE `{user_uuid}` SET Property=@prop WHERE (Value=@channel)", conn);
@@ -495,7 +553,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403, "Permission Denied");
-            if (GetChannel(channel_uuid).Value.IsGroup) return StatusCode(405, "Can not Unarchive group");
+            if (GetChannel(channel_uuid).Value.ChannelType == ChannelTypes.GroupChannel) return StatusCode(405, "Can not Unarchive group");
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User);
             conn.Open();
             using MySqlCommand cmd = new($"UPDATE `{user_uuid}` SET Property=@prop WHERE (Value=@channel)", conn);
@@ -533,7 +591,7 @@ namespace NovaAPI.Controllers
             {
                 Channel c = GetChannel(channel).Value;
                 if (c == null) continue;
-                if (!c.IsGroup)
+                if (c.ChannelType == ChannelTypes.DMChannel)
                 {
                     if (c.Members.Contains(user_uuid1) && c.Members.Contains(user_uuid2))
                     {
