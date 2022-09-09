@@ -45,7 +45,7 @@ namespace NovaAPI.Util
           `Table_ID` char(255) NOT NULL,
           `Owner_UUID` char(255) NOT NULL,
           `ChannelIcon` char(255) NOT NULL,
-          `ChannelType` ENUM NOT NULL DEFAULT '0',
+          `ChannelType` TINYINT NOT NULL DEFAULT '0',
           `GroupName` char(255) NOT NULL DEFAULT 'NewGroup',
           `Timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (`Table_ID`)
