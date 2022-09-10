@@ -52,12 +52,12 @@ namespace NovaAPI.Util
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
-            using MySqlCommand cmd = new($"SELECT IsGroup FROM Channels WHERE (Table_ID=@table)", conn);
+            using MySqlCommand cmd = new($"SELECT ChannelType FROM Channels WHERE (Table_ID=@table)", conn);
             cmd.Parameters.AddWithValue("@table", channel_uuid);
             MySqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                if ((bool) reader["IsGroup"]) return true;
+                if ((ChannelTypes)(int)((sbyte)reader["ChannelType"] & 0xff) == ChannelTypes.GroupChannel) return true;
             }
 
             return false;
