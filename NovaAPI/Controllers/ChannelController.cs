@@ -294,8 +294,8 @@ namespace NovaAPI.Controllers
             {
                 conn.Open();
                 if (c.ChannelType == ChannelTypes.DMChannel && c.Members.Count > 2) {
-                    using MySqlCommand updateType = new($"UPDATE Channels SET IsGroup=@isGroup WHERE (Table_ID=@channel_uuid)", conn);
-                    updateType.Parameters.AddWithValue("@isGroup", true);
+                    using MySqlCommand updateType = new($"UPDATE Channels SET ChannelType=@isGroup WHERE (Table_ID=@channel_uuid)", conn);
+                    updateType.Parameters.AddWithValue("@isGroup", ChannelTypes.GroupChannel);
                     updateType.Parameters.AddWithValue("@channel_uuid", channel_uuid);
                     updateType.ExecuteNonQuery();
                 }
@@ -387,7 +387,7 @@ namespace NovaAPI.Controllers
                 {
                     channel.Table_Id = channel_uuid;
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
-                    channel.ChannelType = (ChannelTypes)reader["IsGroup"];
+                    channel.ChannelType = (ChannelTypes)reader["ChannelType"];
                     channel.ChannelName = (string)reader["GroupName"];
                     channel.ChannelIcon = $"https://api.novastudios.tk/Channel/{channel_uuid}/Icon?size=64";
                         
