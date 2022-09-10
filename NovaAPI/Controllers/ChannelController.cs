@@ -387,7 +387,7 @@ namespace NovaAPI.Controllers
                 {
                     channel.Table_Id = channel_uuid;
                     channel.Owner_UUID = (string)reader["Owner_UUID"];
-                    channel.ChannelType = (ChannelTypes)reader["ChannelType"];
+                    channel.ChannelType = (ChannelTypes)(int)reader["ChannelType"];
                     channel.ChannelName = (string)reader["GroupName"];
                     channel.ChannelIcon = $"https://api.novastudios.tk/Channel/{channel_uuid}/Icon?size=64";
                         
