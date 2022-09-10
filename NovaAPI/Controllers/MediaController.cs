@@ -144,7 +144,7 @@ namespace NovaAPI.Controllers
         // Content Related
         [HttpPost("/Channel/{channel_uuid}")]
         [TokenAuthorization]
-        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, string contentToken, string fileType, int width=0, int height=0)
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, [FromForm] string keys, string contentToken, string fileType, int width=0, int height=0)
         {
             if (!TokenManager.UseToken(contentToken, channel_uuid))
             {
