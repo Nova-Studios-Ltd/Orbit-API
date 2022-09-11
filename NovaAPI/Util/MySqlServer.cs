@@ -56,7 +56,7 @@ namespace NovaAPI.Util
           `File_UUID` char(255) NOT NULL,
           `Channel_UUID` char(255) NOT NULL,
           `User_UUID` char(255) NOT NULL,
-          `Keys` varchar(16383) NOT NULL,
+          `Keys` varchar(5000) NOT NULL,
           `IV` char(255) NOT NULL,
           `Filename` char(255) NOT NULL,
           `MimeType` char(255) NOT NULL,
