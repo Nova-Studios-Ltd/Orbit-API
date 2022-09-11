@@ -107,10 +107,12 @@ namespace NovaAPI.Util
                 // Store file meta data
                 using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
                 conn.Open();
-                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Channel_UUID, User_UUID, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @channel, @user_uuid, @filename, @mime, @size, @width, @height)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO ChannelMedia (File_UUID, Channel_UUID, User_UUID, Keys, Filename, MimeType, Size, ContentWidth, ContentHeight) VALUES (@uuid, @channel, @user_uuid, @keys, @filename, @mime, @size, @width, @height)", conn);
                 cmd.Parameters.AddWithValue("@uuid", filename);
                 cmd.Parameters.AddWithValue("@channel", filemeta.Channel_UUID);
                 cmd.Parameters.AddWithValue("@user_uuid", filemeta.User_UUID);
+                cmd.Parameters.AddWithValue("@keys", filemeta.Keys);
+                cmd.Parameters.AddWithValue("@iv", filemeta.IV);
                 cmd.Parameters.AddWithValue("@filename", filemeta.Filename);
                 cmd.Parameters.AddWithValue("@mime", filemeta.MimeType);
                 cmd.Parameters.AddWithValue("@size", filemeta.Filesize);
@@ -166,7 +168,7 @@ namespace NovaAPI.Util
                 Diamension dim = RetreiveDiamension(resource_id);
                 return new MediaFile(fs,
                     new ChannelContentMeta(dim.Width, dim.Height, RetreiveMimeType(resource_id), RetreiveFilename(resource_id), location_id,
-                        RetreiveContentAuthor(resource_id), fs.Length));
+                        RetreiveContentAuthor(resource_id), fs.Length, RetreiveChannelMediaKeys(resource_id), RetreiveChannelMediaIV(resource_id)));
             }
             else if (mediaType == MediaType.ChannelIcon)
             {
@@ -353,6 +355,34 @@ namespace NovaAPI.Util
             while (reader.Read())
             {
                 return reader["ChannelIcon"].ToString();
+            }
+            return "";
+        }
+
+        public static string RetreiveChannelMediaKeys(string content_id)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT Keys FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["Keys"].ToString();
+            }
+            return "";
+        }
+
+        public static string RetreiveChannelMediaIV(string content_id)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand cmd = new("SELECT IV FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", content_id);
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                return reader["IV"].ToString();
             }
             return "";
         }

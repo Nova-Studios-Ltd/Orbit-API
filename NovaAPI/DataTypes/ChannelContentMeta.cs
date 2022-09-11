@@ -16,8 +16,10 @@ namespace NovaAPI.DataTypes
         public string MimeType { get; set; }
         public string Filename { get; set; }
         public long Filesize { get; set; }
+        public string Keys { get; set; }
+        public string IV { get; set; }
 
-        public ChannelContentMeta(int width, int height, string mimeType, string filename, string channel_uuid, string user_uuid, long filesize)
+        public ChannelContentMeta(int width, int height, string mimeType, string filename, string channel_uuid, string user_uuid, long filesize, string keys, string iv)
         {
             Width = width;
             Height = height;
@@ -26,6 +28,8 @@ namespace NovaAPI.DataTypes
             Channel_UUID = channel_uuid;
             User_UUID = user_uuid;
             Filesize = filesize;
+            Keys = keys;
+            IV = iv;
         }
     }
 }

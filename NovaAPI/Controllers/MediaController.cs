@@ -128,6 +128,13 @@ namespace NovaAPI.Controllers
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             return File(file.File, file.Meta.MimeType);
         }
+
+        [HttpGet("/channel/{channel_uuid}/{content_id}")]
+        public ActionResult<string> GetContentKeys(string channel_uuid, string content_id)
+        {
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            return RetreiveChannelMediaKeys(content_id);
+        }
    
         [HttpHead("/Channel/{channel_uuid}/{content_id}")]
         public ActionResult HeadContent(string channel_uuid, string content_id)
@@ -144,7 +151,7 @@ namespace NovaAPI.Controllers
         // Content Related
         [HttpPost("/Channel/{channel_uuid}")]
         [TokenAuthorization]
-        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, [FromForm] string keys, string contentToken, string fileType, int width=0, int height=0)
+        public ActionResult<string> PostContent(string channel_uuid, IFormFile file, [FromForm] string keys, [FromForm] string iv, string contentToken, string fileType, int width=0, int height=0)
         {
             if (!TokenManager.UseToken(contentToken, channel_uuid))
             {
@@ -155,7 +162,7 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
             if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, "File must be > 0MB and <= 20MB");
 
-            string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(fileType), file.FileName, channel_uuid, Context.GetUserUUID(this.GetToken()), file.Length));
+            string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(fileType), file.FileName, channel_uuid, Context.GetUserUUID(this.GetToken()), file.Length, keys, iv));
             if (contentID == "") return StatusCode(500);
             TokenManager.AddID(contentToken, contentID);
             return contentID;
