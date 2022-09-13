@@ -160,7 +160,7 @@ namespace NovaAPI.Controllers
             }
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
-            if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, "File must be > 0MB and <= 20MB");
+            if (file.Length >= 20971520 || file.Length == 0) return StatusCode(413, $"File must be > 0MB and <= 20MB ({file.Length}bytes)");
 
             string contentID = StoreFile(MediaType.ChannelContent, file.OpenReadStream(), new ChannelContentMeta(width, height, MimeTypeMap.GetMimeType(fileType), file.FileName, channel_uuid, Context.GetUserUUID(this.GetToken()), file.Length, keys, iv));
             if (contentID == "") return StatusCode(500);
