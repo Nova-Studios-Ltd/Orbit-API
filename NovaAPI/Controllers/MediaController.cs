@@ -129,7 +129,7 @@ namespace NovaAPI.Controllers
             return File(file.File, file.Meta.MimeType);
         }
 
-        [HttpGet("/channel/{channel_uuid}/{content_id}")]
+        [HttpGet("/channel/{channel_uuid}/{content_id}/Keys")]
         public ActionResult<string> GetContentKeys(string channel_uuid, string content_id)
         {
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
