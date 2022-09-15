@@ -136,7 +136,9 @@ namespace NovaAPI.Controllers
                                     MimeType = metaReader["MimeType"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
                                     ContentWidth = int.Parse(metaReader["ContentWidth"].ToString()),
-                                    ContentHeight = int.Parse(metaReader["ContentHeight"].ToString())
+                                    ContentHeight = int.Parse(metaReader["ContentHeight"].ToString()),
+                                    Keys = JsonConvert.DeserializeObject<Dictionary<string, string>>(metaReader["User_Keys"].ToString()),
+                                    IV = metaReader["IV"].ToString()
                                 });
                             }
                             metaReader.Close();
