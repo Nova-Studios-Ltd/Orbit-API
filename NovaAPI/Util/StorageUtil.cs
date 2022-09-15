@@ -363,12 +363,12 @@ namespace NovaAPI.Util
         {
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
-            using MySqlCommand cmd = new("SELECT Keys FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
+            using MySqlCommand cmd = new("SELECT User_Keys FROM ChannelMedia WHERE (File_UUID=@uuid)", conn);
             cmd.Parameters.AddWithValue("@uuid", content_id);
             MySqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                return reader["Keys"].ToString();
+                return reader["User_Keys"].ToString();
             }
             return "";
         }
