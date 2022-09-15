@@ -13,5 +13,7 @@ namespace NovaAPI.Models
         public int Size { get; set; }
         public int ContentWidth { get; set; }
         public int ContentHeight { get; set; }
+        public Dictionary<string, string> Keys { get; set; }
+        public string IV { get; set; }
     }
 }
