@@ -57,7 +57,7 @@ namespace NovaAPI.Controllers
                             {
                                 Attachments.Add(new Attachment
                                 {
-                                    ContentUrl = $"https://api.novastudios.tk/Channel/{channel_uuid}/{content_id}",
+                                    ContentUrl = $"https://api.novastudios.uk/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
                                     MimeType = metaReader["MimeType"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
@@ -81,7 +81,7 @@ namespace NovaAPI.Controllers
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
                             Edited = (bool)reader["Edited"],
-                            Avatar = $"https://api.novastudios.tk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
+                            Avatar = $"https://api.novastudios.uk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
                         });
                     }
                 }
@@ -131,7 +131,7 @@ namespace NovaAPI.Controllers
                             {
                                 Attachments.Add(new Attachment
                                 {
-                                    ContentUrl = $"https://api.novastudios.tk/Channel/{channel_uuid}/{content_id}",
+                                    ContentUrl = $"https://api.novastudios.uk/Channel/{channel_uuid}/{content_id}",
                                     Filename = metaReader["Filename"].ToString(),
                                     MimeType = metaReader["MimeType"].ToString(),
                                     Size = int.Parse(metaReader["Size"].ToString()),
@@ -155,7 +155,7 @@ namespace NovaAPI.Controllers
                             Timestamp = DateTime.Parse(reader["CreationDate"].ToString()),
                             EditedTimestamp = DateTime.Parse(reader["EditedDate"].ToString()),
                             Edited = (bool)reader["Edited"],
-                            Avatar = $"https://api.novastudios.tk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
+                            Avatar = $"https://api.novastudios.uk/User/{(reader["Author_UUID"].ToString())}/Avatar?size=64"
                         };
                     }
                 }
