@@ -102,7 +102,7 @@ namespace NovaAPI
             {
                 options.AddPolicy(name: "Origins", builder =>
                 {
-                    builder.WithOrigins("http://localhost:3000", "https://live.orbit.novastudios.tk", "https://orbit.novastudios.tk");
+                    builder.WithOrigins("http://localhost:3000", "https://live.orbit.novastudios.uk", "https://orbit.novastudios.uk");
                     builder.WithMethods("DELETE", "GET", "POST", "PATCH", "PUT", "UPGRADE");
                 });
             });

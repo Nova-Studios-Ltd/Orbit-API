@@ -96,7 +96,9 @@ namespace NovaAPI.Controllers
         [HttpGet("{channel_uuid}/Messages/EditTimestamps")]
         public ActionResult<Dictionary<string, string>> GetMessageHashes(string channel_uuid, int limit = 30, int after = -1, int before = int.MaxValue)
         {
-            ChannelMessage[] messages = GetMessages(channel_uuid, limit, after, before).Value.ToArray();
+            var m = GetMessages(channel_uuid, limit, after, before).Value;
+            if (m == null) return StatusCode(400);
+            ChannelMessage[] messages = m.ToArray();
             Dictionary<string, string> hashes = new Dictionary<string, string>();
             foreach (ChannelMessage message in messages)
             {
