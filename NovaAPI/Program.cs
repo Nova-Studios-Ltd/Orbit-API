@@ -24,8 +24,8 @@ namespace NovaAPI
                 {
                     #if !DEBUG
                     webBuilder.UseKestrel();
+                    webBuilder.UseUrls("http://*:5000");
                     #endif
-                    
                     webBuilder.UseStartup<Startup>();
                 });
     }
