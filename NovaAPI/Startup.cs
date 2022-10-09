@@ -98,7 +98,7 @@ namespace NovaAPI
             
             // Setup storage
             StorageUtil.InitStorage(genConfig.GetSection("APIDataDirectory").Value, Configuration);
-            API_Domain = genConfig.GetSection("APIDataDirectory").Value;
+            API_Domain = genConfig.GetSection("API_Domain").Value;
 
             services.AddCors(options =>
             {
