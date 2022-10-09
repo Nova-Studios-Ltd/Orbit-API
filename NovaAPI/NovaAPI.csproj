@@ -21,7 +21,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="data\api-data" />
+    <Compile Remove="data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="data\**" />
   </ItemGroup>
 
 </Project>
