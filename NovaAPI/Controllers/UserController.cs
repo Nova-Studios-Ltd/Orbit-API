@@ -42,7 +42,7 @@ namespace NovaAPI.Controllers
                         Username = reader["Username"].ToString(),
                         Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                         CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
-                        Avatar = $"https://api.novastudios.uk/User/{(reader["UUID"].ToString())}/Avatar?size=128"
+                        Avatar = $"https://{Startup.API_Domain}/User/{(reader["UUID"].ToString())}/Avatar?size=128"
                     };
                 }
             }
@@ -73,7 +73,7 @@ namespace NovaAPI.Controllers
                     Email = reader["Email"].ToString(),
                     Discriminator = reader["Discriminator"].ToString().PadLeft(4, '0'),
                     CreationDate = DateTime.Parse(reader["CreationDate"].ToString()),
-                    Avatar = $"https://api.novastudios.uk/User/{(reader["UUID"].ToString())}/Avatar?size=128"
+                    Avatar = $"https://{Startup.API_Domain}/User/{(reader["UUID"].ToString())}/Avatar?size=128"
                 };
             }
             
