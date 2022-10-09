@@ -119,7 +119,7 @@ namespace NovaAPI
             {
                 c.SwaggerDoc("v1", new OpenApiInfo 
                 { 
-                    Title = "Nova API", 
+                    Title = "Nova Stable API", 
                     Version = "v1"
                 });
 
