@@ -320,7 +320,7 @@ namespace NovaAPI.Controllers
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!CheckUserChannelOwner(channel_uuid, user_uuid) || recipient == user_uuid) return StatusCode(403);
-            if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
+            if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500, "Recipient feild empty or unknown user");
             Channel c = GetChannel(channel_uuid).Value;
             if (c == null) return StatusCode(400);
             if (c.ChannelType != ChannelTypes.GroupChannel) return StatusCode(405);
