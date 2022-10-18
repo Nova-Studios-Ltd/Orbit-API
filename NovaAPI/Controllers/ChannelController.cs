@@ -319,7 +319,7 @@ namespace NovaAPI.Controllers
         public ActionResult RemoveUserFromGroupChannel(string channel_uuid, string recipient)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (!CheckUserChannelOwner(channel_uuid, user_uuid) || recipient != user_uuid) return StatusCode(403);
+            if (!CheckUserChannelOwner(channel_uuid, user_uuid) || recipient == user_uuid) return StatusCode(403);
             if (string.IsNullOrEmpty(recipient) || !Context.UserExsists(recipient)) return StatusCode(500);
             Channel c = GetChannel(channel_uuid).Value;
             if (c == null) return StatusCode(400);
