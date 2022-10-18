@@ -339,7 +339,7 @@ namespace NovaAPI.Controllers
                 }
                 catch
                 {
-                    return StatusCode(500);
+                    return StatusCode(500, "Unknown query failure");
                 }
             }
 
