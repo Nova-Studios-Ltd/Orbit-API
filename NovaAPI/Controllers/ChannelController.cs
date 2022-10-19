@@ -351,7 +351,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@uuid", recipient);
                 cmd.ExecuteNonQuery();
             }
-            Event.ChannelDeleteEvent(channel_uuid, user_uuid);
+            Event.ChannelDeleteEvent(channel_uuid, recipient);
             return StatusCode(200);
         }
 
