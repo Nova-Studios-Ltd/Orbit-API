@@ -325,7 +325,7 @@ namespace NovaAPI.Controllers
             if (c == null) return StatusCode(400);
             if (c.ChannelType != ChannelTypes.GroupChannel) return StatusCode(405);
             
-            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
+            using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.User))
             {
                 conn.Open();
                 try
