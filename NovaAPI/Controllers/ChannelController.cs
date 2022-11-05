@@ -372,7 +372,7 @@ namespace NovaAPI.Controllers
 
         // General Channel
         [HttpGet("{channel_uuid}")]
-        public ActionResult<Channel> GetChannel(string channel_uuid) 
+        public ActionResult<Channel> GetChannel(string channel_uuid, bool includeDeleted = false) 
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid, true)) return StatusCode(403);
@@ -401,7 +401,7 @@ namespace NovaAPI.Controllers
                 while (reader.Read())
                 {
                     string member = (string)reader["User_UUID"];
-                    if (!(bool)reader["DELETED"])
+                    if (!(bool)reader["DELETED"] && !includeDeleted)
                         channel.Members.Add(member);
                     if (channel.ChannelType == ChannelTypes.DMChannel)
                     {
@@ -425,7 +425,7 @@ namespace NovaAPI.Controllers
             // Handle Standard Channel
             if (channel.ChannelType == ChannelTypes.DMChannel)
             {
-                // Set channel to DeletedChannel in use props
+                // Set channel to DeletedChannel in user props
                 SetUserDeletedChannel(channel_uuid, user_uuid, true);
 
                 // Get Updated information about channel
@@ -589,10 +589,11 @@ namespace NovaAPI.Controllers
 
             foreach (string channel in matchingChannels)
             {
-                Channel c = GetChannel(channel).Value;
+                Channel c = GetChannel(channel, true).Value;
                 if (c == null) continue;
                 if (c.ChannelType == ChannelTypes.DMChannel)
                 {
+                    Console.WriteLine($"User {user_uuid1} and User {user_uuid2} share channel {c.Table_Id}");
                     if (c.Members.Contains(user_uuid1) && c.Members.Contains(user_uuid2))
                     {
                         SetChannelDeleteStatus(c.Table_Id, user_uuid1, false);
