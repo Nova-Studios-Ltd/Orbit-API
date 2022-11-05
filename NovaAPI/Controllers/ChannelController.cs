@@ -401,8 +401,17 @@ namespace NovaAPI.Controllers
                 while (reader.Read())
                 {
                     string member = (string)reader["User_UUID"];
-                    if (!(bool)reader["DELETED"] && !includeDeleted)
-                        channel.Members.Add(member);
+
+                    if (includeDeleted && (bool) reader["DELETED"])
+                    {
+                        channel.Members.Add(member);   
+                    }
+                    else
+                    {
+                        if (!(bool) reader["DELETED"])
+                            channel.Members.Add(member);
+                    }
+
                     if (channel.ChannelType == ChannelTypes.DMChannel)
                     {
                         if (member == user_uuid) continue;
