@@ -85,7 +85,8 @@ namespace NovaAPI.Controllers
         public ActionResult ChangeUsername([FromBody] string username)
         {
             string user_uuid = Context.GetUserUUID(this.GetToken());
-            if (string.IsNullOrEmpty(username)) return StatusCode(400);
+            if (string.IsNullOrEmpty(username)) return StatusCode(400, "Username cannot be empty or unset");
+            if (username.Length > 24) return StatusCode(413, "Username length greater than 24 characters");
             if (!Context.UserExsists(user_uuid)) return StatusCode(404);
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
