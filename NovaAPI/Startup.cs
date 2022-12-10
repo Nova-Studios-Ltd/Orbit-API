@@ -26,6 +26,7 @@ namespace NovaAPI
     public class Startup
     {
         public static string API_Domain { get; set; }
+        public static string Interface_Domain { get; set; }
         public Startup(IWebHostEnvironment env)
         {
             ConfigurationBuilder builder = new();
@@ -99,6 +100,7 @@ namespace NovaAPI
             // Setup storage
             StorageUtil.InitStorage(genConfig.GetSection("APIDataDirectory").Value, Configuration);
             API_Domain = genConfig.GetSection("API_Domain").Value;
+            Interface_Domain = genConfig.GetSection("Interface_Domain").Value;
 
             services.AddCors(options =>
             {

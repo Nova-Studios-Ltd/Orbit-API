@@ -3,6 +3,8 @@ using MySql.Data.MySqlClient;
 using NovaAPI.Models;
 using NovaAPI.Util;
 using System;
+using System.Net;
+using System.Net.Mail;
 
 namespace NovaAPI.Controllers
 {
@@ -24,7 +26,7 @@ namespace NovaAPI.Controllers
             conn.Open();
 
             using MySqlCommand cmd = new($"SELECT * FROM Users WHERE (Email=@email)", conn);
-            cmd.Parameters.AddWithValue("@email", info.Email);
+            cmd.Parameters.AddWithValue("@email", EncryptionUtils.GetHashString(info.Email));
             
             MySqlDataReader reader = cmd.ExecuteReader();
             
@@ -60,6 +62,7 @@ namespace NovaAPI.Controllers
             if (string.IsNullOrEmpty(info.Password) || string.IsNullOrEmpty(info.Email) || string.IsNullOrEmpty(info.Username)) return StatusCode(400, "Password/Email/User cannot be empty");
             if (info.Username.Length > 24) return StatusCode(413, "Username length greater than 24 characters");
             string UUID = Guid.NewGuid().ToString("N");
+            string email = EncryptionUtils.GetHashString(info.Email);
             string token = EncryptionUtils.GetSaltedHashString(UUID + info.Email + EncryptionUtils.GetHashString(info.Password) + info.Username + DateTime.Now, EncryptionUtils.GetSalt(8));
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master))
             {
@@ -72,7 +75,7 @@ namespace NovaAPI.Controllers
                 reader.Close();
 
                 using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
-                checkForEmail.Parameters.AddWithValue("@email", info.Email);
+                checkForEmail.Parameters.AddWithValue("@email", email);
                 MySqlDataReader read = checkForEmail.ExecuteReader();
                 if (read.HasRows) return StatusCode(409);
 
@@ -88,7 +91,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@disc", disc);
                 cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(info.Password, salt));
                 cmd.Parameters.AddWithValue("@salt", salt);
-                cmd.Parameters.AddWithValue("@email", info.Email);
+                cmd.Parameters.AddWithValue("@email", email);
                 cmd.Parameters.AddWithValue("@tok", token);
                 cmd.Parameters.AddWithValue("@avatar", "");
                 cmd.Parameters.AddWithValue("@pubKey", info.Key.Pub);
@@ -115,6 +118,39 @@ namespace NovaAPI.Controllers
                 users.Close();
             }
             return StatusCode(200, "User created");
+        }
+
+        [HttpPost("RequestReset")]
+        public ActionResult ResetPassword(string email)
+        {
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
+            checkForEmail.Parameters.AddWithValue("@email", EncryptionUtils.GetHashString(email));
+            MySqlDataReader read = checkForEmail.ExecuteReader();
+            if (!read.HasRows) return StatusCode(404);
+
+            read.Read();
+
+            string token = ResetTokenController.GenerateToken((string) read["UUID"]);
+            
+            MailMessage message = new MailMessage();  
+            SmtpClient smtp = new SmtpClient();  
+            message.From = new MailAddress("noreply@novastudios.uk");
+            message.To.Add(new MailAddress(email));
+            message.Subject = "Requested Password Reset";  
+            message.IsBodyHtml = true;
+            message.Body = $"Please use the follow link to <a href=\"https://{Startup.Interface_Domain}/reset?token={token}\">reset your password</a><br>If you didn't request a reset, you can safely disregard this email.";  
+            smtp.Port = 587;  
+            smtp.Host = "smtp.gmail.com"; //for gmail host  
+            smtp.EnableSsl = true;  
+            smtp.UseDefaultCredentials = false;  
+            smtp.Credentials = new NetworkCredential("novastudiosnoreply", "igxqivqnxcofjlbz");  
+            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;  
+            smtp.Send(message);  
+            
+            conn.Close();
+            return StatusCode(200);
         }
     }
 }
