@@ -130,7 +130,29 @@ namespace NovaAPI.Controllers
             cmd.ExecuteNonQuery();
             return StatusCode(200);
         }
-        
+
+        [HttpPut("@me/Reset")]
+        public ActionResult ResetPassword(PasswordReset reset, string token)
+        {
+            string user_uuid = Context.GetUserUUID(this.GetToken());
+            if (string.IsNullOrEmpty(reset.Password)) return StatusCode(400);
+            if (!Context.UserExsists(user_uuid)) return StatusCode(404);
+            dynamic u = RetUser(user_uuid).Value;
+            byte[] salt = EncryptionUtils.GetSalt(64);
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand cmd = new($"UPDATE Users SET Password=@pass,Salt=@salt,Token=@newToken,PubKey=@pubKey,PrivKey=@privKey,IV=@iv WHERE (UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            cmd.Parameters.AddWithValue("@pass", EncryptionUtils.GetSaltedHashString(reset.Password, salt));
+            cmd.Parameters.AddWithValue("@salt", salt);
+            cmd.Parameters.AddWithValue("@newToken", EncryptionUtils.GetSaltedHashString(user_uuid + u.Email + reset.Password + u.Username + DateTime.Now.ToString(), EncryptionUtils.GetSalt(8)));
+            cmd.Parameters.AddWithValue("@pubKey", reset.Key.Pub);
+            cmd.Parameters.AddWithValue("@privKey", reset.Key.Priv);
+            cmd.Parameters.AddWithValue("@iv", reset.Key.PrivIV);
+            cmd.ExecuteNonQuery();
+            return StatusCode(200);
+        }
+
         [HttpPatch("@me/Email")]
         [TokenAuthorization]
         public ActionResult ChangeEmail([FromBody] string email)
