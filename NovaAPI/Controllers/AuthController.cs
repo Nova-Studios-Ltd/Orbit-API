@@ -32,6 +32,7 @@ namespace NovaAPI.Controllers
             
             while (reader.Read())
             {
+                if (reader["Confirmed"].ToString() == "0") return StatusCode(405);
                 string saltedPassword = EncryptionUtils.GetSaltedHashString(info.Password, (byte[])reader["Salt"]);
                 if (reader["Password"].ToString() == saltedPassword)
                 {
@@ -117,6 +118,24 @@ namespace NovaAPI.Controllers
                 
                 users.Close();
             }
+            
+            // Send confirmation email
+            MailMessage message = new MailMessage();  
+            SmtpClient smtp = new SmtpClient();  
+            message.From = new MailAddress("noreply@novastudios.uk");
+            message.To.Add(new MailAddress(email));
+            message.Subject = "Email confirmation";  
+            message.IsBodyHtml = true;
+            message.Body = $"Please use the following link to <a href=\"https://{Startup.Interface_Domain}/auth/confirm?token={token}\">confirm your email</a><br>If you didn't create a Orbit account you can disregard this email";  
+            smtp.Port = 587;  
+            smtp.Host = "smtp.gmail.com"; //for gmail host  
+            smtp.EnableSsl = true;  
+            smtp.UseDefaultCredentials = false;  
+            smtp.Credentials = new NetworkCredential("novastudiosnoreply", "igxqivqnxcofjlbz");  
+            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;  
+            smtp.Send(message);
+            
+            
             return StatusCode(200, "User created");
         }
 
@@ -140,7 +159,7 @@ namespace NovaAPI.Controllers
             message.To.Add(new MailAddress(email));
             message.Subject = "Requested Password Reset";  
             message.IsBodyHtml = true;
-            message.Body = $"Please use the follow link to <a href=\"https://{Startup.Interface_Domain}/reset?token={token}\">reset your password</a><br>If you didn't request a reset, you can safely disregard this email.";  
+            message.Body = $"Please use the following link to <a href=\"https://{Startup.Interface_Domain}/auth/reset?token={token}\">reset your password</a><br>. This link will expire in 10 minutes. If you didn't request a reset, you can safely disregard this email.";  
             smtp.Port = 587;  
             smtp.Host = "smtp.gmail.com"; //for gmail host  
             smtp.EnableSsl = true;  

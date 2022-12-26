@@ -26,20 +26,21 @@ namespace NovaAPI.Util
         // Table creation strings
         public static string UserTableString = @"CREATE TABLE IF NOT EXISTS `Users` (
             `UUID` char(255) NOT NULL,
-        `Username` char(255) NOT NULL,
-        `Discriminator` int NOT NULL,
-        `Password` char(255) NOT NULL,
-        `Salt` varbinary(64) NOT NULL,
+            `Username` char(255) NOT NULL,
+            `Discriminator` int NOT NULL,
+            `Password` char(255) NOT NULL,
+            `Salt` varbinary(64) NOT NULL,
             `Email` char(255) NOT NULL,
-        `Token` char(255) NOT NULL,
-        `Avatar` varchar(1000) NOT NULL,
+            `Token` char(255) NOT NULL,
+            `Avatar` varchar(1000) NOT NULL,
             `PubKey` varchar(1000) NOT NULL,
             `PrivKey` varchar(10000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-        `IV` varchar(1000) NOT NULL,
+            `IV` varchar(1000) NOT NULL,
             `CreationDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (`UUID`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-            ";
+            `Confirmed` tinyint NOT NULL DEFAULT '0',
+            PRIMARY KEY (`UUID`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+        ";
 
         public static string ChannelTableString = @"CREATE TABLE IF NOT EXISTS `Channels` (
           `Table_ID` char(255) NOT NULL,

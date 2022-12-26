@@ -249,5 +249,21 @@ namespace NovaAPI.Controllers
             }
             return channels;
         }
+
+        [HttpPut("@me/ConfirmEmail")]
+        public ActionResult ConfirmEmail(string token)
+        {
+            string user_uuid = Context.GetUserUUID(token);
+            if (!Context.UserExsists(user_uuid)) return StatusCode(404);
+            dynamic u = RetUser(user_uuid).Value;
+            using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
+            conn.Open();
+            using MySqlCommand cmd = new($"UPDATE Users SET Confirmed=@confirmed WHERE (UUID=@uuid)", conn);
+            cmd.Parameters.AddWithValue("@uuid", user_uuid);
+            cmd.Parameters.AddWithValue("@confirmed", true);
+            cmd.ExecuteNonQuery();
+            conn.Close();
+            return StatusCode(200);
+        }
     }
 }
