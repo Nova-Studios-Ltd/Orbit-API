@@ -182,7 +182,7 @@ namespace NovaAPI.Controllers
             int members = ChannelUtils.GetRecipents(channel_uuid, user_uuid).Length + 1;
             if (message.EncryptedKeys.Count < members || message.EncryptedKeys.Distinct().Count() != message.EncryptedKeys.Count)
                 return StatusCode(400,
-                    $"Message has missing/duplicate keys. Wants {channel.Members.Count}, Got {message.EncryptedKeys.Count}.");
+                    $"Message has missing/duplicate keys. Wants {members}, Got {message.EncryptedKeys.Count}.");
             
             // Make sure message/attachments arent empty
             if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments.");
