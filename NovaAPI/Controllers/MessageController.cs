@@ -179,7 +179,8 @@ namespace NovaAPI.Controllers
             if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403, "User does not have access to this channel.");
             
             // Check if message contains keys for every user and none are not duplicated
-            Channel channel = new ChannelController(Context, Event).GetChannel(channel_uuid).Value;
+            ChannelController cc = new ChannelController(Context, Event, GetToken());
+            Channel channel = cc.GetChannel(channel_uuid).Value;
             if (message.EncryptedKeys.Count < channel.Members.Count || message.EncryptedKeys.Distinct().Count() == message.EncryptedKeys.Count)
                 return StatusCode(400,
                     $"Message has missing/duplicate keys. Wants {channel.Members.Count}, Got {message.EncryptedKeys.Count}.");

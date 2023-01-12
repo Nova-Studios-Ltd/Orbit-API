@@ -24,10 +24,11 @@ namespace NovaAPI.Controllers
         // "The codebase must grow" - Andy 2021
         private readonly NovaChatDatabaseContext Context;
         private readonly EventManager Event;
-        public ChannelController(NovaChatDatabaseContext context, EventManager em) 
+        public ChannelController(NovaChatDatabaseContext context, EventManager em, string token = "") 
         {
             Context = context;
             Event = em;
+            if (!string.IsNullOrEmpty(token)) HttpContext.Request.Headers.Add("Authorization", token);
         }
 
         [HttpPost("CreateChannel")]
