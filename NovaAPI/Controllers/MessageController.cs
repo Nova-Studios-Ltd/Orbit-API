@@ -172,35 +172,47 @@ namespace NovaAPI.Controllers
         [HttpPost("{channel_uuid}/Messages/")]
         public ActionResult<string> SendMessage(string channel_uuid, SentMessage message, string contentToken) 
         {
+            // Get the current users UUID
+            string user_uuid = Context.GetUserUUID(GetToken());
+            
+            // Check if this user has access to this channel
+            if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403, "User does not have access to this channel.");
+            
+            // Check if message contains keys for every user and none are not duplicated
+            Channel channel = new ChannelController(Context, Event).GetChannel(channel_uuid).Value;
+            if (message.EncryptedKeys.Count < channel.Members.Count || message.EncryptedKeys.Distinct().Count() == message.EncryptedKeys.Count)
+                return StatusCode(400,
+                    $"Message has missing/duplicate keys. Wants {channel.Members.Count}, Got {message.EncryptedKeys.Count}.");
+            
+            // Make sure message/attachments arent empty
+            if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments.");
+
+
+            // Check content token (May be empty if no attachments were uploaded)
             if (contentToken != "empty" && !TokenManager.ValidToken(contentToken, channel_uuid) && message.Attachments.Count > 0)
             {
                 TokenManager.InvalidateToken(contentToken);
                 return StatusCode(400, "The provided Content Token has expired");
             }
-            
-            string user_uuid = Context.GetUserUUID(GetToken());
-            string id = "";
-            if (!ChannelUtils.CheckUserChannelAccess(user_uuid, channel_uuid)) return StatusCode(403);
-            
+
             // Check friend/blocked status (Ignore groups)
             if (!ChannelUtils.IsGroup(channel_uuid))
             {
                 string recip = ChannelUtils.GetRecipents(channel_uuid, user_uuid, true)[0];
                 if (!FriendUtils.IsFriend(user_uuid, recip))
-                    return StatusCode(403, "Unable to send message to non-friend user");
+                    return StatusCode(403, "Unable to send message to non-friend user.");
                 if (FriendUtils.IsBlocked(user_uuid, recip))
-                    return StatusCode(403, "Unable to send message to blocked user");
+                    return StatusCode(403, "Unable to send message to blocked user.");
             }
 
-            if (message.Content.Length == 0 && message.Attachments.Count == 0) return StatusCode(400, "Message cannot be blank and have 0 attachments");
-            
             // Check that attachments arent duplicated and match those of the provided contentToken
             if (message.Attachments.Count != message.Attachments.Distinct().Count())
             {
                 TokenManager.InvalidateToken(contentToken);
-                return StatusCode(409, "Attachments contains duplicate ids");
+                return StatusCode(409, "Attachments contains duplicate ids.");
             }
             
+            string id = "";
             using (MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Channel))
             {
                 conn.Open();
