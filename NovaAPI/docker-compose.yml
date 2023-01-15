@@ -11,9 +11,7 @@ services:
     db:
         image: mysql:8.0
         environment:
-          MYSQL_USER: 'nova'
-          MYSQL_PASSWORD: '17201311'
-          MYSQL_ROOT_PASSWORD: '17201311'
+          MYSQL_ROOT_PASSWORD: 'please-set-a-password'
         ports:
           - '3307:3306'
         expose:
@@ -27,12 +25,12 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/mnt/raid/NovaAPI/mysql'
+      device: '/my/path/to/mysql'
       # device: 'data/mysql'
   api-database:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/mnt/raid/NovaAPI/api-data'
+      device: '/my/path/to/api-data'
       # device: 'data/api-data'
