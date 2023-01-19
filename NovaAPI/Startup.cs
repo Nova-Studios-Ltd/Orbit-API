@@ -57,6 +57,18 @@ namespace NovaAPI
             MySqlServer.ChannelsDatabaseName = config.GetSection("ChannelDatabaseName").Value;
             MySqlServer.MasterDatabaseName = config.GetSection("MasterDatabaseName").Value;
 
+            // Load email configuration
+            IConfigurationSection mailServerConfig = Configuration.GetSection("MailServerConfig");
+            IConfigurationSection mailSetup = mailServerConfig.GetSection("MailSetup");
+            EmailConfig.VerifyEmail = bool.Parse(mailServerConfig.GetSection("VerifyEmail").Value);
+            EmailConfig.PasswordReset = bool.Parse(mailServerConfig.GetSection("PasswordReset").Value);
+            EmailConfig.SMTPPort = int.Parse(mailSetup.GetSection("SMTPPort").Value);
+            EmailConfig.SMTPHost = mailSetup.GetSection("SMTPHost").Value;
+            EmailConfig.FromAddress = mailSetup.GetSection("FromAddress").Value;
+            EmailConfig.Username = mailSetup.GetSection("Username").Value;
+            EmailConfig.Password = mailSetup.GetSection("Password").Value;
+            
+            
             if (MySqlServer.AutoConfig)
             {
                 // Setup databases

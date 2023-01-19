@@ -86,7 +86,7 @@ namespace NovaAPI.Controllers
                 // Get Salt - Sometimes things are better with a bit of salt
                 byte[] salt = EncryptionUtils.GetSalt(64);
 
-                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Salt, Email, Token, Avatar, PubKey, PrivKey, IV) VALUES (@uuid, @user, @disc, @pass, @salt, @email, @tok, @avatar, @pubKey, @privKey, @iv)", conn);
+                using MySqlCommand cmd = new($"INSERT INTO Users (UUID, Username, Discriminator, Password, Salt, Email, Token, Avatar, PubKey, PrivKey, IV, Confirmed) VALUES (@uuid, @user, @disc, @pass, @salt, @email, @tok, @avatar, @pubKey, @privKey, @iv, @confirm)", conn);
                 cmd.Parameters.AddWithValue("@uuid", UUID);
                 cmd.Parameters.AddWithValue("@user", info.Username);
                 cmd.Parameters.AddWithValue("@disc", disc);
@@ -98,6 +98,7 @@ namespace NovaAPI.Controllers
                 cmd.Parameters.AddWithValue("@pubKey", info.Key.Pub);
                 cmd.Parameters.AddWithValue("@privKey", info.Key.Priv);
                 cmd.Parameters.AddWithValue("@iv", info.Key.PrivIV);
+                cmd.Parameters.AddWithValue("@confirm", !EmailConfig.VerifyEmail);
                 cmd.ExecuteNonQuery();
 
                 using MySqlConnection users = MySqlServer.CreateSQLConnection(Database.User);
@@ -120,28 +121,33 @@ namespace NovaAPI.Controllers
             }
             
             // Send confirmation email
-            MailMessage message = new MailMessage();  
-            SmtpClient smtp = new SmtpClient();  
-            message.From = new MailAddress("noreply@novastudios.uk");
-            message.To.Add(new MailAddress(email));
-            message.Subject = "Email confirmation";  
-            message.IsBodyHtml = true;
-            message.Body = $"Please use the following link to <a href=\"https://{Startup.Interface_Domain}/auth/confirm?token={token}\">confirm your email</a><br>If you didn't create a Orbit account you can disregard this email";  
-            smtp.Port = 587;  
-            smtp.Host = "smtp.gmail.com"; //for gmail host  
-            smtp.EnableSsl = true;  
-            smtp.UseDefaultCredentials = false;  
-            smtp.Credentials = new NetworkCredential("novastudiosnoreply", "igxqivqnxcofjlbz");  
-            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;  
-            smtp.Send(message);
-            
-            
+            if (EmailConfig.VerifyEmail)
+            {
+                MailMessage message = new MailMessage();
+                SmtpClient smtp = new SmtpClient();
+                message.From = new MailAddress(EmailConfig.FromAddress);
+                message.To.Add(new MailAddress(email));
+                message.Subject = "Email confirmation";
+                message.IsBodyHtml = true;
+                message.Body =
+                    $"Please use the following link to <a href=\"https://{Startup.Interface_Domain}/auth/confirm?token={token}\">confirm your email</a><br>If you didn't create a Orbit account you can disregard this email";
+                smtp.Port = EmailConfig.SMTPPort;
+                smtp.Host = EmailConfig.SMTPHost;
+                smtp.EnableSsl = true;
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = new NetworkCredential(EmailConfig.Username, EmailConfig.Password);
+                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                smtp.Send(message);
+            }
+
+
             return StatusCode(200, "User created");
         }
 
         [HttpPost("RequestReset")]
         public ActionResult ResetPassword(string email)
         {
+            if (!EmailConfig.PasswordReset) return StatusCode(400, "This server has password resetting disabled.");
             using MySqlConnection conn = MySqlServer.CreateSQLConnection(Database.Master);
             conn.Open();
             using MySqlCommand checkForEmail = new($"SELECT * From Users WHERE (Email=@email)", conn);
@@ -155,16 +161,16 @@ namespace NovaAPI.Controllers
             
             MailMessage message = new MailMessage();  
             SmtpClient smtp = new SmtpClient();  
-            message.From = new MailAddress("noreply@novastudios.uk");
+            message.From = new MailAddress(EmailConfig.FromAddress);
             message.To.Add(new MailAddress(email));
             message.Subject = "Requested Password Reset";  
             message.IsBodyHtml = true;
             message.Body = $"Please use the following link to <a href=\"https://{Startup.Interface_Domain}/auth/reset?token={token}\">reset your password</a><br>. This link will expire in 10 minutes. If you didn't request a reset, you can safely disregard this email.";  
-            smtp.Port = 587;  
-            smtp.Host = "smtp.gmail.com"; //for gmail host  
+            smtp.Port = EmailConfig.SMTPPort;
+            smtp.Host = EmailConfig.SMTPHost;
             smtp.EnableSsl = true;  
             smtp.UseDefaultCredentials = false;  
-            smtp.Credentials = new NetworkCredential("novastudiosnoreply", "igxqivqnxcofjlbz");  
+            smtp.Credentials = new NetworkCredential(EmailConfig.Username, EmailConfig.Password);
             smtp.DeliveryMethod = SmtpDeliveryMethod.Network;  
             smtp.Send(message);  
             
